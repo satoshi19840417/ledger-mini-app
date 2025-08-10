@@ -136,6 +136,17 @@ const CATEGORY_COLORS = {
   'その他(少額)': '#9ca3af'
 };
 
+function getCategoryColor(name) {
+  if (CATEGORY_COLORS[name]) return CATEGORY_COLORS[name];
+  if (!name) return '#ccc';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 60%, 60%)`;
+}
+
 /** 棒グラフの色リスト（ローテーション） */
 const BAR_COLORS = [
   '#60a5fa',
@@ -525,10 +536,10 @@ export default function App() {
 
           {/* カテゴリ構成比（固定色） */}
           <ResponsiveContainer>
-            <PieChart>
+              <PieChart>
               <Pie data={categoryPieLimited} dataKey="value" nameKey="name" label outerRadius="80%">
                 {categoryPieLimited.map((entry, idx) => (
-                  <Cell key={`cell-${idx}`} fill={CATEGORY_COLORS[entry.name] || '#ccc'} />
+                  <Cell key={`cell-${idx}`} fill={getCategoryColor(entry.name)} />
                 ))}
               </Pie>
               <Legend
