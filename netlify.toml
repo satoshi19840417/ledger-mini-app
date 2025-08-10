@@ -1,0 +1,17 @@
+# netlify.toml --- ledger-mini-app 用
+
+[build]
+  # 依存関係を lockfile どおりに入れてから本番ビルド
+  command = "npm ci && npm run build"
+  # Vite のビルド出力先（デフォルトが dist）
+  publish = "dist"
+
+[build.environment]
+  # Netlify のビルド Node を固定
+  NODE_VERSION = "20"
+
+# ★ react-router など SPA ルーティングを使う場合だけ下を有効化してください
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
