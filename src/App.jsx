@@ -465,25 +465,20 @@ export default function App() {
       <section className="section">
         <h3>2. 分類ルール（上から順に評価）</h3>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 120px 120px 160px 90px',
-            gap: 8,
-            alignItems: 'center'
-          }}
-        >
-          <div style={{ fontWeight: 600 }}>パターン（文字列 or 正規表現）</div>
-          <div style={{ fontWeight: 600 }}>ターゲット</div>
-          <div style={{ fontWeight: 600 }}>種別</div>
-          <div style={{ fontWeight: 600 }}>カテゴリ</div>
-          <div />
+        <div className="rules-table-container">
+          <div className="rules-grid">
+            <div className="header sticky-col">パターン（文字列 or 正規表現）</div>
+            <div className="header">ターゲット</div>
+            <div className="header">種別</div>
+            <div className="header">カテゴリ</div>
+            <div className="header actions"></div>
 
-          {(showAllRules ? rules : rules.slice(0, 10)).map(r => (
-            <RuleRow key={r.id} rule={r} onDelete={() => deleteRule(r.id)} />
-          ))}
+            {(showAllRules ? rules : rules.slice(0, 10)).map(r => (
+              <RuleRow key={r.id} rule={r} onDelete={() => deleteRule(r.id)} />
+            ))}
 
-          <NewRuleRow onAdd={addRule} />
+            <NewRuleRow onAdd={addRule} />
+          </div>
         </div>
 
         {rules.length > 10 && (
@@ -654,11 +649,21 @@ export default function App() {
 function RuleRow({ rule, onDelete }) {
   return (
     <>
-      <div className="truncate" title={rule.pattern} style={{ padding: '4px 0' }}>{rule.pattern}</div>
+      <div className="sticky-col truncate" title={rule.pattern}>{rule.pattern}</div>
       <div>{rule.target}</div>
       <div>{rule.kind}</div>
       <div>{rule.category}</div>
-      <div><button onClick={onDelete} style={{ color: '#c00' }}>削除</button></div>
+      <div className="actions">
+        <button className="icon-btn" onClick={onDelete} aria-label="削除">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          </svg>
+        </button>
+      </div>
     </>
   );
 }
@@ -672,7 +677,7 @@ function NewRuleRow({ onAdd }) {
 
   return (
     <>
-      <div>
+      <div className="sticky-col">
         <input
           value={pattern}
           onChange={e => setPattern(e.target.value)}
@@ -713,8 +718,9 @@ function NewRuleRow({ onAdd }) {
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
-      <div>
+      <div className="actions">
         <button
+          className="icon-btn"
           onClick={() => {
             if (!pattern.trim()) return alert('パターンを入力してください');
             onAdd({ pattern: pattern.trim(), mode, target, category: cat, kind });
