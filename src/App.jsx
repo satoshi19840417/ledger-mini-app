@@ -502,19 +502,7 @@ export default function App() {
 
       {/* 3. 可視化 */}
       <AccordionSection title="3. 可視化">
-        <div className="small" style={{ marginBottom: 8 }}>
-          表示期間：
-          <select
-            value={period}
-            onChange={e => setPeriod(e.target.value)}
-            style={{ marginLeft: 6 }}
-          >
-            <option value="3m">最近3ヶ月</option>
-            <option value="6m">半年</option>
-            <option value="1y">1年</option>
-            <option value="all">全期間</option>
-          </select>
-        </div>
+        <PeriodSelector value={period} onChange={setPeriod} />
 
         <div className="grid2" style={{ height: 360 }}>
           {/* 月別総支出（万円単位） */}
@@ -647,6 +635,28 @@ export default function App() {
 } // <= App 閉じ
 
 /** ====== 小さな部品 ====== */
+
+function PeriodSelector({ value, onChange }) {
+  const options = [
+    { key: '3m', label: 'Last 3 months' },
+    { key: '6m', label: '6 months' },
+    { key: '1y', label: '1 year' },
+    { key: 'all', label: 'All' }
+  ];
+  return (
+    <div className="period-selector">
+      {options.map(opt => (
+        <button
+          key={opt.key}
+          className={value === opt.key ? 'active' : ''}
+          onClick={() => onChange(opt.key)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function RuleRow({ rule, onDelete }) {
   return (
