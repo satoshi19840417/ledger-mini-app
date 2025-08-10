@@ -338,7 +338,14 @@ export default function App() {
           .sort((a, b) => b.value - a.value);
       }, [applied]);
     
-      const categoryPieLimited = useMemo(() => limitPieData(categoryPie, 10), [categoryPie]);
+      const categoryPieLimited = useMemo(
+        () =>
+          limitPieData(categoryPie, 10).map(d => ({
+            ...d,
+            fill: getCategoryColor(d.name),
+          })),
+        [categoryPie]
+      );
     
       // 円グラフで「その他(少額)」に入っている“下位カテゴリ集合”
       const smallCatSet = useMemo(() => {
@@ -537,16 +544,18 @@ export default function App() {
           {/* カテゴリ構成比（固定色） */}
           <ResponsiveContainer>
               <PieChart>
-              <Pie data={categoryPieLimited} dataKey="value" nameKey="name" label outerRadius="80%">
-                {categoryPieLimited.map((entry, idx) => (
-                  <Cell key={`cell-${idx}`} fill={getCategoryColor(entry.name)} />
-                ))}
-              </Pie>
+              <Pie data={categoryPieLimited} dataKey="value" nameKey="name" label outerRadius="80%" />
               <Legend
                 layout="vertical"
                 align="right"
                 verticalAlign="middle"
                 wrapperStyle={{ maxHeight: 300, overflowY: 'auto' }}
+                payload={categoryPieLimited.map(item => ({
+                  id: item.name,
+                  value: item.name,
+                  type: 'square',
+                  color: item.fill,
+                }))}
               />
               <Tooltip />
             </PieChart>
