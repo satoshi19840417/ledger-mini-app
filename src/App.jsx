@@ -1,15 +1,15 @@
 // === App.jsx (Part 1/3): Imports, utilities, constants, state ===
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import Papa from 'papaparse';
 import { supabase } from './supabaseClient';
 import { useSession } from './useSession';
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  PieChart, Pie, Legend, Cell
-} from 'recharts';
 import './App.css';
 import AccordionSection from './AccordionSection';
 import FullScreenModal from './FullScreenModal';
+import { CATEGORIES } from './categories';
+const Charts = lazy(() => import('./Charts'));
+const OthersTable = lazy(() => import('./OthersTable'));
+
 
 /** ========= 基本ユーティリティ ========= */
 
@@ -114,11 +114,6 @@ function normalizeRow(r, userId) {
 }
 
 /** 表示カテゴリ候補 */
-const CATEGORIES = [
-  '食費','住居・光熱','日用品・消耗品','通信','交通・移動','医療・健康','衣服・美容',
-  '趣味・娯楽','旅行・レジャー','教育・書籍','交際費','ビジネス','税金・保険','その他','収入'
-];
-
 /** カテゴリ固定色（円グラフ） */
 const CATEGORY_COLORS = {
   '食費': '#f87171',
@@ -150,57 +145,6 @@ function getCategoryColor(name) {
   return `hsl(${hue}, 60%, 60%)`;
 }
 
-/** 棒グラフの色リスト（ローテーション） */
-const BAR_COLORS = [
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#f87171',
-  '#a78bfa',
-  '#fb923c',
-];
-
-/** 長い系列名を省略しつつホバーで全体を見せる凡例 */
-function ScrollableLegend({ payload }) {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-  return (
-    <ul
-      style={{
-        listStyle: 'none',
-        margin: 0,
-        padding: 0,
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        flexWrap: isMobile ? 'nowrap' : 'wrap',
-        maxHeight: isMobile ? 72 : undefined,
-        overflowY: isMobile ? 'auto' : undefined,
-      }}
-    >
-      {payload?.map((entry) => {
-        const label = entry.value || '';
-        const truncated = label.length > 8 ? `${label.slice(0, 8)}…` : label;
-        return (
-          <li
-            key={label}
-            title={label}
-            style={{ marginRight: 12, display: 'flex', alignItems: 'center' }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                width: 10,
-                height: 10,
-                backgroundColor: entry.color,
-                marginRight: 4,
-              }}
-            />
-            <span>{truncated}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 /** ルール適用（先勝ち） */
 function applyRules(items, rules) {
@@ -604,55 +548,9 @@ export default function App() {
       <AccordionSection title="3. 可視化">
         <PeriodSelector value={period} onChange={setPeriod} />
 
-        <div className="grid2" style={{ height: 360 }}>
-          {/* 月別総支出（万円単位） */}
-          <ResponsiveContainer>
-            <BarChart data={monthly} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
-              <XAxis
-                dataKey="month"
-                interval={0}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-                tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
-              />
-              <YAxis
-                tickFormatter={(v) => (v / 10000).toFixed(1)}
-                label={{ value: '万円', angle: -90, position: 'insideLeft' }}
-              />
-              <Tooltip
-                formatter={(v) => [`${(v / 10000).toFixed(1)} 万円`, '合計']}
-                labelFormatter={(label) => label}
-              />
-              <Legend content={<ScrollableLegend />} />
-              <Bar dataKey="total" name="合計">
-                {monthly.map((_, idx) => (
-                  <Cell key={`cell-${idx}`} fill={BAR_COLORS[idx % BAR_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-
-          {/* カテゴリ構成比（固定色） */}
-          <ResponsiveContainer>
-              <PieChart>
-              <Pie data={categoryPieLimited} dataKey="value" nameKey="name" label outerRadius="80%" />
-              <Legend
-                layout="vertical"
-                align="right"
-                verticalAlign="middle"
-                wrapperStyle={{ maxHeight: 300, overflowY: 'auto' }}
-                payload={categoryPieLimited.map(item => ({
-                  id: item.name,
-                  value: item.name,
-                  type: 'square',
-                  color: item.fill,
-                }))}
-              />
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <Suspense fallback={<ChartSkeleton />}>
+          <Charts monthly={monthly} categoryPieLimited={categoryPieLimited} />
+        </Suspense>
       </AccordionSection>
 
       {/* 4. その他削減 */}
@@ -770,37 +668,13 @@ export default function App() {
           </div>
         )}
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left' }}>
-              <th style={{ borderBottom: '1px solid #eee', padding: 6 }}>店舗/内容</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 140 }}>支出合計</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 260 }}>カテゴリに登録</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 100 }} />
-            </tr>
-          </thead>
-          <tbody>
-            {othersTop.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={{ padding: 16, color: '#666' }}>
-                  該当データがありません（期間や表示対象、フィルタを見直してください）
-                </td>
-              </tr>
-            ) : (
-              othersTop.map(row => (
-                <OthersRow
-                  key={row.name}
-                  row={row}
-                  onAdd={(cat, mode) => addRule({
-                    pattern: row.name,
-                    mode, target: 'memo', category: cat, kind: 'expense'
-                  })}
-                  isMobile={isMobile}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
+        <Suspense fallback={<TableSkeleton rows={othersTop.length} />}>
+          <OthersTable
+            rows={othersTop}
+            addRule={addRule}
+            isMobile={isMobile}
+          />
+        </Suspense>
       </AccordionSection>
     </div>
   </>
@@ -976,62 +850,37 @@ function NewRuleRow({ onAdd, isMobile }) {
   );
 }
 
-function OthersRow({ row, onAdd, isMobile }) {
-  const [cat, setCat] = useState('食費');
-  const [mode, setMode] = useState('contains');
-  const [open, setOpen] = useState(false);
 
-  const submit = () => {
-    onAdd(cat, mode);
-    setOpen(false);
-  };
-
+function ChartSkeleton() {
   return (
-    <tr>
-      <td className="truncate" title={row.name} style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
-        {row.name}
-      </td>
-      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
-        {row.total.toLocaleString()} 円
-      </td>
-      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
-        {isMobile ? (
-          <>
-            <button onClick={() => setOpen(true)}>ルール追加</button>
-            <FullScreenModal
-              open={open}
-              onClose={() => setOpen(false)}
-              title="ルール追加"
-              primaryAction={<button onClick={submit}>追加</button>}
-              secondaryAction={<button onClick={() => setOpen(false)}>キャンセル</button>}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <select value={cat} onChange={e => setCat(e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <select value={mode} onChange={e => setMode(e.target.value)}>
-                  <option value="contains">正規表現なし</option>
-                  <option value="regex">正規表現</option>
-                </select>
-              </div>
-            </FullScreenModal>
-          </>
-        ) : (
-          <>
-            <select value={cat} onChange={e => setCat(e.target.value)} style={{ marginRight: 8 }}>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={mode} onChange={e => setMode(e.target.value)} style={{ marginRight: 8 }}>
-              <option value="contains">正規表現なし</option>
-              <option value="regex">正規表現</option>
-            </select>
-            <button onClick={() => onAdd(cat, mode)}>ルール追加</button>
-          </>
-        )}
-      </td>
-      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }} />
-    </tr>
+    <div className="grid2" style={{ height: 360 }}>
+      <div style={{ background: '#f3f4f6', borderRadius: 4 }} />
+      <div style={{ background: '#f3f4f6', borderRadius: 4 }} />
+    </div>
   );
 }
 
-    
+function TableSkeleton({ rows }) {
+  const count = Math.max(rows, 3);
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ textAlign: 'left' }}>
+          <th style={{ borderBottom: '1px solid #eee', padding: 6 }}>店舗/内容</th>
+          <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 140 }}>支出合計</th>
+          <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 260 }}>カテゴリに登録</th>
+          <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 100 }} />
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: count }).map((_, idx) => (
+          <tr key={idx}>
+            <td colSpan={4} style={{ padding: 16 }}>
+              <div style={{ background: '#f3f4f6', height: 16, borderRadius: 4 }} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
