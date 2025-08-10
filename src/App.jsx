@@ -685,10 +685,10 @@ export default function App() {
 
 function PeriodSelector({ value, onChange }) {
   const options = [
-    { key: '3m', label: 'Last 3 months' },
-    { key: '6m', label: '6 months' },
-    { key: '1y', label: '1 year' },
-    { key: 'all', label: 'All' }
+    { key: '3m', label: '直近3ヶ月' },
+    { key: '6m', label: '6ヶ月' },
+    { key: '1y', label: '1年' },
+    { key: 'all', label: '全期間' }
   ];
   return (
     <div className="period-selector">
