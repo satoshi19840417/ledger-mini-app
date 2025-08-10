@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import './App.css';
 import AccordionSection from './AccordionSection';
+import FullScreenModal from './FullScreenModal';
 
 /** ========= 基本ユーティリティ ========= */
 
@@ -272,6 +273,18 @@ export default function App() {
   const [othersSrcCat, setOthersSrcCat] = useState('すべて');
   const [othersKeyword, setOthersKeyword] = useState('');
 
+  // mobile detection & modal state
+  const [isMobile, setIsMobile] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = () => setIsMobile(mq.matches);
+    handler();
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // === Part 1 ここまで ===
   // この直後に Part 2 を続けて貼り付けてください（fetchLatest, onCsv, 集計, 可視化など）
     /** ====== DB から最新取得 ====== */
@@ -521,7 +534,7 @@ export default function App() {
               <RuleRow key={r.id} rule={r} onDelete={() => deleteRule(r.id)} />
             ))}
 
-            <NewRuleRow onAdd={addRule} />
+            <NewRuleRow onAdd={addRule} isMobile={isMobile} />
           </div>
         </div>
 
@@ -603,54 +616,108 @@ export default function App() {
         defaultOpen={othersTop.length > 0}
         key={`others-${othersTop.length > 0 ? 'has' : 'none'}`}
       >
-        {/* フィルタ行：表示対象（未分類/少額）・取り込みカテゴリ・キーワード */}
-        <div
-          className="small"
-          style={{
-            display: 'flex',
-            gap: 12,
-            alignItems: 'center',
-            marginBottom: 8,
-            flexWrap: 'wrap'
-          }}
-        >
-          <span>表示対象：</span>
-          <select
-            value={othersMode}
-            onChange={e => {
-              setOthersMode(e.target.value);
-              setOthersSrcCat('すべて');
-              setOthersKeyword('');
+        {isMobile ? (
+          <>
+            <button onClick={() => setFilterOpen(true)}>フィルタ</button>
+            <FullScreenModal
+              open={filterOpen}
+              onClose={() => setFilterOpen(false)}
+              title="フィルタ"
+              primaryAction={<button onClick={() => setFilterOpen(false)}>適用</button>}
+              secondaryAction={<button onClick={() => setFilterOpen(false)}>キャンセル</button>}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <label>
+                  表示対象：
+                  <select
+                    value={othersMode}
+                    onChange={e => {
+                      setOthersMode(e.target.value);
+                      setOthersSrcCat('すべて');
+                      setOthersKeyword('');
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="unassigned">未分類/「その他」に分類された明細</option>
+                    <option value="small">少額カテゴリ（円グラフの「その他(少額)」）</option>
+                  </select>
+                </label>
+                <label>
+                  取り込みカテゴリ：
+                  <select
+                    value={othersSrcCat}
+                    onChange={e => setOthersSrcCat(e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    {othersSrcCatOptions.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  キーワード：
+                  <input
+                    value={othersKeyword}
+                    onChange={e => setOthersKeyword(e.target.value)}
+                    placeholder="メモに含む文字列"
+                    style={{ width: '100%' }}
+                  />
+                </label>
+                <button onClick={() => { setOthersKeyword(''); setOthersSrcCat('すべて'); }}>
+                  リセット
+                </button>
+              </div>
+            </FullScreenModal>
+          </>
+        ) : (
+          <div
+            className="small"
+            style={{
+              display: 'flex',
+              gap: 12,
+              alignItems: 'center',
+              marginBottom: 8,
+              flexWrap: 'wrap'
             }}
-            style={{ minWidth: 220, padding: '4px 6px' }}
           >
-            <option value="unassigned">未分類/「その他」に分類された明細</option>
-            <option value="small">少額カテゴリ（円グラフの「その他(少額)」）</option>
-          </select>
+            <span>表示対象：</span>
+            <select
+              value={othersMode}
+              onChange={e => {
+                setOthersMode(e.target.value);
+                setOthersSrcCat('すべて');
+                setOthersKeyword('');
+              }}
+              style={{ minWidth: 220, padding: '4px 6px' }}
+            >
+              <option value="unassigned">未分類/「その他」に分類された明細</option>
+              <option value="small">少額カテゴリ（円グラフの「その他(少額)」）</option>
+            </select>
 
-          <span>取り込みカテゴリ：</span>
-          <select
-            value={othersSrcCat}
-            onChange={e => setOthersSrcCat(e.target.value)}
-            style={{ minWidth: 160, padding: '4px 6px' }}
-          >
-            {othersSrcCatOptions.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            <span>取り込みカテゴリ：</span>
+            <select
+              value={othersSrcCat}
+              onChange={e => setOthersSrcCat(e.target.value)}
+              style={{ minWidth: 160, padding: '4px 6px' }}
+            >
+              {othersSrcCatOptions.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
 
-          <span>キーワード：</span>
-          <input
-            value={othersKeyword}
-            onChange={e => setOthersKeyword(e.target.value)}
-            placeholder="メモに含む文字列"
-            style={{ minWidth: 220, padding: '4px 6px' }}
-          />
+            <span>キーワード：</span>
+            <input
+              value={othersKeyword}
+              onChange={e => setOthersKeyword(e.target.value)}
+              placeholder="メモに含む文字列"
+              style={{ minWidth: 220, padding: '4px 6px' }}
+            />
 
-          <button onClick={() => { setOthersKeyword(''); setOthersSrcCat('すべて'); }}>
-            リセット
-          </button>
-        </div>
+            <button onClick={() => { setOthersKeyword(''); setOthersSrcCat('すべて'); }}>
+              リセット
+            </button>
+          </div>
+        )}
 
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
@@ -677,6 +744,7 @@ export default function App() {
                     pattern: row.name,
                     mode, target: 'memo', category: cat, kind: 'expense'
                   })}
+                  isMobile={isMobile}
                 />
               ))
             )}
@@ -733,12 +801,73 @@ function RuleRow({ rule, onDelete }) {
   );
 }
 
-function NewRuleRow({ onAdd }) {
+function NewRuleRow({ onAdd, isMobile }) {
   const [pattern, setPattern] = useState('');
   const [mode, setMode] = useState('contains');
   const [target, setTarget] = useState('memo');
   const [kind, setKind] = useState('expense');
   const [cat, setCat] = useState('食費');
+  const [open, setOpen] = useState(false);
+
+  const submit = () => {
+    if (!pattern.trim()) return alert('パターンを入力してください');
+    onAdd({ pattern: pattern.trim(), mode, target, category: cat, kind });
+    setPattern('');
+    setOpen(false);
+  };
+
+  if (isMobile) {
+    return (
+      <>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <button onClick={() => setOpen(true)}>ルール追加</button>
+          <FullScreenModal
+            open={open}
+            onClose={() => setOpen(false)}
+            title="ルール追加"
+            primaryAction={<button onClick={submit}>追加</button>}
+            secondaryAction={<button onClick={() => setOpen(false)}>キャンセル</button>}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input
+                value={pattern}
+                onChange={e => setPattern(e.target.value)}
+                placeholder="例）セブン-イレブン"
+                style={{ width: '100%' }}
+              />
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    checked={mode === 'contains'}
+                    onChange={() => setMode('contains')}
+                  /> 正規表現なし
+                </label>{' '}
+                <label>
+                  <input
+                    type="radio"
+                    checked={mode === 'regex'}
+                    onChange={() => setMode('regex')}
+                  /> 正規表現
+                </label>
+              </div>
+              <select value={target} onChange={e => setTarget(e.target.value)}>
+                <option value="memo">メモ</option>
+                <option value="category">取り込みカテゴリ</option>
+              </select>
+              <select value={kind} onChange={e => setKind(e.target.value)}>
+                <option value="expense">支出</option>
+                <option value="income">収入</option>
+              </select>
+              <select value={cat} onChange={e => setCat(e.target.value)}>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </FullScreenModal>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -786,11 +915,7 @@ function NewRuleRow({ onAdd }) {
       <div className="actions">
         <button
           className="icon-btn"
-          onClick={() => {
-            if (!pattern.trim()) return alert('パターンを入力してください');
-            onAdd({ pattern: pattern.trim(), mode, target, category: cat, kind });
-            setPattern('');
-          }}
+          onClick={submit}
         >
           追加
         </button>
@@ -799,9 +924,16 @@ function NewRuleRow({ onAdd }) {
   );
 }
 
-function OthersRow({ row, onAdd }) {
+function OthersRow({ row, onAdd, isMobile }) {
   const [cat, setCat] = useState('食費');
   const [mode, setMode] = useState('contains');
+  const [open, setOpen] = useState(false);
+
+  const submit = () => {
+    onAdd(cat, mode);
+    setOpen(false);
+  };
+
   return (
     <tr>
       <td className="truncate" title={row.name} style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
@@ -811,14 +943,39 @@ function OthersRow({ row, onAdd }) {
         {row.total.toLocaleString()} 円
       </td>
       <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
-        <select value={cat} onChange={e => setCat(e.target.value)} style={{ marginRight: 8 }}>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={mode} onChange={e => setMode(e.target.value)} style={{ marginRight: 8 }}>
-          <option value="contains">正規表現なし</option>
-          <option value="regex">正規表現</option>
-        </select>
-        <button onClick={() => onAdd(cat, mode)}>ルール追加</button>
+        {isMobile ? (
+          <>
+            <button onClick={() => setOpen(true)}>ルール追加</button>
+            <FullScreenModal
+              open={open}
+              onClose={() => setOpen(false)}
+              title="ルール追加"
+              primaryAction={<button onClick={submit}>追加</button>}
+              secondaryAction={<button onClick={() => setOpen(false)}>キャンセル</button>}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <select value={cat} onChange={e => setCat(e.target.value)}>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select value={mode} onChange={e => setMode(e.target.value)}>
+                  <option value="contains">正規表現なし</option>
+                  <option value="regex">正規表現</option>
+                </select>
+              </div>
+            </FullScreenModal>
+          </>
+        ) : (
+          <>
+            <select value={cat} onChange={e => setCat(e.target.value)} style={{ marginRight: 8 }}>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={mode} onChange={e => setMode(e.target.value)} style={{ marginRight: 8 }}>
+              <option value="contains">正規表現なし</option>
+              <option value="regex">正規表現</option>
+            </select>
+            <button onClick={() => onAdd(cat, mode)}>ルール追加</button>
+          </>
+        )}
       </td>
       <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }} />
     </tr>
