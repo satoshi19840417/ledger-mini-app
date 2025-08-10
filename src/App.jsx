@@ -269,9 +269,30 @@ export default function App() {
   // 'unassigned'（未分類/「その他」に分類） / 'small'（円グラフの「その他(少額)」＝下位カテゴリ群）
   const [othersMode, setOthersMode] = useState('unassigned');
 
-  // 「その他」フィルタ
-  const [othersSrcCat, setOthersSrcCat] = useState('すべて');
-  const [othersKeyword, setOthersKeyword] = useState('');
+  // 「その他」フィルタ（URL クエリから初期値を取得）
+  const initialQuery = useMemo(() => new URLSearchParams(window.location.search), []);
+  const [othersCats, setOthersCats] = useState(() => {
+    const cats = initialQuery.get('cats');
+    return cats ? cats.split(',').filter(Boolean) : [];
+    });
+  const [othersKeywordInput, setOthersKeywordInput] = useState(() => initialQuery.get('q') || '');
+  const [othersKeyword, setOthersKeyword] = useState(() => initialQuery.get('q') || '');
+
+  // キーワード入力は 300ms デバウンス
+  useEffect(() => {
+    const id = setTimeout(() => setOthersKeyword(othersKeywordInput), 300);
+    return () => clearTimeout(id);
+  }, [othersKeywordInput]);
+
+  // フィルタ状態を URL クエリに保持
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (othersKeyword) params.set('q', othersKeyword); else params.delete('q');
+    if (othersCats.length) params.set('cats', othersCats.join(',')); else params.delete('cats');
+    const qs = params.toString();
+    const url = `${window.location.pathname}${qs ? '?' + qs : ''}`;
+    window.history.replaceState(null, '', url);
+  }, [othersKeyword, othersCats]);
 
   // mobile detection & modal state
   const [isMobile, setIsMobile] = useState(false);
@@ -426,8 +447,11 @@ export default function App() {
       /** フィルタ（取り込みカテゴリ・キーワード）→ メモ単位で上位20件 */
       const othersTop = useMemo(() => {
         const filtered = othersBase.filter(t => {
-          const catOk = othersSrcCat === 'すべて' ? true : (t.category || '(空)') === othersSrcCat;
-          const kwOk  = othersKeyword ? ((t.memo || '').includes(othersKeyword)) : true;
+          const cat = (t.category || '(空)');
+          const catOk = othersCats.length === 0 ? true : othersCats.includes(cat);
+          const kwOk = othersKeyword
+            ? ((t.memo || '').includes(othersKeyword) || (t.store || '').includes(othersKeyword))
+            : true;
           return catOk && kwOk;
         });
         const byMemo = groupBy(filtered, t => (t.memo || '').trim() || '(メモなし)');
@@ -436,12 +460,12 @@ export default function App() {
           total: sumBy(v.filter(x => x.assignedKind === 'expense'), x => x.amount)
         }));
         return rows.filter(r => r.total > 0).sort((a, b) => b.total - a.total).slice(0, 20);
-      }, [othersBase, othersSrcCat, othersKeyword]);
-    
+      }, [othersBase, othersCats, othersKeyword]);
+
       /** 取り込みカテゴリの候補（othersBase を元に生成） */
-      const othersSrcCatOptions = useMemo(() => {
+      const othersCatOptions = useMemo(() => {
         const set = new Set(othersBase.map(t => (t.category?.trim() || '(空)')));
-        return ['すべて', ...Array.from(set).sort()];
+        return Array.from(set).sort();
       }, [othersBase]);
     
       /** ====== ルール JSON 入出力 ====== */
@@ -654,7 +678,8 @@ export default function App() {
                     value={othersMode}
                     onChange={e => {
                       setOthersMode(e.target.value);
-                      setOthersSrcCat('すべて');
+                      setOthersCats([]);
+                      setOthersKeywordInput('');
                       setOthersKeyword('');
                     }}
                     style={{ width: '100%' }}
@@ -666,11 +691,13 @@ export default function App() {
                 <label>
                   取り込みカテゴリ：
                   <select
-                    value={othersSrcCat}
-                    onChange={e => setOthersSrcCat(e.target.value)}
+                    multiple
+                    value={othersCats}
+                    onChange={e => setOthersCats(Array.from(e.target.selectedOptions, o => o.value))}
                     style={{ width: '100%' }}
+                    size={Math.min(Math.max(othersCatOptions.length, 1), 8)}
                   >
-                    {othersSrcCatOptions.map(c => (
+                    {othersCatOptions.map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
@@ -678,13 +705,13 @@ export default function App() {
                 <label>
                   キーワード：
                   <input
-                    value={othersKeyword}
-                    onChange={e => setOthersKeyword(e.target.value)}
+                    value={othersKeywordInput}
+                    onChange={e => setOthersKeywordInput(e.target.value)}
                     placeholder="メモに含む文字列"
                     style={{ width: '100%' }}
                   />
                 </label>
-                <button onClick={() => { setOthersKeyword(''); setOthersSrcCat('すべて'); }}>
+                <button onClick={() => { setOthersKeywordInput(''); setOthersKeyword(''); setOthersCats([]); }}>
                   リセット
                 </button>
               </div>
@@ -706,7 +733,8 @@ export default function App() {
               value={othersMode}
               onChange={e => {
                 setOthersMode(e.target.value);
-                setOthersSrcCat('すべて');
+                setOthersCats([]);
+                setOthersKeywordInput('');
                 setOthersKeyword('');
               }}
               style={{ minWidth: 220, padding: '4px 6px' }}
@@ -717,24 +745,26 @@ export default function App() {
 
             <span>取り込みカテゴリ：</span>
             <select
-              value={othersSrcCat}
-              onChange={e => setOthersSrcCat(e.target.value)}
+              multiple
+              value={othersCats}
+              onChange={e => setOthersCats(Array.from(e.target.selectedOptions, o => o.value))}
               style={{ minWidth: 160, padding: '4px 6px' }}
+              size={Math.min(Math.max(othersCatOptions.length, 1), 8)}
             >
-              {othersSrcCatOptions.map(c => (
+              {othersCatOptions.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
 
             <span>キーワード：</span>
             <input
-              value={othersKeyword}
-              onChange={e => setOthersKeyword(e.target.value)}
+              value={othersKeywordInput}
+              onChange={e => setOthersKeywordInput(e.target.value)}
               placeholder="メモに含む文字列"
               style={{ minWidth: 220, padding: '4px 6px' }}
             />
 
-            <button onClick={() => { setOthersKeyword(''); setOthersSrcCat('すべて'); }}>
+            <button onClick={() => { setOthersKeywordInput(''); setOthersKeyword(''); setOthersCats([]); }}>
               リセット
             </button>
           </div>
