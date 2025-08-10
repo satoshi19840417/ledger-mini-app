@@ -93,7 +93,7 @@
 
 .small {
   font-size: 12px;
-  color: #6b7280;
+  color: #374151;
 }
 
 .rules-table-container {
@@ -135,7 +135,7 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: #c00;
+  color: #b91c1c;
   cursor: pointer;
 }
 
@@ -152,6 +152,16 @@
   html,
   body {
     font-size: 16px;
+    line-height: 1.6;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
   }
 
   .container {
