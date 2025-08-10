@@ -1,4 +1,18 @@
-# Local env files
-.env.local
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+.vite/
+build/
+
+# env files
+.env
 .env.*
+.env.local
 !.env.example
+
+# editor/OS
+.vscode/
+.DS_Store
+Thumbs.db
