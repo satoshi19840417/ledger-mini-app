@@ -136,6 +136,16 @@ const CATEGORY_COLORS = {
   'その他(少額)': '#9ca3af'
 };
 
+/** 棒グラフの色リスト（ローテーション） */
+const BAR_COLORS = [
+  '#60a5fa',
+  '#34d399',
+  '#fbbf24',
+  '#f87171',
+  '#a78bfa',
+  '#fb923c',
+];
+
 /** ルール適用（先勝ち） */
 function applyRules(items, rules) {
   return items.map(t => {
@@ -505,7 +515,11 @@ export default function App() {
                 label={{ value: '万円', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip formatter={(v) => [`${(v / 10000).toFixed(1)} 万円`, '合計']} />
-              <Bar dataKey="total" />
+              <Bar dataKey="total">
+                {monthly.map((_, idx) => (
+                  <Cell key={`cell-${idx}`} fill={BAR_COLORS[idx % BAR_COLORS.length]} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
 
