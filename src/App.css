@@ -78,6 +78,10 @@
   border-radius: 4px;
 }
 
+.period-selector { display: flex; gap: 8px; margin-bottom: 8px; }
+.period-selector button { flex: 1; }
+.period-selector button.active { font-weight: 600; text-decoration: underline; }
+
 @media (max-width: 768px) {
   html,
   body {
@@ -106,5 +110,13 @@
 
   button {
     min-width: 44px;
+  }
+
+  .period-selector {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #fff;
+    padding: 8px 0;
   }
 }
