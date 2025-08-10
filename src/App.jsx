@@ -1,5 +1,5 @@
 // === App.jsx (Part 1/3): Imports, utilities, constants, state ===
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Papa from 'papaparse';
 import { supabase } from './supabaseClient';
 import { useSession } from './useSession';
@@ -276,6 +276,8 @@ export default function App() {
   // mobile detection & modal state
   const [isMobile, setIsMobile] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -476,47 +478,66 @@ export default function App() {
         /** ====== 未ログイン画面 ====== */
   if (!session) {
     return (
-      <div className="container">
-        <h2>ログイン</h2>
-        <form onSubmit={login}>
-          <input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <button type="submit" style={{ marginLeft: 8 }}>ログインリンク送信</button>
-        </form>
-      </div>
+      <>
+        <header className="app-bar">
+          <span className="app-bar-title">家計簿カテゴリ管理ミニアプリ</span>
+        </header>
+        <div className="container app-content">
+          <h2>ログイン</h2>
+          <form onSubmit={login}>
+            <input
+              type="email"
+              placeholder="メールアドレス"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button type="submit" style={{ marginLeft: 8 }}>ログインリンク送信</button>
+          </form>
+        </div>
+      </>
     );
   }
 
   /** ====== ログイン後 UI ====== */
   return (
-    <div className="container">
-      <h1>家計簿カテゴリ管理ミニアプリ</h1>
-      <div style={{ marginBottom: 8 }}>
-        <strong>{session.user.email}</strong>
-        <button
-          onClick={async () => { await supabase.auth.signOut(); }}
-          style={{ marginLeft: 8 }}
-        >
-          ログアウト
-        </button>
-      </div>
-
-      {/* 1. 取込 */}
-      <AccordionSection title="1. 取込CSVをアップロード（複数対応）">
-        <p className="small">
-          CSVの先頭に「月別ご利用明細…」のタイトルがあっても自動スキップします（SJIS/UTF-8対応）。
-        </p>
-        <input type="file" accept=".csv" onChange={onCsv} />
-        <div className="small" style={{ marginTop: 6 }}>
-          読み込み後: 件数 {items.length}（{loading ? '更新中…' : '最新'}）
+    <>
+      <header className="app-bar">
+        <span className="app-bar-title">家計簿カテゴリ管理ミニアプリ</span>
+        <div className="app-bar-actions">
+          <button className="menu-btn" onClick={() => setMenuOpen(v => !v)}>⋮</button>
+          {menuOpen && (
+            <div className="overflow-menu">
+              <button onClick={() => { fileInputRef.current?.click(); setMenuOpen(false); }}>Upload CSV</button>
+              <button onClick={() => { fetchLatest(); setMenuOpen(false); }}>Recalculate</button>
+              <button onClick={async () => { setMenuOpen(false); await supabase.auth.signOut(); }}>Logout</button>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={onCsv}
+            style={{ display: 'none' }}
+          />
         </div>
-      </AccordionSection>
+      </header>
+      <div className="container app-content">
+        <div style={{ marginBottom: 8 }}>
+          <strong>{session.user.email}</strong>
+        </div>
 
-      {/* 2. ルール */}
+        {/* 1. 取込 */}
+        <AccordionSection title="1. 取込CSVをアップロード（複数対応）">
+          <p className="small">
+            CSVの先頭に「月別ご利用明細…」のタイトルがあっても自動スキップします（SJIS/UTF-8対応）。
+          </p>
+          <input type="file" accept=".csv" onChange={onCsv} />
+          <div className="small" style={{ marginTop: 6 }}>
+            読み込み後: 件数 {items.length}（{loading ? '更新中…' : '最新'}）
+          </div>
+        </AccordionSection>
+
+        {/* 2. ルール */}
       <AccordionSection
         title="2. 分類ルール（上から順に評価）"
         defaultOpen={rules.length <= 10}
@@ -752,6 +773,7 @@ export default function App() {
         </table>
       </AccordionSection>
     </div>
+  </>
   );
 } // <= App 閉じ
 
