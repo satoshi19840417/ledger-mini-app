@@ -8,6 +8,7 @@ import {
   PieChart, Pie, Legend, Cell
 } from 'recharts';
 import './App.css';
+import AccordionSection from './AccordionSection';
 
 /** ========= 基本ユーティリティ ========= */
 
@@ -450,8 +451,7 @@ export default function App() {
       </div>
 
       {/* 1. 取込 */}
-      <section className="section">
-        <h3>1. 取込CSVをアップロード（複数対応）</h3>
+      <AccordionSection title="1. 取込CSVをアップロード（複数対応）">
         <p className="small">
           CSVの先頭に「月別ご利用明細…」のタイトルがあっても自動スキップします（SJIS/UTF-8対応）。
         </p>
@@ -459,12 +459,14 @@ export default function App() {
         <div className="small" style={{ marginTop: 6 }}>
           読み込み後: 件数 {items.length}（{loading ? '更新中…' : '最新'}）
         </div>
-      </section>
+      </AccordionSection>
 
       {/* 2. ルール */}
-      <section className="section">
-        <h3>2. 分類ルール（上から順に評価）</h3>
-
+      <AccordionSection
+        title="2. 分類ルール（上から順に評価）"
+        defaultOpen={rules.length <= 10}
+        key={`rules-${rules.length > 10 ? 'many' : 'few'}`}
+      >
         <div className="rules-table-container">
           <div className="rules-grid">
             <div className="header sticky-col">パターン（文字列 or 正規表現）</div>
@@ -496,12 +498,10 @@ export default function App() {
           </label>
           <button onClick={fetchLatest}>再分類・再計算</button>
         </div>
-      </section>
+      </AccordionSection>
 
       {/* 3. 可視化 */}
-      <section className="section">
-        <h3>3. 可視化</h3>
-
+      <AccordionSection title="3. 可視化">
         <div className="small" style={{ marginBottom: 8 }}>
           表示期間：
           <select
@@ -554,12 +554,14 @@ export default function App() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </AccordionSection>
 
       {/* 4. その他削減 */}
-      <section className="section">
-        <h3>4.「その他」を減らす（上位20件）</h3>
-
+      <AccordionSection
+        title="4.「その他」を減らす（上位20件）"
+        defaultOpen={othersTop.length > 0}
+        key={`others-${othersTop.length > 0 ? 'has' : 'none'}`}
+      >
         {/* フィルタ行：表示対象（未分類/少額）・取り込みカテゴリ・キーワード */}
         <div
           className="small"
@@ -631,7 +633,7 @@ export default function App() {
                   key={row.name}
                   row={row}
                   onAdd={(cat, mode) => addRule({
-                    pattern: mode === 'regex' ? row.name : row.name,
+                    pattern: row.name,
                     mode, target: 'memo', category: cat, kind: 'expense'
                   })}
                 />
@@ -639,7 +641,7 @@ export default function App() {
             )}
           </tbody>
         </table>
-      </section>
+      </AccordionSection>
     </div>
   );
 } // <= App 閉じ
