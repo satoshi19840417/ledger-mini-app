@@ -7,6 +7,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
   PieChart, Pie, Legend, Cell
 } from 'recharts';
+import './App.css';
 
 /** ========= 基本ユーティリティ ========= */
 
@@ -419,8 +420,7 @@ export default function App() {
         /** ====== 未ログイン画面 ====== */
   if (!session) {
     return (
-      <div className="container" style={{ padding: 24 }}>
-        <style>{styles}</style>
+      <div className="container">
         <h2>ログイン</h2>
         <form onSubmit={login}>
           <input
@@ -438,8 +438,6 @@ export default function App() {
   /** ====== ログイン後 UI ====== */
   return (
     <div className="container">
-      <style>{styles}</style>
-
       <h1>家計簿カテゴリ管理ミニアプリ</h1>
       <div style={{ marginBottom: 8 }}>
         <strong>{session.user.email}</strong>
@@ -755,14 +753,5 @@ function OthersRow({ row, onAdd }) {
     </tr>
   );
 }
-
-/** ====== 最小CSS ====== */
-const styles = `
-.container{max-width:1100px;margin:0 auto;padding:24px}
-.section{background:#fff;border:1px solid #eaecef;border-radius:12px;padding:16px;margin-top:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.small{font-size:12px;color:#6b7280}
-`;
 
     
