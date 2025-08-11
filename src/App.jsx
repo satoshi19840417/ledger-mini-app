@@ -1,4 +1,5 @@
 import { useEffect, useState, lazy, Suspense, useRef } from 'react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import './App.css';
 import { useStore } from './state/StoreContext.jsx';
 import BarByMonth from './BarByMonth.jsx';
@@ -103,6 +104,12 @@ export default function App() {
   const [hideOthers, setHideOthers] = useState(init.hideOthers);
   const burgerRef = useRef(null);
   const panelRef = useRef(null);
+  const [needRefresh, setNeedRefresh] = useState(false);
+  const { updateServiceWorker } = useRegisterSW({
+    onNeedRefresh() {
+      setNeedRefresh(true);
+    },
+  });
 
   const loadDemo = async () => {
     try {
@@ -292,6 +299,16 @@ export default function App() {
         </Suspense>
       </main>
 
+      {needRefresh && (
+        <div className='pwa-refresh'>
+          新しいバージョンがあります。
+          <button onClick={() => updateServiceWorker(true)}>更新</button>
+        </div>
+      )}
+      <footer className='footer'>
+        MODE: {import.meta.env.MODE} / lastModified: {document.lastModified}
+      </footer>
+
       {/* 最小限のスタイル（既存CSSに合わせて調整可） */}
       <style>{css}</style>
     </div>
@@ -376,6 +393,12 @@ const css = `
 .nav-item{display:block;width:100%;text-align:left;padding:.6rem .7rem;margin:.15rem 0;border:1px solid transparent;border-radius:.6rem}
 .nav-item:hover{background:#fafafa}
 .nav-item.active{background:#f3f6ff;border-color:#dfe8ff}
+.footer{margin:2rem 0;text-align:center;color:var(--muted);font-size:.8rem}
+.error-boundary{padding:1rem;border:1px solid #fecaca;background:#fee2e2;color:#b91c1c;border-radius:.5rem;margin:1rem}
+.error-boundary pre{white-space:pre-wrap;overflow:auto}
+.error-boundary button{margin-top:.5rem;padding:.4rem .8rem;border:1px solid var(--line);border-radius:.5rem;background:#fafafa;cursor:pointer}
+.pwa-refresh{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;align-items:center;padding:.5rem 1rem;background:#1e3a8a;color:#fff;border-radius:.5rem;z-index:50}
+.pwa-refresh button{background:#fff;color:#1e3a8a;border:none;padding:.3rem .6rem;border-radius:.3rem;cursor:pointer}
 @media(min-width:1024px){
   .drawer{display:block;background:transparent;position:sticky;inset:auto}
   .drawer-panel{position:fixed;left:0;top:0;bottom:0}
