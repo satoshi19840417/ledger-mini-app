@@ -1,11 +1,21 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
+/** @typedef {import('../types').Transaction} Transaction */
+/** @typedef {import('../types').Rule} Rule */
+/** @typedef {import('../types').StoreState} StoreState */
+/** @typedef {import('../types').StoreAction} StoreAction */
 
+/** @type {StoreState} */
 const initialState = {
   transactions: [],
   rules: [],
   lastImportAt: null,
 };
 
+/**
+ * @param {Transaction[]} transactions
+ * @param {Rule[]} rules
+ * @returns {Transaction[]}
+ */
 function applyRulesToTransactions(transactions, rules) {
   return transactions.map(tx => {
     const matched = rules.find(rule => {
@@ -25,6 +35,11 @@ function applyRulesToTransactions(transactions, rules) {
   });
 }
 
+/**
+ * @param {StoreState} state
+ * @param {StoreAction} action
+ * @returns {StoreState}
+ */
 function reducer(state, action) {
   switch (action.type) {
     case 'loadFromStorage': {
@@ -87,8 +102,17 @@ function reducer(state, action) {
   }
 }
 
+/**
+ * @type {import('react').Context<{
+ *   state: StoreState;
+ *   dispatch: import('react').Dispatch<StoreAction>;
+ * } | undefined>}
+ */
 const StoreContext = createContext();
 
+/**
+ * @param {{children: import('react').ReactNode}} props
+ */
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -103,6 +127,9 @@ export function StoreProvider({ children }) {
   );
 }
 
+/**
+ * @returns {{state: StoreState, dispatch: import('react').Dispatch<StoreAction>}}
+ */
 export function useStore() {
   const ctx = useContext(StoreContext);
   if (!ctx) throw new Error('useStore must be used within StoreProvider');
