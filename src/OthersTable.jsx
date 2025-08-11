@@ -60,6 +60,16 @@ function OthersRow({ row, onAdd, isMobile }) {
   );
 }
 
+/**
+ * @param {{
+ *   rows: { name: string; total: number }[];
+ *   addRule: (rule: import('./types').Rule) => void;
+ *   isMobile: boolean;
+ * }} props
+ * `addRule` は新しいルールを上位コンポーネントで保存するためのコールバック。
+ * 利用側では `dispatch({ type: 'setRules', payload: [...rules, newRule] })`
+ * および `dispatch({ type: 'applyRules' })` を実行する想定。
+ */
 export default function OthersTable({ rows, addRule, isMobile }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
