@@ -1,10 +1,11 @@
-import { BarChart } from '../App.jsx';
+import BarByMonth from '../BarByMonth.jsx';
 
-export default function Monthly({ period, yenUnit, lockColors, hideOthers }) {
+export default function Monthly({ transactions, period, yenUnit, lockColors, hideOthers }) {
   return (
     <section>
       <div className='card'>
-        <BarChart
+        <BarByMonth
+          transactions={transactions}
           period={period}
           yenUnit={yenUnit}
           lockColors={lockColors}
