@@ -6,7 +6,9 @@ import Papa from 'papaparse';
 const HEADER_ALIASES = {
   date: ['date', '日付', '日時', '取引日'],
   amount: ['amount', '金額', '支出金額', '入金金額', '出金額'],
-  memo: ['memo', 'メモ', '摘要', '備考', '内容', '詳細'],
+  description: ['description', '説明', '内容'],
+  detail: ['detail', '内訳', '相手先', '支店', '店名'],
+  memo: ['memo', 'メモ', '摘要', '備考', 'コメント'],
   category: ['category', 'カテゴリ', '費目', '科目', '分類', '項目'],
   kind: ['kind', '収支', 'タイプ', '種別', '入出金', '取引種別'],
 };
@@ -60,6 +62,8 @@ function rowToTransaction(row) {
     date: new Date(row.date).toISOString().slice(0, 10),
     amount,
   };
+  if (row.description) tx.description = row.description;
+  if (row.detail) tx.detail = row.detail;
   if (row.memo) tx.memo = row.memo;
   if (row.category) tx.category = row.category;
   return tx;
@@ -68,25 +72,31 @@ function rowToTransaction(row) {
 /**
  * Parse multiple CSV files and convert to Transaction objects.
  * @param {FileList|File[]} files
- * @returns {Promise<Transaction[]>}
+ * @returns {Promise<{ transactions: Transaction[]; headerMap: Record<string, string> }>}
  */
 export async function parseCsvFiles(files) {
   const list = Array.from(files);
   /** @type {Transaction[]} */
   const transactions = [];
+  /** @type {Record<string, string>} */
+  const headerMap = {};
   for (const file of list) {
     const text = await readWithFallback(file);
     const parsed = Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: normalizeHeader,
+      transformHeader(header) {
+        const canon = normalizeHeader(header);
+        if (!(canon in headerMap)) headerMap[canon] = header.trim();
+        return canon;
+      },
     });
     for (const row of parsed.data) {
       const tx = rowToTransaction(row);
       if (tx) transactions.push(tx);
     }
   }
-  return transactions;
+  return { transactions, headerMap };
 }
 
 export { normalizeHeader, rowToTransaction };
