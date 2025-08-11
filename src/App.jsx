@@ -541,23 +541,6 @@ export default function App() {
         <span className="app-bar-title">家計簿カテゴリ管理ミニアプリ</span>
         <div className="app-bar-actions">
           <button className="menu-btn" onClick={() => setMenuOpen(v => !v)}>⋮</button>
-          <button
-            onClick={fetchLatest}
-            disabled={loading}
-            title="最新データを取得して再分類します"
-            style={{
-              marginLeft: 8,
-              padding: '6px 10px',
-              border: '1px solid #e5e7eb',
-              borderRadius: 8,
-              background: '#fff',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,.06)'
-            }}
-            aria-label="再計算"
-          >
-            {loading ? '再計算中…' : '再計算'}
-          </button>
           {menuOpen && (
             <div className="overflow-menu">
               <button onClick={() => { fileInputRef.current?.click(); setMenuOpen(false); }}>Upload CSV</button>
