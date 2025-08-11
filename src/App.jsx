@@ -119,16 +119,34 @@ function NavItem({ active, onClick, children }) {
 function Dashboard({ period, yenUnit, lockColors, hideOthers, onToggleUnit, onToggleColors, onToggleOthers }) {
   return (
     <section>
-      <h2>ダッシュボード</h2>
       <div className='quick'>
-        <label><input type='checkbox' checked={yenUnit === 'man'} onChange={onToggleUnit} /> 万円表示</label>
-        <label><input type='checkbox' checked={lockColors} onChange={onToggleColors} /> カテゴリ色固定</label>
-        <label><input type='checkbox' checked={hideOthers} onChange={onToggleOthers} /> 「その他」を除外</label>
-        <span className='pill'>期間: {period}</span>
+        <label>
+          <input type='checkbox' checked={yenUnit === 'man'} onChange={onToggleUnit} /> 円→万円
+        </label>
+        <label>
+          <input type='checkbox' checked={lockColors} onChange={onToggleColors} /> カテゴリ色固定
+        </label>
+        <label>
+          <input type='checkbox' checked={hideOthers} onChange={onToggleOthers} /> 「その他」を除外
+        </label>
       </div>
 
-      <div className='card'>（棒グラフをここに：既存のコンポーネントを貼付）</div>
-      <div className='card'>（円グラフをここに：既存のコンポーネントを貼付）</div>
+      <div className='card'>
+        <BarChart
+          period={period}
+          yenUnit={yenUnit}
+          lockColors={lockColors}
+          hideOthers={hideOthers}
+        />
+      </div>
+      <div className='card'>
+        <PieChart
+          period={period}
+          yenUnit={yenUnit}
+          lockColors={lockColors}
+          hideOthers={hideOthers}
+        />
+      </div>
     </section>
   );
 }
@@ -138,6 +156,38 @@ function ImportCsv(){ return <section><h2>CSV取込</h2><div className='card'>�
 function Rules(){ return <section><h2>再分類ルール</h2><div className='card'>（既存のルール表）</div></section>; }
 function Transactions(){ return <section><h2>取引一覧</h2><div className='card'>（検索・絞り込み）</div></section>; }
 function Prefs(){ return <section><h2>設定</h2><div className='card'>（表示設定ほか）</div></section>; }
+
+function BarChart() {
+  return (
+    <div
+      style={{
+        height: '200px',
+        background: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <span>BarChart</span>
+    </div>
+  );
+}
+
+function PieChart() {
+  return (
+    <div
+      style={{
+        height: '200px',
+        background: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <span>PieChart</span>
+    </div>
+  );
+}
 
 const css = `
 :root { --bg:#fff; --fg:#222; --muted:#666; --line:#eee; }
@@ -151,7 +201,6 @@ const css = `
 .card{border:1px solid var(--line);border-radius:.75rem;padding:1rem;background:#fff}
 .quick{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin-bottom:.5rem}
 .quick label{display:flex;gap:.4rem;align-items:center;font-size:.92rem;color:var(--muted)}
-.pill{padding:.2rem .6rem;border:1px solid var(--line);border-radius:999px;font-size:.8rem;color:var(--muted)}
 .drawer{position:fixed;inset:0;display:none;background:rgba(0,0,0,.2)}
 .drawer.open{display:block}
 .drawer-panel{position:absolute;inset:0 auto 0 0;width:min(82vw,320px);background:#fff;border-right:1px solid var(--line);padding:1rem;overflow:auto}
