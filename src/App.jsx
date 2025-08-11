@@ -1,5 +1,39 @@
-import { useEffect, useState, lazy, Suspense, useRef } from 'react';
+import { useEffect, useState, lazy, Suspense, useRef, useMemo } from 'react';
 import './App.css';
+import {
+  ResponsiveContainer,
+  BarChart as ReBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart as RePieChart,
+  Pie,
+  Legend,
+  Cell,
+} from 'recharts';
+
+const BAR_COLORS = [
+  '#60a5fa',
+  '#34d399',
+  '#fbbf24',
+  '#f87171',
+  '#a78bfa',
+  '#fb923c',
+];
+
+const SAMPLE_DATA = Array.from({ length: 12 }, (_, i) => {
+  const month = `2024-${String(i + 1).padStart(2, '0')}`;
+  return {
+    month,
+    categories: {
+      '食費': 20000 + i * 1000,
+      '住居・光熱': 15000 + (i % 4) * 500,
+      '日用品・消耗品': 5000 + (i % 3) * 500,
+      'その他': 3000 + (i % 5) * 400,
+    },
+  };
+});
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
 const Yearly = lazy(() => import('./pages/Yearly.jsx'));
@@ -302,35 +336,165 @@ function Dashboard({ period, yenUnit, lockColors, hideOthers, onToggleUnit, onTo
   );
 }
 
-function BarChart() {
+function BarChart({ period, yenUnit, lockColors, hideOthers }) {
+  const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: SAMPLE_DATA.length };
+  const limit = limitMap[period] || SAMPLE_DATA.length;
+  const raw = SAMPLE_DATA.slice(-limit);
+  const data = raw.map(d => {
+    const categories = { ...d.categories };
+    if (hideOthers) delete categories['その他'];
+    const total = Object.values(categories).reduce((s, v) => s + v, 0);
+    return { month: d.month, total };
+  });
+
+  const colorMap = useRef({});
+  const dataWithColors = useMemo(() => {
+    if (!lockColors) colorMap.current = {};
+    data.forEach(d => {
+      if (!colorMap.current[d.month]) {
+        const used = Object.keys(colorMap.current).length;
+        colorMap.current[d.month] = BAR_COLORS[used % BAR_COLORS.length];
+      }
+    });
+    return data.map(d => ({ ...d, fill: colorMap.current[d.month] }));
+  }, [data, lockColors]);
+
+  const tickFormatter = v =>
+    yenUnit === 'man' ? (v / 10000).toFixed(1) : v;
+  const tooltipFormatter = v =>
+    yenUnit === 'man'
+      ? [`${(v / 10000).toFixed(1)} 万円`, '合計']
+      : [`${v} 円`, '合計'];
+
   return (
-    <div
-      style={{
-        height: '200px',
-        background: '#f5f5f5',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <span>BarChart</span>
-    </div>
+    <ResponsiveContainer width='100%' height={200}>
+      <ReBarChart data={dataWithColors} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
+        <XAxis
+          dataKey='month'
+          interval={0}
+          angle={-45}
+          textAnchor='end'
+          height={60}
+          tickFormatter={v => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
+        />
+        <YAxis
+          tickFormatter={tickFormatter}
+          label={{ value: yenUnit === 'man' ? '万円' : '円', angle: -90, position: 'insideLeft' }}
+        />
+        <Tooltip formatter={tooltipFormatter} labelFormatter={label => label} />
+        <Legend
+          content={<ScrollableLegend />}
+          payload={dataWithColors.map(d => ({
+            id: d.month,
+            value: d.month,
+            type: 'square',
+            color: d.fill,
+          }))}
+        />
+        <Bar dataKey='total' name='合計'>
+          {dataWithColors.map((entry, idx) => (
+            <Cell key={`cell-${idx}`} fill={entry.fill} />
+          ))}
+        </Bar>
+      </ReBarChart>
+    </ResponsiveContainer>
   );
 }
 
-function PieChart() {
+function PieChart({ period, yenUnit, lockColors, hideOthers }) {
+  const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: SAMPLE_DATA.length };
+  const limit = limitMap[period] || SAMPLE_DATA.length;
+  const raw = SAMPLE_DATA.slice(-limit);
+  const totals = {};
+  raw.forEach(d => {
+    Object.entries(d.categories).forEach(([k, v]) => {
+      if (hideOthers && k === 'その他') return;
+      totals[k] = (totals[k] || 0) + v;
+    });
+  });
+  const data = Object.keys(totals).map(name => ({ name, value: totals[name] }));
+
+  const colorMap = useRef({});
+  const dataWithColors = useMemo(() => {
+    if (!lockColors) colorMap.current = {};
+    data.forEach(d => {
+      if (!colorMap.current[d.name]) {
+        const used = Object.keys(colorMap.current).length;
+        colorMap.current[d.name] = BAR_COLORS[used % BAR_COLORS.length];
+      }
+    });
+    return data.map(d => ({ ...d, fill: colorMap.current[d.name] }));
+  }, [data, lockColors]);
+
+  const tooltipFormatter = v =>
+    yenUnit === 'man'
+      ? `${(v / 10000).toFixed(1)} 万円`
+      : `${v} 円`;
+
   return (
-    <div
+    <ResponsiveContainer width='100%' height={200}>
+      <RePieChart>
+        <Pie data={dataWithColors} dataKey='value' nameKey='name' label outerRadius='80%'>
+          {dataWithColors.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
+          ))}
+        </Pie>
+        <Legend
+          layout='vertical'
+          align='right'
+          verticalAlign='middle'
+          wrapperStyle={{ maxHeight: 300, overflowY: 'auto' }}
+          payload={dataWithColors.map(item => ({
+            id: item.name,
+            value: item.name,
+            type: 'square',
+            color: item.fill,
+          }))}
+        />
+        <Tooltip formatter={tooltipFormatter} />
+      </RePieChart>
+    </ResponsiveContainer>
+  );
+}
+
+function ScrollableLegend({ payload }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  return (
+    <ul
       style={{
-        height: '200px',
-        background: '#f5f5f5',
+        listStyle: 'none',
+        margin: 0,
+        padding: 0,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        flexDirection: isMobile ? 'column' : 'row',
+        flexWrap: isMobile ? 'nowrap' : 'wrap',
+        maxHeight: isMobile ? 72 : undefined,
+        overflowY: isMobile ? 'auto' : undefined,
       }}
     >
-      <span>PieChart</span>
-    </div>
+      {payload?.map(entry => {
+        const label = entry.value || '';
+        const truncated = label.length > 8 ? `${label.slice(0, 8)}…` : label;
+        return (
+          <li
+            key={label}
+            title={label}
+            style={{ marginRight: 12, display: 'flex', alignItems: 'center' }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: 10,
+                height: 10,
+                backgroundColor: entry.color,
+                marginRight: 4,
+              }}
+            />
+            <span>{truncated}</span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
