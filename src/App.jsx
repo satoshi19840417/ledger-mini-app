@@ -431,11 +431,26 @@ export default function App() {
         const text = rules.map(r => [r.pattern, r.target, r.kind, r.category].join('\t')).join('\n');
         setRulesTextMode('export');
         setRulesText(text);
-        try {
-          await navigator.clipboard.writeText(text);
-          alert('テキスト形式のルールをクリップボードにコピーしました');
-        } catch (err) {
-          setRulesTextOpen(true);
+        const copy = window.confirm('クリップボードにコピーしますか?\nキャンセルするとファイルとして保存します');
+        if (copy) {
+          try {
+            await navigator.clipboard.writeText(text);
+            alert('テキスト形式のルールをクリップボードにコピーしました');
+          } catch (err) {
+            setRulesTextOpen(true);
+          }
+        } else {
+          try {
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rules.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+          } catch (err) {
+            setRulesTextOpen(true);
+          }
         }
       }
       async function importRules(e) {
