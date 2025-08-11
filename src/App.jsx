@@ -1,5 +1,6 @@
 import { useEffect, useState, lazy, Suspense, useRef, useMemo } from 'react';
 import './App.css';
+import { useStore } from './state/StoreContext.jsx';
 import {
   ResponsiveContainer,
   BarChart as ReBarChart,
@@ -89,6 +90,7 @@ function serializeHash({
 }
 
 export default function App() {
+  const { state, dispatch } = useStore();
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
     const stored = {
@@ -131,6 +133,10 @@ export default function App() {
   const [hideOthers, setHideOthers] = useState(init.hideOthers);
   const burgerRef = useRef(null);
   const panelRef = useRef(null);
+
+  useEffect(() => {
+    dispatch({ type: 'applyRules' });
+  }, [state.rules, state.transactions, dispatch]);
 
   useEffect(() => {
     const onHash = () => {
