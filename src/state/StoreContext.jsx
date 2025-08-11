@@ -95,12 +95,16 @@ function reducer(state, action) {
     case 'setRules': {
       const rules = action.payload || [];
       const transactions = applyRulesToTransactions(state.transactions, rules);
-      localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
+      const updatedState = { ...state, transactions, rules };
+      localStorage.setItem('lm_rules_v1', JSON.stringify(updatedState.rules));
       localStorage.setItem(
         'lm_tx_v1',
-        JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
+        JSON.stringify({
+          transactions: updatedState.transactions,
+          lastImportAt: state.lastImportAt,
+        })
       );
-      return { ...state, rules, transactions };
+      return updatedState;
     }
     case 'applyRules': {
       const transactions = applyRulesToTransactions(state.transactions, state.rules);
