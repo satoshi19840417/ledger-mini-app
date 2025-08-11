@@ -104,6 +104,23 @@ export default function App() {
   const burgerRef = useRef(null);
   const panelRef = useRef(null);
 
+  const loadDemo = async () => {
+    try {
+      const res = await fetch('/demo/sample.json');
+      const data = await res.json();
+      dispatch({ type: 'importTransactions', payload: data, append: false });
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === '1') {
+      loadDemo();
+    }
+  }, []);
+
   useEffect(() => {
     dispatch({ type: 'applyRules' });
   }, [state.rules, state.transactions, dispatch]);
@@ -227,6 +244,15 @@ export default function App() {
 
       {/* コンテンツ（ダッシュボードを最優先で表示） */}
       <main className='content'>
+        {state.transactions.length === 0 && (
+          <div className='card empty-banner'>
+            <p>取引がありません。</p>
+            <div className='actions'>
+              <a href='#import' className='btn'>CSV取込へ</a>
+              <button className='btn' onClick={loadDemo}>デモ読込</button>
+            </div>
+          </div>
+        )}
         {page === 'dashboard' && (
           <Dashboard
             transactions={state.transactions}
@@ -339,6 +365,10 @@ const css = `
 .card{border:1px solid var(--line);border-radius:.75rem;padding:1rem;background:#fff}
 .quick{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin-bottom:.5rem}
 .quick label{display:flex;gap:.4rem;align-items:center;font-size:.92rem;color:var(--muted)}
+.empty-banner{text-align:center}
+.empty-banner .actions{margin-top:.5rem;display:flex;gap:.5rem;justify-content:center}
+.empty-banner .btn{padding:.4rem .8rem;border:1px solid var(--line);border-radius:.5rem;background:#fafafa;cursor:pointer;text-decoration:none}
+.empty-banner .btn:hover{background:#f0f0f0}
 .drawer{position:fixed;inset:0;display:none;background:rgba(0,0,0,.2)}
 .drawer.open{display:block}
 .drawer-panel{position:absolute;inset:0 auto 0 0;width:min(82vw,320px);background:#fff;border-right:1px solid var(--line);padding:1rem;overflow:auto}

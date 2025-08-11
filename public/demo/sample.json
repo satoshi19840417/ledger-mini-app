@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2024-01-05",
+    "description": "スーパー",
+    "amount": -3500,
+    "category": "食費"
+  },
+  {
+    "date": "2024-01-10",
+    "description": "給料",
+    "amount": 200000,
+    "category": "収入"
+  },
+  {
+    "date": "2024-01-12",
+    "description": "電車",
+    "amount": -500,
+    "category": "交通"
+  }
+]
