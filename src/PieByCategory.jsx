@@ -17,6 +17,52 @@ const BAR_COLORS = [
   '#fb923c',
 ];
 
+function ScrollableLegend({ payload }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  return (
+    <ul
+      style={{
+        listStyle: 'none',
+        margin: 0,
+        padding: 0,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        flexWrap: isMobile ? 'nowrap' : 'wrap',
+        maxHeight: isMobile ? 72 : undefined,
+        overflowY: isMobile ? 'auto' : undefined,
+      }}
+    >
+      {payload?.map(entry => {
+        const label = entry.value || '';
+        const truncated = label.length > 8 ? `${label.slice(0, 8)}…` : label;
+        return (
+          <li
+            key={label}
+            title={`${label} ${entry.formatted ?? ''}`}
+            style={{ marginRight: 12, display: 'flex', alignItems: 'center' }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: 10,
+                height: 10,
+                backgroundColor: entry.color,
+                marginRight: 4,
+              }}
+            />
+            <span>{truncated}</span>
+            {entry.formatted && (
+              <span style={{ marginLeft: 4, color: 'var(--muted)' }}>
+                {entry.formatted}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function PieByCategory({
   transactions,
   period,
@@ -75,7 +121,10 @@ export default function PieByCategory({
     id: item.name,
     type: 'square',
     color: item.fill,
-    value: `${item.name}: ${formatValue(item.value)}`,
+    value: item.name,
+    formatted: `${((item.value / totalSum) * 100).toFixed(1)}% (${formatValue(
+      item.value
+    )})`,
   }));
 
   return (
@@ -86,13 +135,7 @@ export default function PieByCategory({
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Legend
-          layout="vertical"
-          align="right"
-          verticalAlign="middle"
-          wrapperStyle={{ maxHeight: 300, overflowY: 'auto' }}
-          payload={legendPayload}
-        />
+        <Legend content={<ScrollableLegend />} payload={legendPayload} />
         <Tooltip formatter={tooltipFormatter} />
       </RePieChart>
     </ResponsiveContainer>
