@@ -22,30 +22,102 @@ const NAV = {
   settings: [{ key: 'prefs', label: '設定' }],
 };
 
-export default function App() {
-  const [open, setOpen] = useState(false);
-  const [page, setPage] = useState('dashboard');
-  const [period, setPeriod] = useState('3m'); // 3m|6m|1y|all
-  const [yenUnit, setYenUnit] = useState('yen'); // yen|man
-  const [lockColors, setLockColors] = useState(true);
-  const [hideOthers, setHideOthers] = useState(false);
+const exists = k =>
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k);
 
-  // URLハッシュと同期
+function parseHash(hash) {
+  const [raw, q = ''] = hash.replace(/^#/, '').split('?');
+  const params = new URLSearchParams(q);
+  return {
+    page: exists(raw) ? raw : undefined,
+    period: params.get('period') || undefined,
+    yenUnit: params.get('unit') || undefined,
+    lockColors:
+      params.get('colors') !== null ? params.get('colors') === '1' : undefined,
+    hideOthers:
+      params.get('others') !== null ? params.get('others') === '1' : undefined,
+  };
+}
+
+function serializeHash({
+  page,
+  period,
+  yenUnit,
+  lockColors,
+  hideOthers,
+}) {
+  const params = new URLSearchParams();
+  params.set('period', period);
+  params.set('unit', yenUnit);
+  params.set('colors', lockColors ? '1' : '0');
+  params.set('others', hideOthers ? '1' : '0');
+  return `${page}?${params.toString()}`;
+}
+
+export default function App() {
+  const getInitial = () => {
+    const h = parseHash(window.location.hash || '');
+    const stored = {
+      page: localStorage.getItem('page'),
+      period: localStorage.getItem('period'),
+      yenUnit: localStorage.getItem('yenUnit'),
+      lockColors:
+        localStorage.getItem('lockColors') !== null
+          ? localStorage.getItem('lockColors') === '1'
+          : undefined,
+      hideOthers:
+        localStorage.getItem('hideOthers') !== null
+          ? localStorage.getItem('hideOthers') === '1'
+          : undefined,
+    };
+    return {
+      page: h.page || (exists(stored.page) ? stored.page : 'dashboard'),
+      period: h.period || stored.period || '3m',
+      yenUnit: h.yenUnit || stored.yenUnit || 'yen',
+      lockColors:
+        h.lockColors !== undefined
+          ? h.lockColors
+          : stored.lockColors !== undefined
+          ? stored.lockColors
+          : true,
+      hideOthers:
+        h.hideOthers !== undefined
+          ? h.hideOthers
+          : stored.hideOthers !== undefined
+          ? stored.hideOthers
+          : false,
+    };
+  };
+  const init = getInitial();
+  const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(init.page);
+  const [period, setPeriod] = useState(init.period); // 3m|6m|1y|all
+  const [yenUnit, setYenUnit] = useState(init.yenUnit); // yen|man
+  const [lockColors, setLockColors] = useState(init.lockColors);
+  const [hideOthers, setHideOthers] = useState(init.hideOthers);
+
   useEffect(() => {
-    const initial = window.location.hash?.slice(1);
-    if (initial && exists(initial)) setPage(initial);
     const onHash = () => {
-      const h = window.location.hash?.slice(1);
-      if (exists(h)) setPage(h);
+      const h = parseHash(window.location.hash || '');
+      setPage(h.page || 'dashboard');
+      if (h.period) setPeriod(h.period);
+      if (h.yenUnit) setYenUnit(h.yenUnit);
+      if (h.lockColors !== undefined) setLockColors(h.lockColors);
+      if (h.hideOthers !== undefined) setHideOthers(h.hideOthers);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
   useEffect(() => {
-    if (page) window.location.hash = page;
-  }, [page]);
-  const exists = k =>
-    [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k);
+    const hash = serializeHash({ page, period, yenUnit, lockColors, hideOthers });
+    if (window.location.hash.slice(1) !== hash) window.location.hash = hash;
+    localStorage.setItem('page', page);
+    localStorage.setItem('period', period);
+    localStorage.setItem('yenUnit', yenUnit);
+    localStorage.setItem('lockColors', lockColors ? '1' : '0');
+    localStorage.setItem('hideOthers', hideOthers ? '1' : '0');
+  }, [page, period, yenUnit, lockColors, hideOthers]);
 
   // ページ切替（モバイルは自動でドロワー閉）
   const go = k => {
