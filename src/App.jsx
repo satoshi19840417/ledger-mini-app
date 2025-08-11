@@ -361,10 +361,16 @@ export function BarChart({ period, yenUnit, lockColors, hideOthers }) {
 
   const tickFormatter = v =>
     yenUnit === 'man' ? (v / 10000).toFixed(1) : v;
-  const tooltipFormatter = v =>
-    yenUnit === 'man'
-      ? [`${(v / 10000).toFixed(1)} 万円`, '合計']
-      : [`${v} 円`, '合計'];
+  const formatValue = v =>
+    yenUnit === 'man' ? `${(v / 10000).toFixed(1)} 万円` : `${v} 円`;
+  const tooltipFormatter = v => [formatValue(v), '合計'];
+  const legendPayload = dataWithColors.map(d => ({
+    id: d.month,
+    value: d.month,
+    formatted: formatValue(d.total),
+    type: 'square',
+    color: d.fill,
+  }));
 
   return (
     <ResponsiveContainer width='100%' height={200}>
@@ -383,13 +389,8 @@ export function BarChart({ period, yenUnit, lockColors, hideOthers }) {
         />
         <Tooltip formatter={tooltipFormatter} labelFormatter={label => label} />
         <Legend
-          content={<ScrollableLegend />}
-          payload={dataWithColors.map(d => ({
-            id: d.month,
-            value: d.month,
-            type: 'square',
-            color: d.fill,
-          }))}
+          content={<ScrollableLegend yenUnit={yenUnit} />}
+          payload={legendPayload}
         />
         <Bar dataKey='total' name='合計'>
           {dataWithColors.map((entry, idx) => (
@@ -426,10 +427,15 @@ export function PieChart({ period, yenUnit, lockColors, hideOthers }) {
     return data.map(d => ({ ...d, fill: colorMap.current[d.name] }));
   }, [data, lockColors]);
 
-  const tooltipFormatter = v =>
-    yenUnit === 'man'
-      ? `${(v / 10000).toFixed(1)} 万円`
-      : `${v} 円`;
+  const formatValue = v =>
+    yenUnit === 'man' ? `${(v / 10000).toFixed(1)} 万円` : `${v} 円`;
+  const tooltipFormatter = (v, name) => [formatValue(v), name];
+  const legendPayload = dataWithColors.map(item => ({
+    id: item.name,
+    type: 'square',
+    color: item.fill,
+    value: `${item.name}: ${formatValue(item.value)}`,
+  }));
 
   return (
     <ResponsiveContainer width='100%' height={200}>
@@ -444,12 +450,7 @@ export function PieChart({ period, yenUnit, lockColors, hideOthers }) {
           align='right'
           verticalAlign='middle'
           wrapperStyle={{ maxHeight: 300, overflowY: 'auto' }}
-          payload={dataWithColors.map(item => ({
-            id: item.name,
-            value: item.name,
-            type: 'square',
-            color: item.fill,
-          }))}
+          payload={legendPayload}
         />
         <Tooltip formatter={tooltipFormatter} />
       </RePieChart>
@@ -457,7 +458,7 @@ export function PieChart({ period, yenUnit, lockColors, hideOthers }) {
   );
 }
 
-function ScrollableLegend({ payload }) {
+function ScrollableLegend({ payload, yenUnit }) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   return (
     <ul
@@ -478,7 +479,7 @@ function ScrollableLegend({ payload }) {
         return (
           <li
             key={label}
-            title={label}
+            title={`${label} ${entry.formatted ?? ''}`}
             style={{ marginRight: 12, display: 'flex', alignItems: 'center' }}
           >
             <span
@@ -491,6 +492,11 @@ function ScrollableLegend({ payload }) {
               }}
             />
             <span>{truncated}</span>
+            {entry.formatted && (
+              <span style={{ marginLeft: 4, color: 'var(--muted)' }}>
+                {entry.formatted}
+              </span>
+            )}
           </li>
         );
       })}
