@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, useRef } from 'react';
 import './App.css';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
@@ -95,6 +95,8 @@ export default function App() {
   const [yenUnit, setYenUnit] = useState(init.yenUnit); // yen|man
   const [lockColors, setLockColors] = useState(init.lockColors);
   const [hideOthers, setHideOthers] = useState(init.hideOthers);
+  const burgerRef = useRef(null);
+  const panelRef = useRef(null);
 
   useEffect(() => {
     const onHash = () => {
@@ -125,11 +127,56 @@ export default function App() {
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (!open) {
+      burgerRef.current?.focus();
+      return;
+    }
+    const panel = panelRef.current;
+    const focusable = panel.querySelectorAll('button');
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+      } else if (e.key === 'Tab') {
+        if (focusable.length === 0) return;
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const items = Array.from(focusable);
+        const idx = items.indexOf(document.activeElement);
+        if (idx !== -1) {
+          const delta = e.key === 'ArrowDown' ? 1 : -1;
+          const next = (idx + delta + items.length) % items.length;
+          items[next].focus();
+        }
+      }
+    };
+    panel.addEventListener('keydown', onKey);
+    return () => panel.removeEventListener('keydown', onKey);
+  }, [open]);
+
   return (
     <div className='app-shell'>
       {/* ヘッダー */}
       <header className='header'>
-        <button className='burger' aria-label='menu' onClick={() => setOpen(true)}>☰</button>
+        <button
+          ref={burgerRef}
+          className='burger'
+          aria-label='menu'
+          onClick={() => setOpen(true)}
+        >
+          ☰
+        </button>
         <div className='title'>家計簿カテゴリ管理</div>
         <div className='header-controls'>
           <select value={period} onChange={e => setPeriod(e.target.value)}>
@@ -142,8 +189,17 @@ export default function App() {
       </header>
 
       {/* ドロワー */}
-      <aside className={`drawer ${open ? 'open' : ''}`} onClick={() => setOpen(false)}>
-        <nav className='drawer-panel' onClick={e => e.stopPropagation()}>
+      <aside
+        role='dialog'
+        aria-label='メニュー'
+        className={`drawer ${open ? 'open' : ''}`}
+        onClick={() => setOpen(false)}
+      >
+        <nav
+          ref={panelRef}
+          className='drawer-panel'
+          onClick={e => e.stopPropagation()}
+        >
           <h4>メイン</h4>
           {NAV.main.map(i => (
             <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
