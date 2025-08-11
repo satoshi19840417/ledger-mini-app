@@ -479,6 +479,23 @@ export default function App() {
         <span className="app-bar-title">家計簿カテゴリ管理ミニアプリ</span>
         <div className="app-bar-actions">
           <button className="menu-btn" onClick={() => setMenuOpen(v => !v)}>⋮</button>
+          <button
+            onClick={fetchLatest}
+            disabled={loading}
+            title="最新データを取得して再分類します"
+            style={{
+              marginLeft: 8,
+              padding: '6px 10px',
+              border: '1px solid #e5e7eb',
+              borderRadius: 8,
+              background: '#fff',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,.06)'
+            }}
+            aria-label="再計算"
+          >
+            {loading ? '再計算中…' : '再計算'}
+          </button>
           {menuOpen && (
             <div className="overflow-menu">
               <button onClick={() => { fileInputRef.current?.click(); setMenuOpen(false); }}>Upload CSV</button>
@@ -565,6 +582,37 @@ export default function App() {
         defaultOpen={othersTop.length > 0}
         key={`others-${othersTop.length > 0 ? 'has' : 'none'}`}
       >
+        {/* セクション常設の再計算ボタン */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 8,
+            marginBottom: 8,
+            position: 'sticky',
+            top: 0,
+            background: '#fff',
+            zIndex: 1,
+            paddingTop: 4
+          }}
+        >
+          <button
+            onClick={fetchLatest}
+            disabled={loading}
+            title="最新データを取得して再分類します"
+            style={{
+              padding: '6px 10px',
+              border: '1px solid #e5e7eb',
+              borderRadius: 8,
+              background: '#fff',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,.06)'
+            }}
+            aria-label="再計算"
+          >
+            {loading ? '再計算中…' : '再計算'}
+          </button>
+        </div>
         {isMobile ? (
           <>
             <button onClick={() => setFilterOpen(true)}>フィルタ</button>
@@ -683,6 +731,16 @@ export default function App() {
         </Suspense>
       </AccordionSection>
     </div>
+    {isMobile && (
+      <button
+        className="recalc-fixed"
+        onClick={fetchLatest}
+        disabled={loading}
+        aria-label="再計算"
+      >
+        {loading ? '再計算中…' : '再計算'}
+      </button>
+    )}
   </>
   );
 } // <= App 閉じ
