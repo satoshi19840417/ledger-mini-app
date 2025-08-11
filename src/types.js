@@ -14,6 +14,9 @@
  * @property {string} [regex] - Regular expression string for advanced matching.
  * @property {string} [flags] - Flags for the regular expression.
  * @property {string} [keyword] - Keyword used for matching when pattern/regex is absent.
+ * @property {'contains'|'regex'} [mode] - Matching mode: substring or regular expression.
+ * @property {'description'|'detail'|'memo'} [target] - Transaction field to evaluate.
+ * @property {'expense'|'income'|'both'} [kind] - Transaction kind this rule applies to.
  * @property {string} category - Category to apply when rule matches.
  */
 

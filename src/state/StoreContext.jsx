@@ -22,11 +22,20 @@ function applyRulesToTransactions(transactions, rules) {
       try {
         const pattern = rule.pattern || rule.regex || rule.keyword;
         if (!pattern) return false;
-        const reg = rule.regex
-          ? new RegExp(rule.regex, rule.flags || 'i')
-          : new RegExp(pattern, 'i');
-        const target = tx.description || tx.detail || tx.memo || '';
-        return reg.test(target);
+        const txKind = tx.amount < 0 ? 'expense' : 'income';
+        const ruleKind = rule.kind || 'both';
+        if (ruleKind !== 'both' && ruleKind !== txKind) return false;
+        const target = rule.target
+          ? tx[rule.target] || ''
+          : tx.description || tx.detail || tx.memo || '';
+        const mode = rule.mode || (rule.regex ? 'regex' : 'contains');
+        if (mode === 'regex') {
+          const reg = rule.regex
+            ? new RegExp(rule.regex, rule.flags || 'i')
+            : new RegExp(pattern, rule.flags || 'i');
+          return reg.test(target);
+        }
+        return target.toLowerCase().includes(pattern.toLowerCase());
       } catch {
         return false;
       }
@@ -75,17 +84,23 @@ function reducer(state, action) {
       const newTx = append
         ? state.transactions.concat(action.payload || [])
         : action.payload || [];
+      const transactions = applyRulesToTransactions(newTx, state.rules);
       const lastImportAt = new Date().toISOString();
       localStorage.setItem(
         'lm_tx_v1',
-        JSON.stringify({ transactions: newTx, lastImportAt })
+        JSON.stringify({ transactions, lastImportAt })
       );
-      return { ...state, transactions: newTx, lastImportAt };
+      return { ...state, transactions, lastImportAt };
     }
     case 'setRules': {
       const rules = action.payload || [];
+      const transactions = applyRulesToTransactions(state.transactions, rules);
       localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
-      return { ...state, rules };
+      localStorage.setItem(
+        'lm_tx_v1',
+        JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
+      );
+      return { ...state, rules, transactions };
     }
     case 'applyRules': {
       const transactions = applyRulesToTransactions(state.transactions, state.rules);
