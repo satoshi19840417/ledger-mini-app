@@ -7,13 +7,15 @@ export default function ImportCsv() {
   const [append, setAppend] = useState(true);
   const [preview, setPreview] = useState([]);
   const [headerMap, setHeaderMap] = useState({});
+  const [errors, setErrors] = useState([]);
 
   async function handleChange(e) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const { transactions, headerMap: map } = await parseCsvFiles(files);
+    const { transactions, headerMap: map, errors: errs } = await parseCsvFiles(files);
     setPreview(transactions);
     setHeaderMap(map);
+    setErrors(errs);
     e.target.value = '';
   }
 
@@ -21,6 +23,7 @@ export default function ImportCsv() {
     dispatch({ type: 'importTransactions', payload: preview, append });
     setPreview([]);
     setHeaderMap({});
+    setErrors([]);
   }
 
   const KNOWN_FIELDS = ['date', 'description', 'detail', 'memo', 'amount', 'category'];
@@ -40,45 +43,58 @@ export default function ImportCsv() {
             <span className='ml-2'>既存の取引に追加する</span>
           </label>
         </div>
-        {preview.length > 0 && (
+        {(preview.length > 0 || errors.length > 0) && (
           <div className='mt-4 space-y-2'>
-            <div className='text-sm text-gray-700'>
-              {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
-                <span key={f} className='mr-4'>
-                  {f} ↔ {headerMap[f]}
-                </span>
-              ))}
-            </div>
-            <div className='overflow-x-auto'>
-              <table className='min-w-full text-sm'>
-                <thead>
-                  <tr>
-                    {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
-                      <th key={f} className='px-2 py-1 text-left'>
-                        {f}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.slice(0, 5).map((tx, i) => (
-                    <tr key={i} className='border-t'>
-                      {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
-                        <td key={f} className='px-2 py-1'>
-                          {tx[f] ?? ''}
-                        </td>
-                      ))}
-                    </tr>
+            {preview.length > 0 && (
+              <>
+                <div className='text-sm text-gray-700'>
+                  {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
+                    <span key={f} className='mr-4'>
+                      {f} ↔ {headerMap[f]}
+                    </span>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            <button
-              className='mt-2 px-3 py-1 border rounded'
-              onClick={handleImport}
-            >
-              インポート
-            </button>
+                </div>
+                <div className='overflow-x-auto'>
+                  <table className='min-w-full text-sm'>
+                    <thead>
+                      <tr>
+                        {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
+                          <th key={f} className='px-2 py-1 text-left'>
+                            {f}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.slice(0, 5).map((tx, i) => (
+                        <tr key={i} className='border-t'>
+                          {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
+                            <td key={f} className='px-2 py-1'>
+                              {tx[f] ?? ''}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+            {errors.length > 0 && (
+              <ul className='text-sm text-red-600 list-disc list-inside'>
+                {errors.map((err, i) => (
+                  <li key={i}>{err}</li>
+                ))}
+              </ul>
+            )}
+            {preview.length > 0 && (
+              <button
+                className='mt-2 px-3 py-1 border rounded'
+                onClick={handleImport}
+              >
+                インポート
+              </button>
+            )}
           </div>
         )}
       </div>

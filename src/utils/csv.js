@@ -43,12 +43,13 @@ async function readWithFallback(file) {
   return count(utf8) <= count(sjis) ? utf8 : sjis;
 }
 
-// Convert row object to Transaction
+// Convert row object to Transaction with validation error reporting
 function rowToTransaction(row) {
-  if (!row.date || !row.amount) return null;
+  if (!row.date) return { tx: null, error: 'Missing date' };
+  if (!row.amount) return { tx: null, error: 'Missing amount' };
 
   let amount = Number(String(row.amount).replace(/,/g, ''));
-  if (Number.isNaN(amount)) return null;
+  if (Number.isNaN(amount)) return { tx: null, error: `Invalid amount: ${row.amount}` };
   if (row.kind) {
     const kind = String(row.kind).toLowerCase();
     if (/(expense|支出|出金)/.test(kind)) {
@@ -66,13 +67,13 @@ function rowToTransaction(row) {
   if (row.detail) tx.detail = row.detail;
   if (row.memo) tx.memo = row.memo;
   if (row.category) tx.category = row.category;
-  return tx;
+  return { tx, error: null };
 }
 
 /**
  * Parse multiple CSV files and convert to Transaction objects.
  * @param {FileList|File[]} files
- * @returns {Promise<{ transactions: Transaction[]; headerMap: Record<string, string> }>}
+ * @returns {Promise<{ transactions: Transaction[]; headerMap: Record<string, string>; errors: string[] }>}
  */
 export async function parseCsvFiles(files) {
   const list = Array.from(files);
@@ -80,6 +81,8 @@ export async function parseCsvFiles(files) {
   const transactions = [];
   /** @type {Record<string, string>} */
   const headerMap = {};
+  /** @type {string[]} */
+  const errors = [];
   for (const file of list) {
     const text = await readWithFallback(file);
     const parsed = Papa.parse(text, {
@@ -91,12 +94,28 @@ export async function parseCsvFiles(files) {
         return canon;
       },
     });
-    for (const row of parsed.data) {
-      const tx = rowToTransaction(row);
-      if (tx) transactions.push(tx);
+
+    // Capture Papa.parse errors
+    for (const err of parsed.errors) {
+      const rowInfo = typeof err.row === 'number' ? `Row ${err.row}: ` : '';
+      errors.push(`${rowInfo}${err.message}`);
     }
+
+    // Validate mandatory columns
+    const required = ['date', 'amount'];
+    for (const field of required) {
+      if (!parsed.meta.fields || !parsed.meta.fields.includes(field)) {
+        errors.push(`Missing mandatory column: ${field}`);
+      }
+    }
+
+    parsed.data.forEach((row, i) => {
+      const { tx, error } = rowToTransaction(row);
+      if (tx) transactions.push(tx);
+      else if (error) errors.push(`Row ${i + 1}: ${error}`);
+    });
   }
-  return { transactions, headerMap };
+  return { transactions, headerMap, errors };
 }
 
 export { normalizeHeader, rowToTransaction };
