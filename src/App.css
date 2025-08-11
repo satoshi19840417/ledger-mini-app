@@ -247,3 +247,18 @@
     max-height: none;
   }
 }
+
+@media (max-width: 768px) {
+  .recalc-fixed {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 14px;
+    border-radius: 9999px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    z-index: 50;
+  }
+  .recalc-fixed[disabled] { opacity: .6; }
+}
