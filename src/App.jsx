@@ -113,6 +113,11 @@ function normalizeRow(r, userId) {
   return { ...t, hash: makeHash(t) };
 }
 
+function normalizeCategory(raw) {
+  const s = (raw ?? '').toString().trim();
+  return CATEGORIES.includes(s) ? s : 'その他';
+}
+
 /** 表示カテゴリ候補 */
 /** カテゴリ固定色（円グラフ） */
 const CATEGORY_COLORS = {
@@ -149,16 +154,17 @@ function getCategoryColor(name) {
 /** ルール適用（先勝ち） */
 function applyRules(items, rules) {
   return items.map(t => {
-    let assignedCat = t.category || '';
+    const baseCat = normalizeCategory(t.category);
+    let assignedCat = baseCat;
     let assignedKind = t.kind;
     for (const r of rules) {
-      const hay = (r.target === 'memo' ? (t.memo || '') : (t.category || ''));
+      const hay = (r.target === 'memo' ? (t.memo || '') : baseCat);
       let ok = false;
       if (r.mode === 'contains') ok = hay.includes(r.pattern);
       else { try { ok = new RegExp(r.pattern).test(hay); } catch { ok = false; } }
       if (ok) { assignedCat = r.category; assignedKind = r.kind; break; }
     }
-    return { ...t, assignedCat, assignedKind };
+    return { ...t, assignedCat: normalizeCategory(assignedCat), assignedKind };
   });
 }
 
@@ -356,7 +362,7 @@ export default function App() {
       /** ====== 可視化（円グラフ：カテゴリ構成） ====== */
       const categoryPie = useMemo(() => {
         const onlyExpense = applied.filter(t => t.assignedKind === 'expense');
-        const byCat = groupBy(onlyExpense, t => t.assignedCat || 'その他');
+        const byCat = groupBy(onlyExpense, t => normalizeCategory(t.assignedCat));
         return Array.from(byCat.entries())
           .map(([k, v]) => ({ name: k, value: sumBy(v, x => x.amount) }))
           .sort((a, b) => b.value - a.value);
