@@ -9,6 +9,7 @@ const Yearly = lazy(() => import('./pages/Yearly.jsx'));
 const ImportCsv = lazy(() => import('./pages/ImportCsv.jsx'));
 const Rules = lazy(() => import('./pages/Rules.jsx'));
 const Transactions = lazy(() => import('./pages/Transactions.jsx'));
+const Others = lazy(() => import('./pages/Others.jsx'));
 const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 
 const NAV = {
@@ -20,6 +21,7 @@ const NAV = {
   data: [
     { key: 'import', label: 'CSV取込' },
     { key: 'rules', label: '再分類ルール' },
+    { key: 'others', label: 'その他集計' },
     { key: 'tx', label: '取引一覧' },
   ],
   settings: [{ key: 'prefs', label: '設定' }],
@@ -258,6 +260,7 @@ export default function App() {
           )}
           {page === 'import' && <ImportCsv />}
           {page === 'rules' && <Rules />}
+          {page === 'others' && <Others />}
           {page === 'tx' && <Transactions />}
           {page === 'prefs' && <Prefs />}
         </Suspense>
