@@ -1,10 +1,11 @@
-import { PieChart } from '../App.jsx';
+import PieByCategory from '../PieByCategory.jsx';
 
-export default function Yearly({ period, yenUnit, lockColors, hideOthers }) {
+export default function Yearly({ transactions, period, yenUnit, lockColors, hideOthers }) {
   return (
     <section>
       <div className='card'>
-        <PieChart
+        <PieByCategory
+          transactions={transactions}
           period={period}
           yenUnit={yenUnit}
           lockColors={lockColors}
