@@ -248,6 +248,9 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [rulesText, setRulesText] = useState('');
+  const [rulesTextOpen, setRulesTextOpen] = useState(false);
+  const [rulesTextMode, setRulesTextMode] = useState('export'); // 'export' | 'import'
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -418,11 +421,22 @@ export default function App() {
         return Array.from(set).sort();
       }, [othersBase]);
     
-      /** ====== ルール JSON 入出力 ====== */
+      /** ====== ルール JSON / テキスト 入出力 ====== */
       async function exportRules() {
         const blob = new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'rules.json'; a.click(); URL.revokeObjectURL(url);
+      }
+      async function exportRulesAsText() {
+        const text = rules.map(r => [r.pattern, r.target, r.kind, r.category].join('\t')).join('\n');
+        setRulesTextMode('export');
+        setRulesText(text);
+        try {
+          await navigator.clipboard.writeText(text);
+          alert('テキスト形式のルールをクリップボードにコピーしました');
+        } catch (err) {
+          setRulesTextOpen(true);
+        }
       }
       async function importRules(e) {
         const file = e.target.files?.[0]; if (!file) return;
@@ -442,9 +456,33 @@ export default function App() {
           const { error } = await supabase.from('rules').insert(rows);
           if (error) alert(error.message); else await fetchLatest();
         } catch (err) {
-          alert('JSONの読み込みに失敗しました: ' + err.message);
+          alert('JSONの読み込みに失敗しました: ' + err.message + '（テキスト形式も利用できます）');
         }
         e.target.value = '';
+      }
+      async function importRulesFromText(text) {
+        try {
+          const rows = text
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(Boolean)
+            .map(line => {
+              const [pattern = '', target = 'memo', kind = 'expense', category = ''] = line.split('\t');
+              return {
+                user_id: session.user.id,
+                pattern: String(pattern),
+                target: (target === 'category' ? 'category' : 'memo'),
+                kind: (kind === 'income' ? 'income' : 'expense'),
+                category: String(category),
+              };
+            })
+            .filter(r => r.pattern && r.category);
+          if (!rows.length) return alert('取り込むルールがありません');
+          const { error } = await supabase.from('rules').insert(rows);
+          if (error) alert(error.message); else await fetchLatest();
+        } catch (err) {
+          alert('テキストの読み込みに失敗しました: ' + err.message + '（JSON形式も利用できます）');
+        }
       }
     
       // === Part 2 ここまで ===
@@ -542,12 +580,31 @@ export default function App() {
         )}
 
         <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={exportRules}>ルールを書き出す</button>
+          <button onClick={exportRules}>ルールを書き出す（JSON）</button>
+          <button onClick={exportRulesAsText}>ルールを書き出す（テキスト）</button>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            JSONインポート <input type="file" accept="application/json" onChange={importRules} />
+            JSONインポート（ファイル） <input type="file" accept="application/json" onChange={importRules} />
           </label>
+          <button onClick={() => { setRulesTextMode('import'); setRulesText(''); setRulesTextOpen(true); }}>テキストインポート（貼り付け）</button>
           <button onClick={fetchLatest}>再分類・再計算</button>
         </div>
+        <FullScreenModal
+          open={rulesTextOpen}
+          onClose={() => setRulesTextOpen(false)}
+          title={rulesTextMode === 'export' ? 'ルール（テキスト）' : 'ルールのテキストインポート'}
+          primaryAction={
+            rulesTextMode === 'import'
+              ? <button onClick={async () => { await importRulesFromText(rulesText); setRulesTextOpen(false); }}>インポート</button>
+              : <button onClick={() => setRulesTextOpen(false)}>閉じる</button>
+          }
+          secondaryAction={rulesTextMode === 'import' ? <button onClick={() => setRulesTextOpen(false)}>キャンセル</button> : null}
+        >
+          <textarea
+            value={rulesText}
+            onChange={e => setRulesText(e.target.value)}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </FullScreenModal>
       </AccordionSection>
 
       {/* 3. 可視化 */}
