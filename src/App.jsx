@@ -475,6 +475,15 @@ export default function App() {
         }
         e.target.value = '';
       }
+      function importRulesFromFile(e) {
+        const file = e.target.files?.[0]; if (!file) return;
+        const fr = new FileReader();
+        fr.onload = async () => {
+          await importRulesFromText(String(fr.result));
+        };
+        fr.readAsText(file);
+        e.target.value = '';
+      }
       async function importRulesFromText(text) {
         try {
           const rows = text
@@ -611,15 +620,18 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={exportRules}>ルールを書き出す（JSON）</button>
-          <button onClick={exportRulesAsText}>ルールを書き出す（テキスト）</button>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            JSONインポート（ファイル） <input type="file" accept="application/json" onChange={importRules} />
-          </label>
-          <button onClick={() => { setRulesTextMode('import'); setRulesText(''); setRulesTextOpen(true); }}>テキストインポート（貼り付け）</button>
-          <button onClick={fetchLatest}>再分類・再計算</button>
-        </div>
+          <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={exportRules}>ルールを書き出す（JSON）</button>
+            <button onClick={exportRulesAsText}>ルールを書き出す（テキスト）</button>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              JSONインポート（ファイル） <input type="file" accept="application/json" onChange={importRules} />
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              テキストインポート（ファイル） <input type="file" accept="text/plain" onChange={importRulesFromFile} />
+            </label>
+            <button onClick={() => { setRulesTextMode('import'); setRulesText(''); setRulesTextOpen(true); }}>テキストインポート（貼り付け）</button>
+            <button onClick={fetchLatest}>再分類・再計算</button>
+          </div>
         <FullScreenModal
           open={rulesTextOpen}
           onClose={() => setRulesTextOpen(false)}
