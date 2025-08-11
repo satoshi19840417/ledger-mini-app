@@ -24,6 +24,7 @@ export default function ImportCsv() {
     setPreview([]);
     setHeaderMap({});
     setErrors([]);
+    dispatch({ type: 'applyRules' });
   }
 
   const KNOWN_FIELDS = ['date', 'description', 'detail', 'memo', 'amount', 'category'];
