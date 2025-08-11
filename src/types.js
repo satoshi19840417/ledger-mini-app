@@ -29,7 +29,7 @@
  */
 
 /**
- * @typedef {{ type: 'importTransactions', payload?: Transaction[] }} ImportTransactionsAction
+ * @typedef {{ type: 'importTransactions', payload?: Transaction[], append?: boolean }} ImportTransactionsAction
  */
 
 /**

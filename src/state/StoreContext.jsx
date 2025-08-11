@@ -71,7 +71,10 @@ function reducer(state, action) {
       return { transactions, rules, lastImportAt };
     }
     case 'importTransactions': {
-      const newTx = state.transactions.concat(action.payload || []);
+      const incoming = action.payload || [];
+      const newTx = action.append
+        ? state.transactions.concat(incoming)
+        : incoming;
       const lastImportAt = new Date().toISOString();
       localStorage.setItem(
         'lm_tx_v1',
