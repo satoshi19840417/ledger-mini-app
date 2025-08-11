@@ -336,7 +336,7 @@ function Dashboard({ period, yenUnit, lockColors, hideOthers, onToggleUnit, onTo
   );
 }
 
-function BarChart({ period, yenUnit, lockColors, hideOthers }) {
+export function BarChart({ period, yenUnit, lockColors, hideOthers }) {
   const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: SAMPLE_DATA.length };
   const limit = limitMap[period] || SAMPLE_DATA.length;
   const raw = SAMPLE_DATA.slice(-limit);
@@ -401,7 +401,7 @@ function BarChart({ period, yenUnit, lockColors, hideOthers }) {
   );
 }
 
-function PieChart({ period, yenUnit, lockColors, hideOthers }) {
+export function PieChart({ period, yenUnit, lockColors, hideOthers }) {
   const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: SAMPLE_DATA.length };
   const limit = limitMap[period] || SAMPLE_DATA.length;
   const raw = SAMPLE_DATA.slice(-limit);
