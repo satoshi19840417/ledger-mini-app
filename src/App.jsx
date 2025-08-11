@@ -1,5 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import './App.css';
+
+const Monthly = lazy(() => import('./pages/Monthly.jsx'));
+const Yearly = lazy(() => import('./pages/Yearly.jsx'));
+const ImportCsv = lazy(() => import('./pages/ImportCsv.jsx'));
+const Rules = lazy(() => import('./pages/Rules.jsx'));
+const Transactions = lazy(() => import('./pages/Transactions.jsx'));
+const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 
 const NAV = {
   main: [
@@ -93,12 +100,28 @@ export default function App() {
             onToggleOthers={() => setHideOthers(v => !v)}
           />
         )}
-        {page === 'monthly' && <Monthly />}
-        {page === 'yearly' && <Yearly />}
-        {page === 'import' && <ImportCsv />}
-        {page === 'rules' && <Rules />}
-        {page === 'tx' && <Transactions />}
-        {page === 'prefs' && <Prefs />}
+        <Suspense fallback={<div>Loading...</div>}>
+          {page === 'monthly' && (
+            <Monthly
+              period={period}
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+            />
+          )}
+          {page === 'yearly' && (
+            <Yearly
+              period={period}
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+            />
+          )}
+          {page === 'import' && <ImportCsv />}
+          {page === 'rules' && <Rules />}
+          {page === 'tx' && <Transactions />}
+          {page === 'prefs' && <Prefs />}
+        </Suspense>
       </main>
 
       {/* 最小限のスタイル（既存CSSに合わせて調整可） */}
@@ -150,12 +173,6 @@ function Dashboard({ period, yenUnit, lockColors, hideOthers, onToggleUnit, onTo
     </section>
   );
 }
-function Monthly(){ return <section><h2>月次比較</h2><div className='card'>（棒/折れ線 既存グラフ）</div></section>; }
-function Yearly(){ return <section><h2>年間サマリ</h2><div className='card'>（円/ツリー 既存グラフ）</div></section>; }
-function ImportCsv(){ return <section><h2>CSV取込</h2><div className='card'>（既存のアップローダ）</div></section>; }
-function Rules(){ return <section><h2>再分類ルール</h2><div className='card'>（既存のルール表）</div></section>; }
-function Transactions(){ return <section><h2>取引一覧</h2><div className='card'>（検索・絞り込み）</div></section>; }
-function Prefs(){ return <section><h2>設定</h2><div className='card'>（表示設定ほか）</div></section>; }
 
 function BarChart() {
   return (
