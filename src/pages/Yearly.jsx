@@ -1,11 +1,10 @@
-import { PieChart as CategoryPieChart } from '../App.jsx';
+import { PieChart } from '../App.jsx';
 
 export default function Yearly({ period, yenUnit, lockColors, hideOthers }) {
   return (
     <section>
-      <h2>年間サマリ</h2>
       <div className='card'>
-        <CategoryPieChart
+        <PieChart
           period={period}
           yenUnit={yenUnit}
           lockColors={lockColors}
