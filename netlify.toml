@@ -1,6 +1,6 @@
 [build]
-  command = "npm ci && npm run build"
-  publish = "dist"
+  command = "corepack enable && pnpm install --frozen-lockfile && pnpm build"
+  publish = "dist"   # Vite なら dist。別なら実フォルダを指定
 
 [build.environment]
   NODE_VERSION = "20"
