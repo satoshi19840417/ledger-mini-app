@@ -4,12 +4,21 @@ import Papa from 'papaparse';
 
 // Aliases for header names mapping to canonical keys
 const HEADER_ALIASES = {
-  date: ['date', '日付', '日時', '取引日', 'ご利用年月日'],
-  amount: ['amount', '金額', '支出金額', '入金金額', '出金額', 'ご利用金額（キャッシングでは元金になります）'],
-  description: ['description', '説明', '内容', 'ご利用場所'],
+  date: ['date', '日付', '日時', '取引日', 'ご利用年月日', '年月日'],
+  amount: [
+    'amount',
+    '金額',
+    '支出金額',
+    '入金金額',
+    '出金額',
+    'ご利用金額（キャッシングでは元金になります）',
+  ],
+  deposit: ['deposit', 'お預入れ'],
+  withdraw: ['withdraw', 'お引出し'],
+  description: ['description', '説明', '内容', 'ご利用場所', 'お取り扱い内容'],
   detail: ['detail', '内訳', '相手先', '支店', '店名', 'ご利用内容'],
   memo: ['memo', 'メモ', '摘要', '備考', 'コメント', '支払区分', 'お支払開始月'],
-  category: ['category', 'カテゴリ', '費目', '科目', '分類', '項目'],
+  category: ['category', 'カテゴリ', '費目', '科目', '分類', '項目', 'ラベル'],
   kind: ['kind', '収支', 'タイプ', '種別', '入出金', '取引種別', '種別（ショッピング、キャッシング、その他）'],
 };
 
@@ -43,23 +52,45 @@ async function readWithFallback(file) {
   return count(utf8) <= count(sjis) ? utf8 : sjis;
 }
 
-// Convert dates like "YYYY年M月D日" to "YYYY-MM-DD"
+// Convert dates like "YYYY年M月D日" or "YYYY/M/D" to "YYYY-MM-DD"
 function parseJapaneseDate(str) {
-  const s = String(str);
-  const m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
-  if (!m) return s;
-  const [, y, mth, d] = m;
-  return `${y}-${mth.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  const s = String(str).trim();
+  let m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+  if (m) {
+    const [, y, mth, d] = m;
+    return `${y}-${mth.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  m = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (m) {
+    const [, y, mth, d] = m;
+    return `${y}-${mth.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return s;
 }
 
 // Convert row object to Transaction with validation error reporting
 function rowToTransaction(row) {
   const dateStr = row.date ? parseJapaneseDate(row.date) : '';
   if (!dateStr) return { tx: null, error: 'Missing date' };
-  if (!row.amount) return { tx: null, error: 'Missing amount' };
 
-  let amount = Number(String(row.amount).replace(/,/g, ''));
-  if (Number.isNaN(amount)) return { tx: null, error: `Invalid amount: ${row.amount}` };
+  let amount;
+  let sourceAmount;
+  if (row.amount != null && String(row.amount).trim() !== '') {
+    sourceAmount = row.amount;
+    amount = Number(String(row.amount).replace(/,/g, ''));
+  } else if (row.deposit != null && String(row.deposit).trim() !== '') {
+    sourceAmount = row.deposit;
+    amount = Math.abs(Number(String(row.deposit).replace(/,/g, '')));
+  } else if (row.withdraw != null && String(row.withdraw).trim() !== '') {
+    sourceAmount = row.withdraw;
+    amount = -Math.abs(Number(String(row.withdraw).replace(/,/g, '')));
+  } else {
+    return { tx: null, error: 'Missing amount' };
+  }
+
+  if (Number.isNaN(amount)) {
+    return { tx: null, error: `Invalid amount: ${sourceAmount}` };
+  }
   if (row.kind) {
     const kind = String(row.kind).toLowerCase();
     if (/(expense|支出|出金|ショッピング|キャッシング)/.test(kind)) {
@@ -120,11 +151,12 @@ export async function parseCsvFiles(files) {
     }
 
     // Validate mandatory columns
-    const required = ['date', 'amount'];
-    for (const field of required) {
-      if (!parsed.meta.fields || !parsed.meta.fields.includes(field)) {
-        errors.push(`Missing mandatory column: ${field}`);
-      }
+    const fields = parsed.meta.fields || [];
+    if (!fields.includes('date')) {
+      errors.push('Missing mandatory column: date');
+    }
+    if (!['amount', 'deposit', 'withdraw'].some((f) => fields.includes(f))) {
+      errors.push('Missing mandatory column: amount/deposit/withdraw');
     }
 
     parsed.data.forEach((row, i) => {
