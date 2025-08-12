@@ -42,6 +42,9 @@ function parseHash(hash) {
       params.get('colors') !== null ? params.get('colors') === '1' : undefined,
     hideOthers:
       params.get('others') !== null ? params.get('others') === '1' : undefined,
+    kind: ['expense', 'income'].includes(params.get('kind'))
+      ? params.get('kind')
+      : undefined,
   };
 }
 
@@ -51,12 +54,14 @@ function serializeHash({
   yenUnit,
   lockColors,
   hideOthers,
+  kind,
 }) {
   const params = new URLSearchParams();
   params.set('period', period);
   params.set('unit', yenUnit);
   params.set('colors', lockColors ? '1' : '0');
   params.set('others', hideOthers ? '1' : '0');
+  params.set('kind', kind);
   return `${page}?${params.toString()}`;
 }
 
@@ -76,6 +81,7 @@ export default function App() {
         localStorage.getItem('hideOthers') !== null
           ? localStorage.getItem('hideOthers') === '1'
           : undefined,
+      kind: localStorage.getItem('kind'),
     };
     return {
       page: h.page || (exists(stored.page) ? stored.page : 'dashboard'),
@@ -93,6 +99,7 @@ export default function App() {
           : stored.hideOthers !== undefined
           ? stored.hideOthers
           : false,
+      kind: h.kind || stored.kind || 'expense',
     };
   };
   const init = getInitial();
@@ -102,6 +109,7 @@ export default function App() {
   const [yenUnit, setYenUnit] = useState(init.yenUnit); // yen|man
   const [lockColors, setLockColors] = useState(init.lockColors);
   const [hideOthers, setHideOthers] = useState(init.hideOthers);
+  const [kind, setKind] = useState(init.kind);
   const burgerRef = useRef(null);
   const panelRef = useRef(null);
   const [needRefresh, setNeedRefresh] = useState(false);
@@ -140,20 +148,29 @@ export default function App() {
       if (h.yenUnit) setYenUnit(h.yenUnit);
       if (h.lockColors !== undefined) setLockColors(h.lockColors);
       if (h.hideOthers !== undefined) setHideOthers(h.hideOthers);
+      if (h.kind) setKind(h.kind);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   useEffect(() => {
-    const hash = serializeHash({ page, period, yenUnit, lockColors, hideOthers });
+    const hash = serializeHash({
+      page,
+      period,
+      yenUnit,
+      lockColors,
+      hideOthers,
+      kind,
+    });
     if (window.location.hash.slice(1) !== hash) window.location.hash = hash;
     localStorage.setItem('page', page);
     localStorage.setItem('period', period);
     localStorage.setItem('yenUnit', yenUnit);
     localStorage.setItem('lockColors', lockColors ? '1' : '0');
     localStorage.setItem('hideOthers', hideOthers ? '1' : '0');
-  }, [page, period, yenUnit, lockColors, hideOthers]);
+    localStorage.setItem('kind', kind);
+  }, [page, period, yenUnit, lockColors, hideOthers, kind]);
 
   // ページ切替（モバイルは自動でドロワー閉）
   const go = k => {
@@ -267,29 +284,81 @@ export default function App() {
             yenUnit={yenUnit}
             lockColors={lockColors}
             hideOthers={hideOthers}
+            kind={kind}
             onToggleUnit={() => setYenUnit(v => (v === 'yen' ? 'man' : 'yen'))}
             onToggleColors={() => setLockColors(v => !v)}
             onToggleOthers={() => setHideOthers(v => !v)}
+            onKindChange={setKind}
           />
         )}
         <Suspense fallback={<div>Loading...</div>}>
           {page === 'monthly' && (
-            <Monthly
-              transactions={state.transactions}
-              period={period}
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-            />
+            <>
+              <div className='quick'>
+                <label>
+                  <input
+                    type='radio'
+                    name='kind'
+                    value='expense'
+                    checked={kind === 'expense'}
+                    onChange={() => setKind('expense')}
+                  />
+                  支出
+                </label>
+                <label>
+                  <input
+                    type='radio'
+                    name='kind'
+                    value='income'
+                    checked={kind === 'income'}
+                    onChange={() => setKind('income')}
+                  />
+                  収入
+                </label>
+              </div>
+              <Monthly
+                transactions={state.transactions}
+                period={period}
+                yenUnit={yenUnit}
+                lockColors={lockColors}
+                hideOthers={hideOthers}
+                kind={kind}
+              />
+            </>
           )}
           {page === 'yearly' && (
-            <Yearly
-              transactions={state.transactions}
-              period={period}
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-            />
+            <>
+              <div className='quick'>
+                <label>
+                  <input
+                    type='radio'
+                    name='kind'
+                    value='expense'
+                    checked={kind === 'expense'}
+                    onChange={() => setKind('expense')}
+                  />
+                  支出
+                </label>
+                <label>
+                  <input
+                    type='radio'
+                    name='kind'
+                    value='income'
+                    checked={kind === 'income'}
+                    onChange={() => setKind('income')}
+                  />
+                  収入
+                </label>
+              </div>
+              <Yearly
+                transactions={state.transactions}
+                period={period}
+                yenUnit={yenUnit}
+                lockColors={lockColors}
+                hideOthers={hideOthers}
+                kind={kind}
+              />
+            </>
           )}
           {page === 'import' && <ImportCsv />}
           {page === 'rules' && <Rules />}
@@ -330,13 +399,35 @@ function Dashboard({
   yenUnit,
   lockColors,
   hideOthers,
+  kind,
   onToggleUnit,
   onToggleColors,
   onToggleOthers,
+  onKindChange,
 }) {
   return (
     <section>
       <div className='quick'>
+        <label>
+          <input
+            type='radio'
+            name='kind'
+            value='expense'
+            checked={kind === 'expense'}
+            onChange={() => onKindChange('expense')}
+          />
+          支出
+        </label>
+        <label>
+          <input
+            type='radio'
+            name='kind'
+            value='income'
+            checked={kind === 'income'}
+            onChange={() => onKindChange('income')}
+          />
+          収入
+        </label>
         <label>
           <input type='checkbox' checked={yenUnit === 'man'} onChange={onToggleUnit} /> 円→万円
         </label>
@@ -355,6 +446,7 @@ function Dashboard({
           yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
+          kind={kind}
         />
       </div>
       <div className='card'>
@@ -364,6 +456,7 @@ function Dashboard({
           yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
+          kind={kind}
         />
       </div>
     </section>

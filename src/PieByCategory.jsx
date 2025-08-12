@@ -69,10 +69,11 @@ export default function PieByCategory({
   yenUnit,
   lockColors,
   hideOthers,
+  kind = 'expense',
 }) {
   const monthMap = {};
-  const expenses = transactions.filter((tx) => tx.kind === 'expense');
-  expenses.forEach((tx) => {
+  const txs = transactions.filter((tx) => tx.kind === kind);
+  txs.forEach((tx) => {
     const month = tx.date.slice(0, 7);
     (monthMap[month] = monthMap[month] || []).push(tx);
   });
