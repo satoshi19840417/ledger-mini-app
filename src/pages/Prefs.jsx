@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useStore } from '../state/StoreContext';
 
 export default function Prefs() {
   const init = {
@@ -20,6 +21,56 @@ export default function Prefs() {
   const [lockColors, setLockColors] = useState(init.lockColors);
   const [hideOthers, setHideOthers] = useState(init.hideOthers);
   const [kind, setKind] = useState(init.kind);
+
+  const { state, dispatch } = useStore();
+  const fileInputRef = useRef(null);
+
+  const handleExport = () => {
+    const data = JSON.stringify(
+      { transactions: state.transactions, rules: state.rules },
+      null,
+      2
+    );
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ledger-data.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImport = async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      if (json.transactions) {
+        dispatch({
+          type: 'importTransactions',
+          payload: json.transactions,
+          append: false,
+        });
+      }
+      if (json.rules) {
+        dispatch({ type: 'setRules', payload: json.rules });
+      }
+    } catch (err) {
+      console.error('Import failed', err);
+    }
+    e.target.value = '';
+  };
+
+  const handleClear = () => {
+    if (window.confirm('本当に全データを削除しますか？')) {
+      dispatch({ type: 'clearAll' });
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem('period', period);
@@ -98,6 +149,26 @@ export default function Prefs() {
             </label>
           </div>
         </form>
+      </div>
+      <div className='card' style={{ marginTop: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button type='button' onClick={handleExport}>
+            データのエクスポート
+          </button>
+          <button type='button' onClick={handleImportClick}>
+            データのインポート
+          </button>
+          <input
+            type='file'
+            accept='application/json'
+            ref={fileInputRef}
+            onChange={handleImport}
+            style={{ display: 'none' }}
+          />
+          <button type='button' onClick={handleClear}>
+            データをすべて削除
+          </button>
+        </div>
       </div>
     </section>
   );
