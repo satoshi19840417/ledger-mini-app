@@ -49,26 +49,30 @@ export default function MonthlyAnalysis({
       <div className='card'>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ flex: 1, minWidth: 300 }}>
-            <BarByMonth
-              transactions={transactions}
-              period={period}
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-              kind='expense'
-              height={200}
-            />
+            <div style={{ overflowX: 'auto' }}>
+              <BarByMonth
+                transactions={transactions}
+                period={period}
+                yenUnit={yenUnit}
+                lockColors={lockColors}
+                hideOthers={hideOthers}
+                kind='expense'
+                height={200}
+              />
+            </div>
           </div>
           <div style={{ flex: 1, minWidth: 300 }}>
-            <BarByMonth
-              transactions={transactions}
-              period={period}
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-              kind='income'
-              height={200}
-            />
+            <div style={{ overflowX: 'auto' }}>
+              <BarByMonth
+                transactions={transactions}
+                period={period}
+                yenUnit={yenUnit}
+                lockColors={lockColors}
+                hideOthers={hideOthers}
+                kind='income'
+                height={200}
+              />
+            </div>
           </div>
         </div>
         <div style={{ marginTop: 16 }}>

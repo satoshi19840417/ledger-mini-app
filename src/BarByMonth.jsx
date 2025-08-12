@@ -90,6 +90,8 @@ export default function BarByMonth({
     .slice(-limit)
     .map((m) => ({ month: m, total: monthMap[m] }));
 
+  const width = data.length * 40;
+
   const colorMap = useRef({});
   const dataWithColors = useMemo(() => {
     if (!lockColors) colorMap.current = {};
@@ -117,7 +119,7 @@ export default function BarByMonth({
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width={width} height={height}>
       <ReBarChart data={dataWithColors} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
         <XAxis
           dataKey="month"
