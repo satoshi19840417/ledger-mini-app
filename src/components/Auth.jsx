@@ -74,14 +74,14 @@ export default function Auth({ onSkipAuth }) {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin },
       });
 
       if (error) throw error;
 
-      window.location.reload();
+      if (data?.url) window.location.href = data.url;
     } catch (error) {
       setError(error.message);
     } finally {
