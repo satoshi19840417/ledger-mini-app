@@ -6,6 +6,7 @@ import BarByMonth from './BarByMonth.jsx';
 import NetBalance from './NetBalance.jsx';
 import PieByCategory from './PieByCategory.jsx';
 import SupabaseTest from './SupabaseTest.jsx';
+import { useSession, logout } from './useSession';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
 const MonthlyAnalysis = lazy(() => import('./pages/MonthlyAnalysis.jsx'));
@@ -71,6 +72,7 @@ function serializeHash({
 
 export default function App() {
   const { state, dispatch } = useStore();
+  const session = useSession();
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
     const stored = {
@@ -182,6 +184,17 @@ export default function App() {
     setOpen(false);
   };
 
+  // ログアウト処理
+  const handleLogout = async () => {
+    const success = await logout();
+    if (success) {
+      // Clear local storage
+      localStorage.clear();
+      // Reload the page to reset the app state
+      window.location.reload();
+    }
+  };
+
   useEffect(() => {
     if (!open) {
       burgerRef.current?.focus();
@@ -268,6 +281,14 @@ export default function App() {
           {NAV.settings.map(i => (
             <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
           ))}
+          {session && (
+            <>
+              <h4>アカウント</h4>
+              <button className='nav-item logout-btn' onClick={handleLogout}>
+                ログアウト
+              </button>
+            </>
+          )}
         </nav>
       </aside>
 
@@ -506,9 +527,11 @@ const css = `
 .drawer.open{display:block}
 .drawer-panel{position:absolute;inset:0 0 0 auto;width:min(82vw,320px);background:#fff;border-left:1px solid var(--line);padding:1rem;overflow:auto}
 .drawer-panel h4{margin:.75rem 0 .25rem;color:var(--muted);font-weight:600;font-size:.85rem}
-.nav-item{display:block;width:100%;text-align:left;padding:.6rem .7rem;margin:.15rem 0;border:1px solid transparent;border-radius:.6rem}
+.nav-item{display:block;width:100%;text-align:left;padding:.6rem .7rem;margin:.15rem 0;border:1px solid transparent;border-radius:.6rem;background:transparent;cursor:pointer}
 .nav-item:hover{background:#fafafa}
 .nav-item.active{background:#f3f6ff;border-color:#dfe8ff}
+.nav-item.logout-btn{color:#dc2626;border-color:#fecaca}
+.nav-item.logout-btn:hover{background:#fee2e2}
 .footer{margin:2rem 0;text-align:center;color:var(--muted);font-size:.8rem}
 .error-boundary{padding:1rem;border:1px solid #fecaca;background:#fee2e2;color:#b91c1c;border-radius:.5rem;margin:1rem}
 .error-boundary pre{white-space:pre-wrap;overflow:auto}

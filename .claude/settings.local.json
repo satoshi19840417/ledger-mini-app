@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(claude logout)",
+      "Bash(claude login)",
+      "Bash(claude account set:*)",
+      "Bash(claude account)",
+      "Bash(claude account show)",
+      "Bash(claude --version)",
+      "Bash(copy:*)",
+      "Bash(cp:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
