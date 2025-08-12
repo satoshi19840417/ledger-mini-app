@@ -18,6 +18,7 @@ export default function Monthly({
           lockColors={lockColors}
           hideOthers={hideOthers}
           kind={kind}
+          height={350}
         />
       </div>
     </section>

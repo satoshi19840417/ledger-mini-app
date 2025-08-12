@@ -72,6 +72,7 @@ export default function BarByMonth({
   lockColors,
   hideOthers,
   kind = 'expense',
+  height = 350,
 }) {
   const monthMap = {};
   transactions
@@ -113,7 +114,7 @@ export default function BarByMonth({
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <ResponsiveContainer width="100%" height={height}>
       <ReBarChart data={dataWithColors} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
         <XAxis
           dataKey="month"
