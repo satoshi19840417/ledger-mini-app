@@ -74,7 +74,9 @@ export default function App() {
   const { state, dispatch } = useStore();
   const session = useSession();
   const isLocalMode = localStorage.getItem('localMode') === 'true';
+
   const isAuthenticated = session || isLocalMode;
+
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
     const stored = {
@@ -234,6 +236,7 @@ export default function App() {
     panel.addEventListener('keydown', onKey);
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
+
 
   if (!isAuthenticated) {
     return <Auth onSkipAuth={() => window.location.reload()} />;
@@ -438,6 +441,10 @@ export default function App() {
 }
 
 function NavItem({ active, onClick, children }) {
+  if (!session && !isLocalMode) {
+    return <Auth onSkipAuth={() => window.location.reload()} />;
+  }
+
   return (
     <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
       {children}
@@ -458,6 +465,10 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
+  if (!session && !isLocalMode) {
+    return <Auth onSkipAuth={() => window.location.reload()} />;
+  }
+
   return (
     <section>
       <div className='quick'>
