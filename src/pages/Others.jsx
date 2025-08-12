@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import OthersTable from '../OthersTable.jsx';
-import { useStore } from '../state/StoreContext.jsx';
+import { useStore } from '../state/StoreContextWithDB.jsx';
 
 export default function Others({ yenUnit }) {
   const { state, dispatch } = useStore();

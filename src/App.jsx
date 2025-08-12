@@ -1,12 +1,13 @@
 import { useEffect, useState, lazy, Suspense, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './App.css';
-import { useStore } from './state/StoreContext.jsx';
+import { useStore } from './state/StoreContextWithDB.jsx';
 import BarByMonth from './BarByMonth.jsx';
 import NetBalance from './NetBalance.jsx';
 import PieByCategory from './PieByCategory.jsx';
 import SupabaseTest from './SupabaseTest.jsx';
 import { useSession, logout } from './useSession';
+import Auth from './components/Auth.jsx';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
 const MonthlyAnalysis = lazy(() => import('./pages/MonthlyAnalysis.jsx'));
@@ -73,6 +74,12 @@ function serializeHash({
 export default function App() {
   const { state, dispatch } = useStore();
   const session = useSession();
+  const isLocalMode = localStorage.getItem('localMode') === 'true';
+  
+  // Show auth screen if not logged in and not in local mode
+  if (!session && !isLocalMode) {
+    return <Auth onSkipAuth={() => window.location.reload()} />;
+  }
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
     const stored = {
@@ -281,12 +288,25 @@ export default function App() {
           {NAV.settings.map(i => (
             <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
           ))}
-          {session && (
+          {(session || isLocalMode) && (
             <>
               <h4>アカウント</h4>
-              <button className='nav-item logout-btn' onClick={handleLogout}>
-                ログアウト
-              </button>
+              {session ? (
+                <button className='nav-item logout-btn' onClick={handleLogout}>
+                  ログアウト
+                </button>
+              ) : (
+                <button 
+                  className='nav-item' 
+                  onClick={() => {
+                    localStorage.removeItem('localMode');
+                    window.location.reload();
+                  }}
+                  style={{ color: '#3b82f6' }}
+                >
+                  クラウド同期に切り替え
+                </button>
+              )}
             </>
           )}
         </nav>

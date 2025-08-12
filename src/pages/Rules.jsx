@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore } from '../state/StoreContext';
+import { useStore } from '../state/StoreContextWithDB';
 import { CATEGORIES } from '../categories';
 /** @typedef {import('../types').Rule} Rule */
 

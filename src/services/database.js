@@ -1,0 +1,145 @@
+import { supabase } from '../supabaseClient';
+
+export const dbService = {
+  async syncTransactions(userId, transactions) {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .upsert(
+          transactions.map(tx => ({
+            ...tx,
+            user_id: userId,
+            id: tx.id || crypto.randomUUID(),
+            created_at: tx.created_at || new Date().toISOString(),
+          })),
+          { onConflict: 'id,user_id' }
+        );
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error syncing transactions:', error);
+      return { success: false, error };
+    }
+  },
+
+  async loadTransactions(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      return { success: false, error };
+    }
+  },
+
+  async syncRules(userId, rules) {
+    try {
+      const { data, error } = await supabase
+        .from('rules')
+        .upsert(
+          rules.map(rule => ({
+            ...rule,
+            user_id: userId,
+            id: rule.id || crypto.randomUUID(),
+            created_at: rule.created_at || new Date().toISOString(),
+          })),
+          { onConflict: 'id,user_id' }
+        );
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error syncing rules:', error);
+      return { success: false, error };
+    }
+  },
+
+  async loadRules(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('rules')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error loading rules:', error);
+      return { success: false, error };
+    }
+  },
+
+  async deleteTransaction(userId, transactionId) {
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('id', transactionId);
+      
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      return { success: false, error };
+    }
+  },
+
+  async deleteRule(userId, ruleId) {
+    try {
+      const { error } = await supabase
+        .from('rules')
+        .delete()
+        .eq('user_id', userId)
+        .eq('id', ruleId);
+      
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting rule:', error);
+      return { success: false, error };
+    }
+  },
+
+  async saveUserPreferences(userId, preferences) {
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          preferences: preferences,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      return { success: false, error };
+    }
+  },
+
+  async loadUserPreferences(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('preferences')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return { success: true, data: data?.preferences || {} };
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+      return { success: false, error };
+    }
+  },
+};

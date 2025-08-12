@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useStore } from '../state/StoreContext';
+import { useStore } from '../state/StoreContextWithDB';
 
 export default function Prefs() {
   const init = {
