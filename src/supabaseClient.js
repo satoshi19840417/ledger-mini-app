@@ -1,22 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-// 環境変数を取得する。
-// Node.js でのテスト実行時は process.env を、Vite 環境では import.meta.env を利用する。
-const env = {
-  ...(typeof process !== 'undefined' ? process.env : {}),
-  ...(import.meta.env || {}),
-};
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
-
+// Fail fast if required environment variables are missing.
+// This prevents the application from starting without a valid Supabase configuration.
 if (!supabaseUrl || !supabaseAnonKey) {
-  const missing = [];
-  if (!supabaseUrl) missing.push('VITE_SUPABASE_URL');
-  if (!supabaseAnonKey) missing.push('VITE_SUPABASE_ANON_KEY');
-  const message = `Missing environment variable(s): ${missing.join(', ')}`;
-  console.error(message);
-  throw new Error(message);
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
