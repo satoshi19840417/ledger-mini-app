@@ -15,6 +15,12 @@ npm run dev
   - `VITE_SUPABASE_URL`: Supabase プロジェクトの URL
   - `VITE_SUPABASE_ANON_KEY`: Supabase の anon key
 
+## 開発用コマンド
+
+| コマンド | 説明 |
+|---|---|
+| `pnpm lint` | ESLint を実行してコードをチェックします |
+
 ## できること
 - 複数CSVのドラッグ＆ドロップ取り込み（SJIS/UTF-8、自動ヘッダースキップ）
 - ルール管理（保存は localStorage）
