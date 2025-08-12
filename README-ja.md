@@ -11,7 +11,10 @@ npm run dev
 ```
 - ブラウザで http://localhost:5173 を開きます。
 
-- `.env` に以下の環境変数を設定してください:
+### Supabase の設定
+
+- Supabase のダッシュボードで「Authentication」→「Providers」から **Google** を有効化し、Redirect URL に `http://localhost:5173` などアプリの URL を登録します。
+- 「プロジェクト設定」→「API」から `URL` と `anon key` を取得し、`.env` に以下の環境変数として設定してください:
   - `VITE_SUPABASE_URL`: Supabase プロジェクトの URL
   - `VITE_SUPABASE_ANON_KEY`: Supabase の anon key
 
