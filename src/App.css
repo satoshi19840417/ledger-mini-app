@@ -262,3 +262,18 @@
   }
   .recalc-fixed[disabled] { opacity: .6; }
 }
+
+.net-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.net-balance-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.net-balance-row.negative {
+  color: #b91c1c;
+}
