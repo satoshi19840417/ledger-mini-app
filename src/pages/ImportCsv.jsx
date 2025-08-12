@@ -12,19 +12,19 @@ export default function ImportCsv() {
   async function handleChange(e) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const { transactions, headerMap: map, errors: errs } = await parseCsvFiles(files);
+    const {
+      transactions,
+      headerMap: map,
+      errors: errs,
+    } = await parseCsvFiles(files);
     setPreview(transactions);
     setHeaderMap(map);
     setErrors(errs);
+    if (transactions.length > 0) {
+      dispatch({ type: 'importTransactions', payload: transactions, append });
+      dispatch({ type: 'applyRules' });
+    }
     e.target.value = '';
-  }
-
-  function handleImport() {
-    dispatch({ type: 'importTransactions', payload: preview, append });
-    setPreview([]);
-    setHeaderMap({});
-    setErrors([]);
-    dispatch({ type: 'applyRules' });
   }
 
   const KNOWN_FIELDS = ['date', 'description', 'detail', 'memo', 'amount', 'category'];
@@ -87,14 +87,6 @@ export default function ImportCsv() {
                   <li key={i}>{err}</li>
                 ))}
               </ul>
-            )}
-            {preview.length > 0 && (
-              <button
-                className='mt-2 px-3 py-1 border rounded'
-                onClick={handleImport}
-              >
-                インポート
-              </button>
             )}
           </div>
         )}
