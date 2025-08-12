@@ -4,13 +4,13 @@ import Papa from 'papaparse';
 
 // Aliases for header names mapping to canonical keys
 const HEADER_ALIASES = {
-  date: ['date', '日付', '日時', '取引日'],
-  amount: ['amount', '金額', '支出金額', '入金金額', '出金額'],
-  description: ['description', '説明', '内容'],
-  detail: ['detail', '内訳', '相手先', '支店', '店名'],
-  memo: ['memo', 'メモ', '摘要', '備考', 'コメント'],
+  date: ['date', '日付', '日時', '取引日', 'ご利用年月日'],
+  amount: ['amount', '金額', '支出金額', '入金金額', '出金額', 'ご利用金額（キャッシングでは元金になります）'],
+  description: ['description', '説明', '内容', 'ご利用場所'],
+  detail: ['detail', '内訳', '相手先', '支店', '店名', 'ご利用内容'],
+  memo: ['memo', 'メモ', '摘要', '備考', 'コメント', '支払区分', 'お支払開始月'],
   category: ['category', 'カテゴリ', '費目', '科目', '分類', '項目'],
-  kind: ['kind', '収支', 'タイプ', '種別', '入出金', '取引種別'],
+  kind: ['kind', '収支', 'タイプ', '種別', '入出金', '取引種別', '種別（ショッピング、キャッシング、その他）'],
 };
 
 // Normalize header names using aliases above
