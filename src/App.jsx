@@ -237,6 +237,99 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
+  function Dashboard({
+    transactions,
+    period,
+    yenUnit,
+    lockColors,
+    hideOthers,
+    kind,
+    onToggleUnit,
+    onToggleColors,
+    onToggleOthers,
+    onKindChange,
+  }) {
+    return (
+      <section>
+        <div className='quick'>
+          <label>
+            <input
+              type='radio'
+              name='kind'
+              value='expense'
+              checked={kind === 'expense'}
+              onChange={() => onKindChange('expense')}
+            />
+            支出
+          </label>
+          <label>
+            <input
+              type='radio'
+              name='kind'
+              value='income'
+              checked={kind === 'income'}
+              onChange={() => onKindChange('income')}
+            />
+            収入
+          </label>
+          <label>
+            <input
+              type='checkbox'
+              checked={yenUnit === 'man'}
+              onChange={onToggleUnit}
+            />{' '}
+            円→万円
+          </label>
+          <label>
+            <input
+              type='checkbox'
+              checked={lockColors}
+              onChange={onToggleColors}
+            />{' '}
+            カテゴリ色固定
+          </label>
+          <label>
+            <input
+              type='checkbox'
+              checked={hideOthers}
+              onChange={onToggleOthers}
+            />{' '}
+            「その他」を除外
+          </label>
+        </div>
+
+        <div className='card'>
+          <NetBalance
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
+          />
+        </div>
+
+        <div className='card'>
+          <BarByMonth
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
+            lockColors={lockColors}
+            hideOthers={hideOthers}
+            kind={kind}
+            height={350}
+          />
+        </div>
+        <div className='card'>
+          <PieByCategory
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
+            lockColors={lockColors}
+            hideOthers={hideOthers}
+            kind={kind}
+          />
+        </div>
+      </section>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Auth onSkipAuth={() => window.location.reload()} />;
@@ -441,98 +534,10 @@ export default function App() {
 }
 
 function NavItem({ active, onClick, children }) {
-  if (!session && !isLocalMode) {
-    return <Auth onSkipAuth={() => window.location.reload()} />;
-  }
-
   return (
     <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
       {children}
     </button>
-  );
-}
-
-// ====== ページ雛形（既存の中身をはめ込んでください） ======
-function Dashboard({
-  transactions,
-  period,
-  yenUnit,
-  lockColors,
-  hideOthers,
-  kind,
-  onToggleUnit,
-  onToggleColors,
-  onToggleOthers,
-  onKindChange,
-}) {
-  if (!session && !isLocalMode) {
-    return <Auth onSkipAuth={() => window.location.reload()} />;
-  }
-
-  return (
-    <section>
-      <div className='quick'>
-        <label>
-          <input
-            type='radio'
-            name='kind'
-            value='expense'
-            checked={kind === 'expense'}
-            onChange={() => onKindChange('expense')}
-          />
-          支出
-        </label>
-        <label>
-          <input
-            type='radio'
-            name='kind'
-            value='income'
-            checked={kind === 'income'}
-            onChange={() => onKindChange('income')}
-          />
-          収入
-        </label>
-        <label>
-          <input type='checkbox' checked={yenUnit === 'man'} onChange={onToggleUnit} /> 円→万円
-        </label>
-        <label>
-          <input type='checkbox' checked={lockColors} onChange={onToggleColors} /> カテゴリ色固定
-        </label>
-        <label>
-          <input type='checkbox' checked={hideOthers} onChange={onToggleOthers} /> 「その他」を除外
-        </label>
-        </div>
-
-        <div className='card'>
-          <NetBalance
-            transactions={transactions}
-            period={period}
-            yenUnit={yenUnit}
-          />
-        </div>
-
-        <div className='card'>
-          <BarByMonth
-            transactions={transactions}
-            period={period}
-            yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-          height={350}
-        />
-      </div>
-      <div className='card'>
-        <PieByCategory
-          transactions={transactions}
-          period={period}
-          yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-        />
-      </div>
-    </section>
   );
 }
 
