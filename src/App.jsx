@@ -447,6 +447,7 @@ function Dashboard({
           lockColors={lockColors}
           hideOthers={hideOthers}
           kind={kind}
+          height={350}
         />
       </div>
       <div className='card'>
