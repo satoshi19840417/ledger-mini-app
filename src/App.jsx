@@ -3,6 +3,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import './App.css';
 import { useStore } from './state/StoreContext.jsx';
 import BarByMonth from './BarByMonth.jsx';
+import NetBalance from './NetBalance.jsx';
 import PieByCategory from './PieByCategory.jsx';
 import SupabaseTest from './SupabaseTest.jsx';
 
@@ -439,13 +440,21 @@ function Dashboard({
         <label>
           <input type='checkbox' checked={hideOthers} onChange={onToggleOthers} /> 「その他」を除外
         </label>
-      </div>
+        </div>
 
-      <div className='card'>
-        <BarByMonth
-          transactions={transactions}
-          period={period}
-          yenUnit={yenUnit}
+        <div className='card'>
+          <NetBalance
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
+          />
+        </div>
+
+        <div className='card'>
+          <BarByMonth
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
           kind={kind}
