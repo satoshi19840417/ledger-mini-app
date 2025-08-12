@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="yg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FACC15"/>
+      <stop offset="100%" stop-color="#EAB308"/>
+    </linearGradient>
+    <clipPath id="rounded">
+      <rect x="4" y="4" width="248" height="248" rx="40" ry="40"/>
+    </clipPath>
+  </defs>
+  <!-- yellow base with rounded corners -->
+  <rect x="4" y="4" width="248" height="248" rx="40" ry="40" fill="url(#yg)"/>
+  <g stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" clip-path="url(#rounded)">
+    <!-- roof -->
+    <path d="M40 128 L128 56 L216 128"/>
+    <!-- house body -->
+    <rect x="64" y="128" width="128" height="88" rx="10" ry="10"/>
+    <!-- Yen (inside house) -->
+    <path d="M100 112 L128 140 M156 112 L128 140"/>
+    <path d="M96 152 H160 M104 168 H152"/>
+    <path d="M128 152 V208"/>
+  </g>
+</svg>

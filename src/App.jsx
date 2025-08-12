@@ -5,7 +5,6 @@ import { useStore } from './state/StoreContextWithDB.jsx';
 import BarByMonth from './BarByMonth.jsx';
 import NetBalance from './NetBalance.jsx';
 import PieByCategory from './PieByCategory.jsx';
-import SupabaseTest from './SupabaseTest.jsx';
 import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
 
@@ -242,7 +241,6 @@ export default function App() {
 
   return (
     <div className='app-shell'>
-      {import.meta.env.DEV && <SupabaseTest />}
       {/* ヘッダー */}
       <header className='header'>
         <div className='header-controls'>

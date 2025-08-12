@@ -11,7 +11,9 @@
       "Bash(copy:*)",
       "Bash(cp:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
