@@ -71,64 +71,6 @@ export default function Rules() {
     <section>
       <h2>再分類ルール</h2>
       <div className='card'>
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ marginBottom: 8 }}>ルールは JSON 形式で定義します。例:</p>
-          <pre
-            style={{
-              background: '#f8f8f8',
-              padding: 8,
-              overflowX: 'auto',
-              marginBottom: 8,
-            }}
-          >
-{`[
-  { "pattern": "スタバ", "mode": "contains", "target": "detail", "kind": "expense", "category": "カフェ" },
-  { "regex": "Salary\\s*Payment", "flags": "i", "mode": "regex", "target": "description", "kind": "income", "category": "給与" }
-]`}
-          </pre>
-          <table style={{ fontSize: '0.9em', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 4 }}>キー</th>
-                <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 4 }}>説明</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ padding: 4 }}>pattern</td>
-                <td style={{ padding: 4 }}>説明などに含まれる文字列を部分一致で検索します</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>regex</td>
-                <td style={{ padding: 4 }}>正規表現パターン</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>flags</td>
-                <td style={{ padding: 4 }}>正規表現のフラグ (例: i)</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>keyword</td>
-                <td style={{ padding: 4 }}>pattern/regex が無い場合に用いるキーワード</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>mode</td>
-                <td style={{ padding: 4 }}>'contains' または 'regex' のマッチ方法</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>target</td>
-                <td style={{ padding: 4 }}>評価対象フィールド ('description'/'detail'/'memo')</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>kind</td>
-                <td style={{ padding: 4 }}>適用対象の取引種別 ('expense'/'income'/'both')</td>
-              </tr>
-              <tr>
-                <td style={{ padding: 4 }}>category</td>
-                <td style={{ padding: 4 }}>条件に一致したときに設定するカテゴリ</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
         <div style={{ marginBottom: 8 }}>（{rules.length}件のルール）</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
