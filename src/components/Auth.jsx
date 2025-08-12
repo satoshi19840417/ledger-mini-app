@@ -143,6 +143,7 @@ export default function Auth({ onSkipAuth }) {
         </div>
 
         <button
+          type="button"
           onClick={handleGoogleSignIn}
           className="auth-button google"
           disabled={loading}
