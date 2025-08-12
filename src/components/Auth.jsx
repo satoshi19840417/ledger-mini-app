@@ -12,6 +12,12 @@ export default function Auth({ onSkipAuth }) {
 
   const handleAuth = async (e) => {
     e.preventDefault();
+    
+    if (!supabase) {
+      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
+      return;
+    }
+    
     setLoading(true);
     setMessage('');
     setError('');

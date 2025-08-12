@@ -2,6 +2,10 @@ import { supabase } from '../supabaseClient';
 
 export const dbService = {
   async syncTransactions(userId, transactions) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -24,6 +28,10 @@ export const dbService = {
   },
 
   async loadTransactions(userId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -40,6 +48,10 @@ export const dbService = {
   },
 
   async syncRules(userId, rules) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { data, error } = await supabase
         .from('rules')
@@ -62,6 +74,10 @@ export const dbService = {
   },
 
   async loadRules(userId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { data, error } = await supabase
         .from('rules')
@@ -78,6 +94,10 @@ export const dbService = {
   },
 
   async deleteTransaction(userId, transactionId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { error } = await supabase
         .from('transactions')
@@ -94,6 +114,10 @@ export const dbService = {
   },
 
   async deleteRule(userId, ruleId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { error } = await supabase
         .from('rules')
@@ -110,6 +134,10 @@ export const dbService = {
   },
 
   async saveUserPreferences(userId, preferences) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { data, error } = await supabase
         .from('user_preferences')
@@ -128,6 +156,10 @@ export const dbService = {
   },
 
   async loadUserPreferences(userId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
     try {
       const { data, error } = await supabase
         .from('user_preferences')
