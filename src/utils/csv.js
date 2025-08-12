@@ -62,9 +62,10 @@ function rowToTransaction(row) {
   if (Number.isNaN(amount)) return { tx: null, error: `Invalid amount: ${row.amount}` };
   if (row.kind) {
     const kind = String(row.kind).toLowerCase();
-    if (/(expense|支出|出金)/.test(kind)) {
+    if (/(expense|支出|出金|ショッピング|キャッシング)/.test(kind)) {
       amount = -Math.abs(amount);
     } else if (/(income|収入|入金)/.test(kind)) {
+      // TODO: Add more income type keywords if additional deposit kinds are introduced
       amount = Math.abs(amount);
     }
   }
