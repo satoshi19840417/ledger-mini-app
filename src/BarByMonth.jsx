@@ -74,7 +74,7 @@ export default function BarByMonth({
 }) {
   const monthMap = {};
   transactions
-    .filter((tx) => tx.amount < 0)
+    .filter((tx) => tx.kind === 'expense')
     .forEach((tx) => {
       if (hideOthers && tx.category === 'その他') return;
       const month = tx.date.slice(0, 7);

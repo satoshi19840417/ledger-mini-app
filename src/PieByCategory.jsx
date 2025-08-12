@@ -71,7 +71,7 @@ export default function PieByCategory({
   hideOthers,
 }) {
   const monthMap = {};
-  const expenses = transactions.filter((tx) => tx.amount < 0);
+  const expenses = transactions.filter((tx) => tx.kind === 'expense');
   expenses.forEach((tx) => {
     const month = tx.date.slice(0, 7);
     (monthMap[month] = monthMap[month] || []).push(tx);

@@ -7,7 +7,7 @@ export default function Others() {
   const rows = useMemo(() => {
     const map = {};
     state.transactions
-      .filter(tx => tx.category === 'その他' && tx.amount < 0)
+      .filter((tx) => tx.category === 'その他' && tx.kind === 'expense')
       .forEach(tx => {
         if (!tx.memo) return;
         map[tx.memo] = (map[tx.memo] || 0) + Math.abs(tx.amount);
