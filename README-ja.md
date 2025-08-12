@@ -9,6 +9,10 @@ npm run dev
 ```
 - ブラウザで http://localhost:5173 を開きます。
 
+- `.env` に以下の環境変数を設定してください:
+  - `VITE_SUPABASE_URL`: Supabase プロジェクトの URL
+  - `VITE_SUPABASE_ANON_KEY`: Supabase の anon key
+
 ## できること
 - 複数CSVのドラッグ＆ドロップ取り込み（SJIS/UTF-8、自動ヘッダースキップ）
 - ルール管理（保存は localStorage）
