@@ -237,7 +237,13 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
+  const NavItem = ({ active, onClick, children }) => (
+    <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
+      {children}
+    </button>
+  );
 
+  
   if (!isAuthenticated) {
     return <Auth onSkipAuth={() => window.location.reload()} />;
   }
@@ -440,18 +446,6 @@ export default function App() {
   );
 }
 
-function NavItem({ active, onClick, children }) {
-  if (!session && !isLocalMode) {
-    return <Auth onSkipAuth={() => window.location.reload()} />;
-  }
-
-  return (
-    <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
-      {children}
-    </button>
-  );
-}
-
 // ====== ページ雛形（既存の中身をはめ込んでください） ======
 function Dashboard({
   transactions,
@@ -465,10 +459,6 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
-  if (!session && !isLocalMode) {
-    return <Auth onSkipAuth={() => window.location.reload()} />;
-  }
-
   return (
     <section>
       <div className='quick'>
