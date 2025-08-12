@@ -95,6 +95,7 @@ export default function MonthlyAnalysis({
           )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
             <div style={{ flex: 1, minWidth: 300 }}>
+              <h3 style={{ textAlign: 'center', marginBottom: 8 }}>支出</h3>
               <PieByCategory
                 transactions={monthTxs}
                 period='all'
@@ -105,6 +106,7 @@ export default function MonthlyAnalysis({
               />
             </div>
             <div style={{ flex: 1, minWidth: 300 }}>
+              <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収入</h3>
               <PieByCategory
                 transactions={monthTxs}
                 period='all'
