@@ -146,10 +146,23 @@ export default function Auth({ onSkipAuth }) {
           type="button"
           onClick={handleGoogleSignIn}
           className="auth-button google"
-          disabled={loading}
+          disabled={loading || !supabase}
         >
           Google でログイン
         </button>
+        {!supabase && (
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: '#dc2626',
+              textAlign: 'center',
+              marginTop: '-0.5rem',
+              marginBottom: '1rem',
+            }}
+          >
+            Supabase設定が必要
+          </p>
+        )}
 
         <form onSubmit={handleAuth} className="auth-form">
           <div className="form-group">
