@@ -74,7 +74,9 @@ export default function App() {
   const { state, dispatch } = useStore();
   const session = useSession();
   const isLocalMode = localStorage.getItem('localMode') === 'true';
-  
+
+  const isAuthenticated = session || isLocalMode;
+
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
     const stored = {
@@ -235,7 +237,8 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
-  if (!session && !isLocalMode) {
+
+  if (!isAuthenticated) {
     return <Auth onSkipAuth={() => window.location.reload()} />;
   }
 
@@ -286,7 +289,7 @@ export default function App() {
           {NAV.settings.map(i => (
             <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
           ))}
-          {(session || isLocalMode) && (
+          {isAuthenticated && (
             <>
               <h4>アカウント</h4>
               {session ? (
