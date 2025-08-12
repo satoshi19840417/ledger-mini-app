@@ -3,6 +3,8 @@
 ## セットアップ
 ```bash
 npm install
+cp .env.example .env
+# .env を編集して Supabase の URL と anon key を設定
 npm run dev
 ```
 - ブラウザで http://localhost:5173 を開きます。
