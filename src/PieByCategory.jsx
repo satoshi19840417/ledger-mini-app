@@ -1,4 +1,5 @@
 import { useRef, useMemo } from 'react';
+import { formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
   PieChart as RePieChart,
@@ -115,8 +116,7 @@ export default function PieByCategory({
     return items.map((d) => ({ ...d, fill: colorMap.current[d.name] }));
   }, [items, lockColors]);
 
-  const formatValue = (v) =>
-    yenUnit === 'man' ? `${(v / 10000).toFixed(1)} 万円` : `${v} 円`;
+  const formatValue = (v) => formatAmount(v, yenUnit);
   const tooltipFormatter = (v, name) => [formatValue(v), name];
   const legendPayload = dataWithColors.map((item) => ({
     id: item.name,

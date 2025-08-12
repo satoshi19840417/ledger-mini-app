@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import FullScreenModal from './FullScreenModal';
 import { CATEGORIES } from './categories';
+import { formatAmount } from './utils/currency.js';
 
-function OthersRow({ row, onAdd, isMobile }) {
+function OthersRow({ row, onAdd, isMobile, yenUnit }) {
   const [cat, setCat] = useState('食費');
   const [mode, setMode] = useState('contains');
   const [open, setOpen] = useState(false);
@@ -18,7 +19,7 @@ function OthersRow({ row, onAdd, isMobile }) {
         {row.name}
       </td>
       <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
-        {row.total.toLocaleString()} 円
+        {formatAmount(row.total, yenUnit)}
       </td>
       <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
         {isMobile ? (
@@ -66,12 +67,13 @@ function OthersRow({ row, onAdd, isMobile }) {
  *   addRule: (rule: import('./types').Rule) => void;
  *   isMobile: boolean;
  *   kind: 'income' | 'expense';
+ *   yenUnit: 'yen' | 'man';
  * }} props
  * `addRule` は新しいルールを上位コンポーネントで保存するためのコールバック。
  * 利用側では `dispatch({ type: 'setRules', payload: [...rules, newRule] })`
  * および `dispatch({ type: 'applyRules' })` を実行する想定。
  */
-export default function OthersTable({ rows, addRule, isMobile, kind }) {
+export default function OthersTable({ rows, addRule, isMobile, kind, yenUnit }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
@@ -102,6 +104,7 @@ export default function OthersTable({ rows, addRule, isMobile, kind }) {
                 kind
               })}
               isMobile={isMobile}
+              yenUnit={yenUnit}
             />
           ))
         )}

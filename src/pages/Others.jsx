@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import OthersTable from '../OthersTable.jsx';
 import { useStore } from '../state/StoreContext.jsx';
 
-export default function Others() {
+export default function Others({ yenUnit }) {
   const { state, dispatch } = useStore();
   const [selectedKind, setSelectedKind] = useState('expense');
   const rows = useMemo(() => {
@@ -35,7 +35,13 @@ export default function Others() {
             <option value="income">収入</option>
           </select>
         </div>
-        <OthersTable rows={rows} addRule={addRule} isMobile={isMobile} kind={selectedKind} />
+        <OthersTable
+          rows={rows}
+          addRule={addRule}
+          isMobile={isMobile}
+          kind={selectedKind}
+          yenUnit={yenUnit}
+        />
       </div>
     </section>
   );

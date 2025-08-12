@@ -1,4 +1,5 @@
 import { useRef, useMemo } from 'react';
+import { convertAmount, formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
   BarChart as ReBarChart,
@@ -101,9 +102,11 @@ export default function BarByMonth({
     return data.map((d) => ({ ...d, fill: colorMap.current[d.month] }));
   }, [data, lockColors]);
 
-  const tickFormatter = (v) => (yenUnit === 'man' ? (v / 10000).toFixed(1) : v);
-  const formatValue = (v) =>
-    yenUnit === 'man' ? `${(v / 10000).toFixed(1)} 万円` : `${v} 円`;
+  const tickFormatter = (v) => {
+    const value = convertAmount(v, yenUnit);
+    return yenUnit === 'man' ? value.toFixed(1) : value.toLocaleString();
+  };
+  const formatValue = (v) => formatAmount(v, yenUnit);
   const tooltipFormatter = (v) => [formatValue(v), '合計'];
   const legendPayload = dataWithColors.map((d) => ({
     id: d.month,

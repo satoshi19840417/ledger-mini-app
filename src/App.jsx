@@ -376,7 +376,7 @@ export default function App() {
           )}
           {page === 'import' && <ImportCsv />}
           {page === 'rules' && <Rules />}
-          {page === 'others' && <Others />}
+          {page === 'others' && <Others yenUnit={yenUnit} />}
           {page === 'tx' && <Transactions />}
           {page === 'prefs' && <Prefs />}
         </Suspense>

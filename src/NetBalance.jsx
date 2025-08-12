@@ -1,3 +1,5 @@
+import { formatAmount } from './utils/currency.js';
+
 export default function NetBalance({ transactions, period, yenUnit }) {
   const monthMap = {};
   transactions.forEach((tx) => {
@@ -21,25 +23,19 @@ export default function NetBalance({ transactions, period, yenUnit }) {
 
   const diff = incomeTotal - expenseTotal;
 
-  const format = (v) => {
-    const value = yenUnit === 'man' ? v / 10000 : v;
-    const unit = yenUnit === 'man' ? '万円' : '円';
-    return `${value.toLocaleString()} ${unit}`;
-  };
-
   return (
     <div className='net-balance'>
       <div className='net-balance-row'>
         <span>収入</span>
-        <span>{format(incomeTotal)}</span>
+        <span>{formatAmount(incomeTotal, yenUnit)}</span>
       </div>
       <div className='net-balance-row'>
         <span>支出</span>
-        <span>{format(expenseTotal)}</span>
+        <span>{formatAmount(expenseTotal, yenUnit)}</span>
       </div>
       <div className={`net-balance-row${diff < 0 ? ' negative' : ''}`}>
         <span>差分</span>
-        <span>{format(diff)}</span>
+        <span>{formatAmount(diff, yenUnit)}</span>
       </div>
     </div>
   );
