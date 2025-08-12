@@ -203,15 +203,6 @@ export default function App() {
     <div className='app-shell'>
       {/* ヘッダー */}
       <header className='header'>
-        <button
-          ref={burgerRef}
-          className='burger'
-          aria-label='menu'
-          onClick={() => setOpen(true)}
-        >
-          ☰
-        </button>
-        <div className='title'>家計簿カテゴリ管理</div>
         <div className='header-controls'>
           <select value={period} onChange={e => setPeriod(e.target.value)}>
             <option value='3m'>最近3ヶ月</option>
@@ -220,6 +211,15 @@ export default function App() {
             <option value='all'>全期間</option>
           </select>
         </div>
+        <div className='title'>家計簿カテゴリ管理</div>
+        <button
+          ref={burgerRef}
+          className='burger'
+          aria-label='menu'
+          onClick={() => setOpen(true)}
+        >
+          ☰
+        </button>
       </header>
 
       {/* ドロワー */}
@@ -374,8 +374,8 @@ const css = `
 :root { --bg:#fff; --fg:#222; --muted:#666; --line:#eee; }
 *{box-sizing:border-box} body{margin:0}
 .app-shell{min-height:100svh;background:var(--bg);color:var(--fg)}
-.header{position:sticky;top:0;display:flex;gap:.75rem;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--line);background:var(--bg);z-index:20}
-.title{font-weight:600}
+.header{position:sticky;top:0;display:flex;gap:.75rem;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--line);background:var(--bg);z-index:20}
+.title{font-weight:600;flex:1;text-align:center}
 .burger{font-size:1.1rem;padding:.4rem .6rem;border:1px solid var(--line);background:#fafafa;border-radius:.5rem}
 .header-controls select{padding:.4rem .6rem;border:1px solid var(--line);border-radius:.5rem}
 .content{max-width:1100px;margin:1rem auto;padding:0 1rem;display:grid;gap:1rem}
