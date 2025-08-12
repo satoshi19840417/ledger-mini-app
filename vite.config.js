@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["/icons/favicon-32.png"],
       manifest: {
-        name: "Ledger Mini App",
-        short_name: "Ledger",
+        name: "家計簿ミニアプリ",
+        short_name: "家計簿",
         start_url: "/",
         display: "standalone",
         background_color: "#ffffff",
