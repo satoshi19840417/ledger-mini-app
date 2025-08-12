@@ -11,8 +11,11 @@ export default function MonthlyAnalysis({
   hideOthers,
 }) {
   const months = useMemo(() => {
-    const set = new Set(transactions.map(tx => tx.date.slice(0, 7)));
-    return Array.from(set).sort();
+    const monthSet = new Set();
+    transactions.forEach(tx => {
+      monthSet.add(tx.date.slice(0, 7));
+    });
+    return Array.from(monthSet).sort();
   }, [transactions]);
 
   const rows = useMemo(
