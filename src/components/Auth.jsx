@@ -64,6 +64,31 @@ export default function Auth({ onSkipAuth }) {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (!supabase) {
+      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+
+      if (error) throw error;
+
+      window.location.reload();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLocalMode = () => {
     // ローカルストレージモードで起動
     localStorage.setItem('localMode', 'true');
@@ -116,7 +141,15 @@ export default function Auth({ onSkipAuth }) {
         <div className="auth-divider">
           <span>または</span>
         </div>
-        
+
+        <button
+          onClick={handleGoogleSignIn}
+          className="auth-button google"
+          disabled={loading}
+        >
+          Google でログイン
+        </button>
+
         <form onSubmit={handleAuth} className="auth-form">
           <div className="form-group">
             <label htmlFor="email">メールアドレス</label>
