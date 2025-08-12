@@ -91,19 +91,26 @@ function rowToTransaction(row) {
   if (Number.isNaN(amount)) {
     return { tx: null, error: `Invalid amount: ${sourceAmount}` };
   }
+  /** @type {'income'|'expense'|undefined} */
+  let kind;
   if (row.kind) {
-    const kind = String(row.kind).toLowerCase();
-    if (/(expense|支出|出金|ショッピング|キャッシング)/.test(kind)) {
-      amount = -Math.abs(amount);
-    } else if (/(income|収入|入金)/.test(kind)) {
+    const k = String(row.kind).toLowerCase();
+    if (/(expense|支出|出金|ショッピング|キャッシング)/.test(k)) {
+      kind = 'expense';
+    } else if (/(income|収入|入金)/.test(k)) {
       // TODO: Add more income type keywords if additional deposit kinds are introduced
-      amount = Math.abs(amount);
+      kind = 'income';
     }
   }
+  if (!kind) {
+    kind = amount < 0 ? 'expense' : 'income';
+  }
+  amount = kind === 'expense' ? -Math.abs(amount) : Math.abs(amount);
 
   const tx = {
     date: new Date(dateStr).toISOString().slice(0, 10),
     amount,
+    kind,
   };
   if (row.description) tx.description = row.description;
   if (row.detail) tx.detail = row.detail;

@@ -5,6 +5,7 @@
  * @property {string} [detail] - Additional details such as payee or store name.
  * @property {string} [memo] - Optional memo or note.
  * @property {number} amount - Amount of the transaction. Negative for expenses.
+ * @property {'income'|'expense'} kind - Transaction kind.
  * @property {string} [category] - Category assigned to the transaction.
  */
 

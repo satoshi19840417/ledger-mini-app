@@ -22,7 +22,7 @@ function applyRulesToTransactions(transactions, rules) {
       try {
         const pattern = rule.pattern || rule.regex || rule.keyword;
         if (!pattern) return false;
-        const txKind = tx.amount < 0 ? 'expense' : 'income';
+        const txKind = tx.kind || (tx.amount < 0 ? 'expense' : 'income');
         const ruleKind = rule.kind || 'both';
         if (ruleKind !== 'both' && ruleKind !== txKind) return false;
         const target = rule.target
@@ -64,6 +64,10 @@ function reducer(state, action) {
             transactions = parsed.transactions || [];
             lastImportAt = parsed.lastImportAt || null;
           }
+          transactions = transactions.map(tx => ({
+            ...tx,
+            kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
+          }));
         } catch {
           // ignore
         }
@@ -84,7 +88,11 @@ function reducer(state, action) {
       const newTx = append
         ? state.transactions.concat(action.payload || [])
         : action.payload || [];
-      const transactions = applyRulesToTransactions(newTx, state.rules);
+      const newTxWithKind = newTx.map(tx => ({
+        ...tx,
+        kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
+      }));
+      const transactions = applyRulesToTransactions(newTxWithKind, state.rules);
       const lastImportAt = new Date().toISOString();
       localStorage.setItem(
         'lm_tx_v1',

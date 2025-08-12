@@ -27,7 +27,15 @@ export default function ImportCsv() {
     e.target.value = '';
   }
 
-  const KNOWN_FIELDS = ['date', 'description', 'detail', 'memo', 'amount', 'category'];
+  const KNOWN_FIELDS = [
+    'date',
+    'description',
+    'detail',
+    'memo',
+    'amount',
+    'category',
+    'kind',
+  ];
 
   return (
     <section>

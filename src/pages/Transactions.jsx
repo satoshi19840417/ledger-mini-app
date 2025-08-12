@@ -31,8 +31,8 @@ export default function Transactions() {
       const amt = Math.abs(tx.amount);
       if (minAmount !== '' && amt < Number(minAmount)) return false;
       if (maxAmount !== '' && amt > Number(maxAmount)) return false;
-      if (type === 'income' && tx.amount <= 0) return false;
-      if (type === 'expense' && tx.amount >= 0) return false;
+      if (type === 'income' && tx.kind !== 'income') return false;
+      if (type === 'expense' && tx.kind !== 'expense') return false;
       return true;
     });
   }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type]);
