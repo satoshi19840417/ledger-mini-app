@@ -88,6 +88,13 @@ export async function parseCsvFiles(files) {
     const parsed = Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
+      beforeFirstChunk(chunk) {
+        const lines = chunk.split(/\r?\n/);
+        if (lines[0].includes('月別ご利用明細')) {
+          return lines.slice(1).join('\n');
+        }
+        return chunk;
+      },
       transformHeader(header) {
         const canon = normalizeHeader(header);
         if (!(canon in headerMap)) headerMap[canon] = header.trim();
