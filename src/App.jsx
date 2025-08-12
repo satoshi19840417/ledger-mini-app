@@ -4,6 +4,7 @@ import './App.css';
 import { useStore } from './state/StoreContext.jsx';
 import BarByMonth from './BarByMonth.jsx';
 import PieByCategory from './PieByCategory.jsx';
+import SupabaseTest from './SupabaseTest.jsx';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
 const Yearly = lazy(() => import('./pages/Yearly.jsx'));
@@ -218,6 +219,7 @@ export default function App() {
 
   return (
     <div className='app-shell'>
+      {import.meta.env.DEV && <SupabaseTest />}
       {/* ヘッダー */}
       <header className='header'>
         <div className='header-controls'>
