@@ -65,18 +65,19 @@ function OthersRow({ row, onAdd, isMobile }) {
  *   rows: { name: string; total: number }[];
  *   addRule: (rule: import('./types').Rule) => void;
  *   isMobile: boolean;
+ *   kind: 'income' | 'expense';
  * }} props
  * `addRule` は新しいルールを上位コンポーネントで保存するためのコールバック。
  * 利用側では `dispatch({ type: 'setRules', payload: [...rules, newRule] })`
  * および `dispatch({ type: 'applyRules' })` を実行する想定。
  */
-export default function OthersTable({ rows, addRule, isMobile }) {
+export default function OthersTable({ rows, addRule, isMobile, kind }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr style={{ textAlign: 'left' }}>
           <th style={{ borderBottom: '1px solid #eee', padding: 6 }}>店舗/内容</th>
-          <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 140 }}>支出合計</th>
+          <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 140 }}>{kind === 'income' ? '収入合計' : '支出合計'}</th>
           <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 260 }}>カテゴリに登録</th>
           <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 100 }} />
         </tr>
@@ -98,7 +99,7 @@ export default function OthersTable({ rows, addRule, isMobile }) {
                 mode,
                 target: 'memo',
                 category: cat,
-                kind: 'expense'
+                kind
               })}
               isMobile={isMobile}
             />
