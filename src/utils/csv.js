@@ -43,9 +43,19 @@ async function readWithFallback(file) {
   return count(utf8) <= count(sjis) ? utf8 : sjis;
 }
 
+// Convert dates like "YYYY年M月D日" to "YYYY-MM-DD"
+function parseJapaneseDate(str) {
+  const s = String(str);
+  const m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+  if (!m) return s;
+  const [, y, mth, d] = m;
+  return `${y}-${mth.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
 // Convert row object to Transaction with validation error reporting
 function rowToTransaction(row) {
-  if (!row.date) return { tx: null, error: 'Missing date' };
+  const dateStr = row.date ? parseJapaneseDate(row.date) : '';
+  if (!dateStr) return { tx: null, error: 'Missing date' };
   if (!row.amount) return { tx: null, error: 'Missing amount' };
 
   let amount = Number(String(row.amount).replace(/,/g, ''));
@@ -60,7 +70,7 @@ function rowToTransaction(row) {
   }
 
   const tx = {
-    date: new Date(row.date).toISOString().slice(0, 10),
+    date: new Date(dateStr).toISOString().slice(0, 10),
     amount,
   };
   if (row.description) tx.description = row.description;
