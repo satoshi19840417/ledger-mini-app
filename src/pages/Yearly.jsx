@@ -1,6 +1,13 @@
 import PieByCategory from '../PieByCategory.jsx';
 
-export default function Yearly({ transactions, period, yenUnit, lockColors, hideOthers }) {
+export default function Yearly({
+  transactions,
+  period,
+  yenUnit,
+  lockColors,
+  hideOthers,
+  kind,
+}) {
   return (
     <section>
       <div className='card'>
@@ -10,6 +17,7 @@ export default function Yearly({ transactions, period, yenUnit, lockColors, hide
           yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
+          kind={kind}
         />
       </div>
     </section>

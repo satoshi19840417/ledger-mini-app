@@ -71,10 +71,11 @@ export default function BarByMonth({
   yenUnit,
   lockColors,
   hideOthers,
+  kind = 'expense',
 }) {
   const monthMap = {};
   transactions
-    .filter((tx) => tx.kind === 'expense')
+    .filter((tx) => tx.kind === kind)
     .forEach((tx) => {
       if (hideOthers && tx.category === 'その他') return;
       const month = tx.date.slice(0, 7);

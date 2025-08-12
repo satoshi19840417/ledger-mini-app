@@ -1,6 +1,13 @@
 import BarByMonth from '../BarByMonth.jsx';
 
-export default function Monthly({ transactions, period, yenUnit, lockColors, hideOthers }) {
+export default function Monthly({
+  transactions,
+  period,
+  yenUnit,
+  lockColors,
+  hideOthers,
+  kind,
+}) {
   return (
     <section>
       <div className='card'>
@@ -10,6 +17,7 @@ export default function Monthly({ transactions, period, yenUnit, lockColors, hid
           yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
+          kind={kind}
         />
       </div>
     </section>
