@@ -8,6 +8,7 @@ import PieByCategory from './PieByCategory.jsx';
 import SupabaseTest from './SupabaseTest.jsx';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
+const MonthlyAnalysis = lazy(() => import('./pages/MonthlyAnalysis.jsx'));
 const Yearly = lazy(() => import('./pages/Yearly.jsx'));
 const ImportCsv = lazy(() => import('./pages/ImportCsv.jsx'));
 const Rules = lazy(() => import('./pages/Rules.jsx'));
@@ -19,6 +20,7 @@ const NAV = {
   main: [
     { key: 'dashboard', label: 'ダッシュボード' },
     { key: 'monthly', label: '月次比較' },
+    { key: 'analysis', label: '月次分析' },
     { key: 'yearly', label: '年間サマリ' },
   ],
   data: [
@@ -328,6 +330,15 @@ export default function App() {
                 kind={kind}
               />
             </>
+          )}
+          {page === 'analysis' && (
+            <MonthlyAnalysis
+              transactions={state.transactions}
+              period={period}
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+            />
           )}
           {page === 'yearly' && (
             <>
