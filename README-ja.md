@@ -15,6 +15,26 @@ npm run dev
 - 可視化（Recharts）
 - Excel/CSV 出力（xlsx/papaparse）
 
+### 再分類ルール例
+
+```json
+[
+  { "pattern": "スタバ", "mode": "contains", "target": "detail", "kind": "expense", "category": "カフェ" },
+  { "regex": "Salary\\s*Payment", "flags": "i", "mode": "regex", "target": "description", "kind": "income", "category": "給与" }
+]
+```
+
+|キー|説明|
+|----|----|
+|pattern|説明などに含まれる文字列を部分一致で検索します|
+|regex|正規表現パターン|
+|flags|正規表現のフラグ (例: `i`)|
+|keyword|pattern/regex が無い場合に用いるキーワード|
+|mode|`contains` または `regex` のマッチ方法|
+|target|評価対象フィールド (`description`/`detail`/`memo`)|
+|kind|適用対象の取引種別 (`expense`/`income`/`both`)|
+|category|条件に一致したときに設定するカテゴリ|
+
 ## CSVレイアウト
 - `年月日` ヘッダーや `YYYY/M/D` 形式の日付に対応
 - 金額列が無い場合は `お預入れ` / `お引出し` から金額を算出
