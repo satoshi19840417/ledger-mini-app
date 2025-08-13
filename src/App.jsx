@@ -680,10 +680,13 @@ function Dashboard({
 .error-boundary button{margin-top:.5rem;padding:.4rem .8rem;border:1px solid var(--line);border-radius:.5rem;background:#fafafa;cursor:pointer}
 .pwa-refresh{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;align-items:center;padding:.5rem 1rem;background:#1e3a8a;color:#fff;border-radius:.5rem;z-index:50}
 .pwa-refresh button{background:#fff;color:#1e3a8a;border:none;padding:.3rem .6rem;border-radius:.3rem;cursor:pointer}
-@media(min-width:1024px){
-  .drawer{display:block;background:transparent;position:sticky;inset:auto}
-  .drawer-panel{position:fixed;right:0;left:auto;top:0;bottom:0}
-  .content{margin-right:min(82vw,320px);margin-left:0}
+  @media(min-width:1024px){
+    .drawer{display:block;background:transparent;position:sticky;inset:auto}
+    .drawer-panel{position:fixed;right:0;left:auto;top:0;bottom:0}
+    .content{margin-right:min(82vw,320px);margin-left:0}
+  }
+  `}</style>
+
+</section>
+  );
 }
-`;
-`}</style>
