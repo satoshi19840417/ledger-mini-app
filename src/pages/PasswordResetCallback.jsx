@@ -4,6 +4,8 @@ import { supabase } from '../supabaseClient';
 export default function PasswordResetCallback() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -17,8 +19,12 @@ export default function PasswordResetCallback() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('パスワードは8文字以上で入力してください');
+    if (
+      password.length < 8 ||
+      !/[A-Za-z]/.test(password) ||
+      !/\d/.test(password)
+    ) {
+      setError('パスワードは8文字以上で英字と数字を含めてください');
       return;
     }
 
@@ -63,26 +69,46 @@ export default function PasswordResetCallback() {
       <div className='card'>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         <form onSubmit={handleSubmit}>
-          <label>
-            新しいパスワード
+          <label htmlFor='password'>新しいパスワード</label>
+          <div className='password-field'>
             <input
-              type='password'
+              id='password'
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
               minLength={8}
+              pattern='(?=.*[A-Za-z])(?=.*\d).+'
+              aria-describedby='password-hint'
             />
-          </label>
-          <label>
-            確認
+            <button
+              type='button'
+              onClick={() => setShowPassword(prev => !prev)}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? '非表示' : '表示'}
+            </button>
+          </div>
+          <p id='password-hint'>8文字以上・英数字混在</p>
+          <label htmlFor='confirm'>確認</label>
+          <div className='password-field'>
             <input
-              type='password'
+              id='confirm'
+              type={showConfirm ? 'text' : 'password'}
               value={confirm}
               onChange={e => setConfirm(e.target.value)}
               required
               minLength={8}
+              pattern='(?=.*[A-Za-z])(?=.*\d).+'
             />
-          </label>
+            <button
+              type='button'
+              onClick={() => setShowConfirm(prev => !prev)}
+              aria-pressed={showConfirm}
+            >
+              {showConfirm ? '非表示' : '表示'}
+            </button>
+          </div>
           <button type='submit' disabled={loading}>
             {loading ? '更新中...' : '更新'}
           </button>
