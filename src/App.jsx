@@ -645,11 +645,11 @@ function Dashboard({
         />
       </div>
 
-      <div className="card">
-        <PieByCategory
+     <div className="card">
+   <PieByCategory />
+    </div>
 
-
-const css = `
+    <style>{`
 :root { --bg:#fff; --fg:#222; --muted:#666; --line:#eee; }
 *{box-sizing:border-box} body{margin:0}
 .app-shell{min-height:100svh;background:var(--bg);color:var(--fg)}
@@ -686,4 +686,4 @@ const css = `
   .content{margin-right:min(82vw,320px);margin-left:0}
 }
 `;
-
+`}</style>
