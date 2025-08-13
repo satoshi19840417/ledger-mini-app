@@ -10,6 +10,15 @@ export default function Auth({ onSkipAuth }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  const normalizeAuthError = (error) => {
+    if (!error?.message) return '';
+    return error.message === 'Invalid login credentials'
+      ? 'メールアドレスまたはパスワードが正しくありません。'
+      : error.message.includes('Email address') && error.message.includes('invalid')
+      ? '有効なメールアドレスを入力してください（例: your-email@gmail.com）'
+      : error.message;
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     
@@ -84,6 +93,29 @@ export default function Auth({ onSkipAuth }) {
       if (data?.url) window.location.href = data.url;
     } catch (error) {
       setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!supabase) {
+      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setMessage('パスワードリセットのメールを送信しました。');
+    } catch (error) {
+      setError(normalizeAuthError(error));
     } finally {
       setLoading(false);
     }
@@ -202,8 +234,15 @@ export default function Auth({ onSkipAuth }) {
           >
             {loading ? '処理中...' : (isSignUp ? '登録' : 'ログイン')}
           </button>
+          {!isSignUp && (
+            <div className="forgot-password">
+              <button type="button" className="auth-link" onClick={handlePasswordReset}>
+                パスワードをお忘れですか？
+              </button>
+            </div>
+          )}
         </form>
-        
+
         <div className="auth-switch">
           {isSignUp ? (
             <>
