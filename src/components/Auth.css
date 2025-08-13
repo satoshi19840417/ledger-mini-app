@@ -132,6 +132,23 @@
   border-color: #9ca3af;
 }
 
+.auth-social-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.auth-button.github {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  margin-bottom: 1rem;
+}
+
+.auth-button.github:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
 .auth-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
