@@ -690,3 +690,7 @@ function Dashboard({
 </section>
   );
 }
+
+    </section>
+  );
+}
