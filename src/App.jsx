@@ -237,11 +237,113 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const NavItem = ({ active, onClick, children }) => (
-    <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
-      {children}
-    </button>
+function Dashboard({
+  transactions,
+  period,
+  yenUnit,
+  lockColors,
+  hideOthers,
+  kind,
+  onToggleUnit,
+  onToggleColors,
+  onToggleOthers,
+  onKindChange,
+}) {
+  return (
+    <section>
+      <div className="quick">
+        <label>
+          <input
+            type="radio"
+            name="kind"
+            value="expense"
+            checked={kind === 'expense'}
+            onChange={() => onKindChange('expense')}
+          />
+          支出
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="kind"
+            value="income"
+            checked={kind === 'income'}
+            onChange={() => onKindChange('income')}
+          />
+          収入
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={yenUnit === 'man'}
+            onChange={onToggleUnit}
+          />
+          円→万円
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={lockColors}
+            onChange={onToggleColors}
+          />
+          カテゴリ色固定
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={hideOthers}
+            onChange={onToggleOthers}
+          />
+          「その他」を除外
+        </label>
+      </div>
+
+      <div className="card">
+        <NetBalance
+          transactions={transactions}
+          period={period}
+          yenUnit={yenUnit}
+        />
+      </div>
+
+      <div className="card">
+        <BarByMonth
+          transactions={transactions}
+          period={period}
+          yenUnit={yenUnit}
+          lockColors={lockColors}
+          hideOthers={hideOthers}
+          kind={kind}
+          height={350}
+        />
+      </div>
+
+      <div className="card">
+        <PieByCategory
+          transactions={transactions}
+          period={period}
+          yenUnit={yenUnit}
+          lockColors={lockColors}
+          hideOthers={hideOthers}
+          kind={kind}
+        />
+      </div>
+    </section>
   );
+}
+
+const NavItem = ({ active, onClick, children }) => (
+  <button
+    className={`nav-item ${active ? 'active' : ''}`}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
 
   
   if (!isAuthenticated) {
@@ -445,8 +547,19 @@ export default function App() {
     </div>
   );
 }
+// --- keep both ---
 
-// ====== ページ雛形（既存の中身をはめ込んでください） ======
+function NavItem({ active, onClick, children }) {
+  return (
+    <button
+      className={`nav-item ${active ? 'active' : ''}`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
 function Dashboard({
   transactions,
   period,
@@ -461,72 +574,82 @@ function Dashboard({
 }) {
   return (
     <section>
-      <div className='quick'>
+      <div className="quick">
         <label>
           <input
-            type='radio'
-            name='kind'
-            value='expense'
+            type="radio"
+            name="kind"
+            value="expense"
             checked={kind === 'expense'}
             onChange={() => onKindChange('expense')}
           />
           支出
         </label>
+
         <label>
           <input
-            type='radio'
-            name='kind'
-            value='income'
+            type="radio"
+            name="kind"
+            value="income"
             checked={kind === 'income'}
             onChange={() => onKindChange('income')}
           />
           収入
         </label>
-        <label>
-          <input type='checkbox' checked={yenUnit === 'man'} onChange={onToggleUnit} /> 円→万円
-        </label>
-        <label>
-          <input type='checkbox' checked={lockColors} onChange={onToggleColors} /> カテゴリ色固定
-        </label>
-        <label>
-          <input type='checkbox' checked={hideOthers} onChange={onToggleOthers} /> 「その他」を除外
-        </label>
-        </div>
 
-        <div className='card'>
-          <NetBalance
-            transactions={transactions}
-            period={period}
-            yenUnit={yenUnit}
+        <label>
+          <input
+            type="checkbox"
+            checked={yenUnit === 'man'}
+            onChange={onToggleUnit}
           />
-        </div>
+          円→万円
+        </label>
 
-        <div className='card'>
-          <BarByMonth
-            transactions={transactions}
-            period={period}
-            yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-          height={350}
+        <label>
+          <input
+            type="checkbox"
+            checked={lockColors}
+            onChange={onToggleColors}
+          />
+          カテゴリ色固定
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={hideOthers}
+            onChange={onToggleOthers}
+          />
+          「その他」を除外
+        </label>
+      </div>
+
+      <div className="card">
+        <NetBalance
+          transactions={transactions}
+          period={period}
+          yenUnit={yenUnit}
         />
       </div>
-      <div className='card'>
-        <PieByCategory
+
+      <div className="card">
+        <BarByMonth
           transactions={transactions}
           period={period}
           yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
           kind={kind}
+          height={350}
         />
       </div>
-    </section>
-  );
-}
 
-const css = `
+     <div className="card">
+   <PieByCategory />
+    </div>
+
+    <style>{`
 :root { --bg:#fff; --fg:#222; --muted:#666; --line:#eee; }
 *{box-sizing:border-box} body{margin:0}
 .app-shell{min-height:100svh;background:var(--bg);color:var(--fg)}
@@ -563,4 +686,4 @@ const css = `
   .content{margin-right:min(82vw,320px);margin-left:0}
 }
 `;
-
+`}</style>
