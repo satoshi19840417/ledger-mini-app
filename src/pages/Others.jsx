@@ -1,32 +1,49 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import OthersTable from '../OthersTable.jsx';
 import { useStore } from '../state/StoreContextWithDB.jsx';
 
 export default function Others({ yenUnit }) {
   const { state, dispatch } = useStore();
   const [selectedKind, setSelectedKind] = useState('expense');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const rows = useMemo(() => {
     const map = {};
-    state.transactions
-      .filter((tx) => tx.category === 'その他' && tx.kind === selectedKind)
-      .forEach(tx => {
-        if (!tx.memo) return;
-        map[tx.memo] = (map[tx.memo] || 0) + Math.abs(tx.amount);
-      });
-    return Object.entries(map)
+    const filteredTxs = state.transactions
+      .filter((tx) => tx.category === 'その他' && tx.kind === selectedKind);
+    
+    console.log('Others page - filtered transactions:', filteredTxs.length);
+    console.log('Selected kind:', selectedKind);
+    
+    filteredTxs.forEach(tx => {
+      if (!tx.memo) return;
+      map[tx.memo] = (map[tx.memo] || 0) + Math.abs(tx.amount);
+    });
+    
+    const result = Object.entries(map)
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => b.total - a.total);
+    
+    console.log('Others page - rows:', result);
+    return result;
   }, [state.transactions, selectedKind]);
 
   const addRule = newRule => {
     console.log('addRule called with:', newRule);
     console.log('Current rules:', state.rules);
+    // setRulesアクションが自動的にルールを適用するため、applyRulesは不要
     dispatch({ type: 'setRules', payload: [...state.rules, newRule] });
-    dispatch({ type: 'applyRules' });
     console.log('Rule added and applied');
   };
-
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   return (
     <section>

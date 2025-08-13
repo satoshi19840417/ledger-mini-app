@@ -88,8 +88,8 @@ export default function Transactions() {
   const saveRule = () => {
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
+    // setRulesアクションが自動的にルールを適用するため、applyRulesは不要
     dispatch({ type: 'setRules', payload: updatedRules });
-    dispatch({ type: 'applyRules' });
     setShowRuleModal(false);
     setSelectedTx(null);
   };
@@ -185,8 +185,18 @@ export default function Transactions() {
                   <td style={{ padding: 4 }}>{tx.memo || ''}</td>
                   <td style={{ padding: 4 }}>
                     <button 
+                      type="button"
                       onClick={() => openRuleModal(tx)}
-                      style={{ fontSize: '0.85rem', padding: '2px 8px' }}
+                      style={{ 
+                        fontSize: '0.85rem', 
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 1,
+                        backgroundColor: '#fff',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px'
+                      }}
                     >
                       ルール作成
                     </button>

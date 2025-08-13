@@ -147,9 +147,8 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    dispatch({ type: 'applyRules' });
-  }, [state.rules, state.transactions, dispatch]);
+  // applyRulesは手動でルールが変更された時のみ実行する
+  // 自動実行を削除して無限ループを防ぐ
 
   useEffect(() => {
     const onHash = () => {

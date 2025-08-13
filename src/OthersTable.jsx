@@ -14,7 +14,7 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
   };
   
   const handlePCSubmit = (e) => {
-    e.preventDefault();
+    e.stopPropagation();
     console.log('PC Button clicked - cat:', cat, 'mode:', mode);
     console.log('onAdd function:', onAdd);
     try {
@@ -64,7 +64,13 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
               <option value="contains">正規表現なし</option>
               <option value="regex">正規表現</option>
             </select>
-            <button type="button" onClick={handlePCSubmit}>ルール追加</button>
+            <button 
+              type="button" 
+              onClick={handlePCSubmit}
+              style={{ cursor: 'pointer', padding: '4px 8px' }}
+            >
+              ルール追加
+            </button>
           </>
         )}
       </td>
