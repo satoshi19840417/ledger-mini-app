@@ -237,6 +237,15 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
+const NavItem = ({ active, onClick, children }) => (
+  <button
+    className={`nav-item ${active ? 'active' : ''}`}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
+
 function Dashboard({
   transactions,
   period,
@@ -335,15 +344,6 @@ function Dashboard({
     </section>
   );
 }
-
-const NavItem = ({ active, onClick, children }) => (
-  <button
-    className={`nav-item ${active ? 'active' : ''}`}
-    onClick={onClick}
-  >
-    {children}
-  </button>
-);
 
   
   if (!isAuthenticated) {
@@ -543,147 +543,5 @@ const NavItem = ({ active, onClick, children }) => (
       </footer>
 
     </div>
-  );
-}
-// --- keep both ---
-
-function NavItem({ active, onClick, children }) {
-  return (
-    <button
-      className={`nav-item ${active ? 'active' : ''}`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Dashboard({
-  transactions,
-  period,
-  yenUnit,
-  lockColors,
-  hideOthers,
-  kind,
-  onToggleUnit,
-  onToggleColors,
-  onToggleOthers,
-  onKindChange,
-}) {
-  return (
-    <section>
-      <div className="quick">
-        <label>
-          <input
-            type="radio"
-            name="kind"
-            value="expense"
-            checked={kind === 'expense'}
-            onChange={() => onKindChange('expense')}
-          />
-          支出
-        </label>
-
-        <label>
-          <input
-            type="radio"
-            name="kind"
-            value="income"
-            checked={kind === 'income'}
-            onChange={() => onKindChange('income')}
-          />
-          収入
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={yenUnit === 'man'}
-            onChange={onToggleUnit}
-          />
-          円→万円
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={lockColors}
-            onChange={onToggleColors}
-          />
-          カテゴリ色固定
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={hideOthers}
-            onChange={onToggleOthers}
-          />
-          「その他」を除外
-        </label>
-      </div>
-
-      <div className="card">
-        <NetBalance
-          transactions={transactions}
-          period={period}
-          yenUnit={yenUnit}
-        />
-      </div>
-
-      <div className="card">
-        <BarByMonth
-          transactions={transactions}
-          period={period}
-          yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-          height={350}
-        />
-      </div>
-
-     <div className="card">
-   <PieByCategory />
-    </div>
-
-    <style>{`
-:root { --bg:#fff; --fg:#222; --muted:#666; --line:#eee; }
-*{box-sizing:border-box} body{margin:0}
-.app-shell{min-height:100svh;background:var(--bg);color:var(--fg)}
-.header{position:relative;display:flex;justify-content:space-between;gap:.75rem;align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--line);background:var(--bg);z-index:20}
-.title{font-weight:600;position:absolute;left:50%;transform:translateX(-50%);text-align:center}
-.burger{font-size:1.1rem;padding:.4rem .6rem;border:1px solid var(--line);background:#fafafa;border-radius:.5rem}
-.header-controls select{padding:.4rem .6rem;border:1px solid var(--line);border-radius:.5rem}
-.content{max-width:1100px;margin:1rem auto;padding:0 1rem;display:grid;gap:1rem}
-.card{border:1px solid var(--line);border-radius:.75rem;padding:1rem;background:#fff}
-.quick{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin-bottom:.5rem}
-.quick label{display:flex;gap:.4rem;align-items:center;font-size:.92rem;color:var(--muted)}
-.empty-banner{text-align:center}
-.empty-banner .actions{margin-top:.5rem;display:flex;gap:.5rem;justify-content:center}
-.empty-banner .btn{padding:.4rem .8rem;border:1px solid var(--line);border-radius:.5rem;background:#fafafa;cursor:pointer;text-decoration:none}
-.empty-banner .btn:hover{background:#f0f0f0}
-.drawer{position:fixed;inset:0;display:none;background:rgba(0,0,0,.2)}
-.drawer.open{display:block}
-.drawer-panel{position:absolute;inset:0 0 0 auto;width:min(82vw,320px);background:#fff;border-left:1px solid var(--line);padding:1rem;overflow:auto}
-.drawer-panel h4{margin:.75rem 0 .25rem;color:var(--muted);font-weight:600;font-size:.85rem}
-.nav-item{display:block;width:100%;text-align:left;padding:.6rem .7rem;margin:.15rem 0;border:1px solid transparent;border-radius:.6rem;background:transparent;cursor:pointer}
-.nav-item:hover{background:#fafafa}
-.nav-item.active{background:#f3f6ff;border-color:#dfe8ff}
-.nav-item.logout-btn{color:#dc2626;border-color:#fecaca}
-.nav-item.logout-btn:hover{background:#fee2e2}
-.footer{margin:2rem 0;text-align:center;color:var(--muted);font-size:.8rem}
-.error-boundary{padding:1rem;border:1px solid #fecaca;background:#fee2e2;color:#b91c1c;border-radius:.5rem;margin:1rem}
-.error-boundary pre{white-space:pre-wrap;overflow:auto}
-.error-boundary button{margin-top:.5rem;padding:.4rem .8rem;border:1px solid var(--line);border-radius:.5rem;background:#fafafa;cursor:pointer}
-.pwa-refresh{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;align-items:center;padding:.5rem 1rem;background:#1e3a8a;color:#fff;border-radius:.5rem;z-index:50}
-.pwa-refresh button{background:#fff;color:#1e3a8a;border:none;padding:.3rem .6rem;border-radius:.3rem;cursor:pointer}
-@media(min-width:1024px){
-  .drawer{display:block;background:transparent;position:sticky;inset:auto}
-  .drawer-panel{position:fixed;right:0;left:auto;top:0;bottom:0}
-  .content{margin-right:min(82vw,320px);margin-left:0}
-}
-`}</style>
-    </section>
   );
 }
