@@ -288,6 +288,7 @@ export default function Auth({ onSkipAuth }) {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              autoComplete="email"
             />
             <small style={{ color: '#6b7280', fontSize: '0.75rem' }}>
               ※ クラウド同期には実際のメールアドレスが必要です
@@ -305,6 +306,7 @@ export default function Auth({ onSkipAuth }) {
               required
               disabled={loading}
               minLength={6}
+              autoComplete={isSignUp ? "new-password" : "current-password"}
             />
           </div>
           
