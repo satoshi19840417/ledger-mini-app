@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabaseClient.js';
 import './Auth.css';
 
 export default function Auth({ onSkipAuth }) {

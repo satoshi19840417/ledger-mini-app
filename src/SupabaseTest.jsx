@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { supabase } from './supabaseClient.js';
+import { supabase } from './lib/supabaseClient.js';
 
 export default function SupabaseTest() {
   useEffect(() => {

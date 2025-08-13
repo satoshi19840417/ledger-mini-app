@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabaseClient.js';
 
 export const dbService = {
   async syncTransactions(userId, transactions) {
