@@ -10,6 +10,7 @@ export default function Auth({ onSkipAuth }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [authMode, setAuthMode] = useState('magic-link'); // 'magic-link' or 'password'
 
   const normalizeAuthError = (error) => {
     if (!error?.message) return '';
@@ -33,10 +34,10 @@ export default function Auth({ onSkipAuth }) {
     setError('');
 
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
+      if (authMode === 'magic-link') {
+        // メールリンク認証
+        const { error } = await supabase.auth.signInWithOtp({
           email,
-          password,
           options: {
             emailRedirectTo: window.location.origin,
           },
@@ -44,24 +45,40 @@ export default function Auth({ onSkipAuth }) {
         
         if (error) throw error;
         
-        if (data?.user?.identities?.length === 0) {
-          setError('このメールアドレスは既に登録されています。ログインしてください。');
-        } else if (data?.user && data?.session) {
-          setMessage('登録が完了しました！自動的にログインしています...');
-          window.location.reload();
-        } else {
-          setMessage('確認メールを送信しました。メールをご確認ください。');
-        }
+        setMessage('認証メールを送信しました。メール内のリンクをクリックしてログインしてください。');
+        setEmail('');
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) throw error;
-        
-        setMessage('ログインに成功しました！');
-        window.location.reload();
+        // パスワード認証
+        if (isSignUp) {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: window.location.origin,
+            },
+          });
+          
+          if (error) throw error;
+          
+          if (data?.user?.identities?.length === 0) {
+            setError('このメールアドレスは既に登録されています。ログインしてください。');
+          } else if (data?.user && data?.session) {
+            setMessage('登録が完了しました！自動的にログインしています...');
+            window.location.reload();
+          } else {
+            setMessage('確認メールを送信しました。メールをご確認ください。');
+          }
+        } else {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (error) throw error;
+          
+          setMessage('ログインに成功しました！');
+          window.location.reload();
+        }
       }
     } catch (error) {
       setError(error.message === 'Invalid login credentials' 
@@ -217,7 +234,9 @@ export default function Auth({ onSkipAuth }) {
         </div>
         
         <h1 className="auth-title">家計簿カテゴリ管理</h1>
-        <h2 className="auth-subtitle">{isSignUp ? '新規登録' : 'ログイン'}</h2>
+        <h2 className="auth-subtitle">
+          {authMode === 'magic-link' ? 'メールでログイン' : (isSignUp ? '新規登録' : 'ログイン')}
+        </h2>
         
         {message && (
           <div className="auth-message success">{message}</div>
@@ -291,33 +310,46 @@ export default function Auth({ onSkipAuth }) {
               autoComplete="email"
             />
             <small style={{ color: '#6b7280', fontSize: '0.75rem' }}>
-              ※ クラウド同期には実際のメールアドレスが必要です
+              {authMode === 'magic-link' 
+                ? '※ メールアドレスに認証リンクが送信されます'
+                : '※ クラウド同期には実際のメールアドレスが必要です'
+              }
             </small>
           </div>
           
-          <div className="form-group">
-            <label htmlFor="password">パスワード</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              minLength={6}
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-            />
-          </div>
+          {authMode === 'password' && (
+            <div className="form-group">
+              <label htmlFor="password">パスワード</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={6}
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+              />
+            </div>
+          )}
           
           <button
             type="submit"
             className="auth-button primary"
-            disabled={loading}
+            disabled={loading || !email}
+            style={{ 
+              background: authMode === 'magic-link' 
+                ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' 
+                : undefined 
+            }}
           >
-            {loading ? '処理中...' : (isSignUp ? '登録' : 'ログイン')}
+            {loading ? '処理中...' : 
+              authMode === 'magic-link' ? '認証メールを送信' : 
+              (isSignUp ? '登録' : 'ログイン')
+            }
           </button>
-          {!isSignUp && (
+          {authMode === 'password' && !isSignUp && (
             <div className="forgot-password">
               <button type="button" className="auth-link" onClick={handlePasswordReset}>
                 パスワードをお忘れですか？
@@ -326,39 +358,61 @@ export default function Auth({ onSkipAuth }) {
           )}
         </form>
 
-        <div className="auth-switch">
-          {isSignUp ? (
-            <>
-              既にアカウントをお持ちですか？{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(false);
-                  setMessage('');
-                  setError('');
-                }}
-                className="auth-link"
-              >
-                ログイン
-              </button>
-            </>
-          ) : (
-            <>
-              アカウントをお持ちでないですか？{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(true);
-                  setMessage('');
-                  setError('');
-                }}
-                className="auth-link"
-              >
-                新規登録
-              </button>
-            </>
-          )}
+        {/* 認証モード切り替え */}
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <button
+            type="button"
+            className="auth-link"
+            onClick={() => {
+              setAuthMode(authMode === 'magic-link' ? 'password' : 'magic-link');
+              setMessage('');
+              setError('');
+              setPassword('');
+            }}
+            style={{ fontSize: '0.875rem' }}
+          >
+            {authMode === 'magic-link' 
+              ? 'パスワードでログインする' 
+              : 'メールリンクでログインする（パスワード不要）'
+            }
+          </button>
         </div>
+
+        {authMode === 'password' && (
+          <div className="auth-switch">
+            {isSignUp ? (
+              <>
+                既にアカウントをお持ちですか？{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(false);
+                    setMessage('');
+                    setError('');
+                  }}
+                  className="auth-link"
+                >
+                  ログイン
+                </button>
+              </>
+            ) : (
+              <>
+                アカウントをお持ちでないですか？{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(true);
+                    setMessage('');
+                    setError('');
+                  }}
+                  className="auth-link"
+                >
+                  新規登録
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         <div style={{ marginTop: '2rem', padding: '1rem', background: '#f3f4f6', borderRadius: '0.5rem' }}>
           <h3 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
