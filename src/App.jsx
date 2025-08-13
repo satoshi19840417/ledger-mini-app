@@ -542,8 +542,6 @@ const NavItem = ({ active, onClick, children }) => (
         MODE: {import.meta.env.MODE} / lastModified: {document.lastModified}
       </footer>
 
-      {/* 最小限のスタイル（既存CSSに合わせて調整可） */}
-      <style>{css}</style>
     </div>
   );
 }
