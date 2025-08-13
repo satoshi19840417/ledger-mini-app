@@ -72,7 +72,7 @@ function serializeHash({
 
 export default function App() {
   const { state, dispatch } = useStore();
-  const session = useSession();
+  const { session, loading } = useSession();
   const isLocalMode = localStorage.getItem('localMode') === 'true';
 
   const isAuthenticated = session || isLocalMode;
@@ -345,6 +345,22 @@ function Dashboard({
   );
 }
 
+  
+  // ローディング中は何も表示しない
+  if (loading && !isLocalMode) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem',
+        color: '#6b7280'
+      }}>
+        読み込み中...
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     return <Auth onSkipAuth={() => window.location.reload()} />;
