@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient.js';
+import { toast } from 'react-hot-toast';
 import './Auth.css';
 
 export default function Auth({ onSkipAuth }) {
@@ -98,6 +99,35 @@ export default function Auth({ onSkipAuth }) {
     }
   };
 
+  const handleGitHubSignIn = async () => {
+    if (!supabase) {
+      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: window.location.origin,
+          scopes: 'read:user user:email',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) window.location.href = data.url;
+    } catch (error) {
+      toast.error(error.message);
+      setError('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePasswordReset = async () => {
     if (!supabase) {
       setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
@@ -173,15 +203,24 @@ export default function Auth({ onSkipAuth }) {
         <div className="auth-divider">
           <span>または</span>
         </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          className="auth-button google"
-          disabled={loading || !supabase}
-        >
-          Google でログイン
-        </button>
+        <div className="auth-social-buttons">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="auth-button google"
+            disabled={loading || !supabase}
+          >
+            Google でログイン
+          </button>
+          <button
+            type="button"
+            onClick={handleGitHubSignIn}
+            className="auth-button github"
+            disabled={loading || !supabase}
+          >
+            GitHub でログイン
+          </button>
+        </div>
         {!supabase && (
           <p
             style={{
