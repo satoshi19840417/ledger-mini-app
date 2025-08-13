@@ -57,7 +57,7 @@ export default function PasswordResetCallback() {
         <h2>パスワード更新</h2>
         <div className='card'>
           <p>パスワードを更新しました。ログインし直してください。</p>
-          <a href='/'>ログイン画面へ</a>
+          <a href='/login'>ログイン画面へ</a>
         </div>
       </section>
     );
