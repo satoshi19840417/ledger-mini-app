@@ -168,6 +168,11 @@
   font-size: 0.875rem;
 }
 
+.forgot-password {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
 .auth-link {
   color: #667eea;
   font-weight: 500;

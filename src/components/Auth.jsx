@@ -18,6 +18,15 @@ export default function Auth({ onSkipAuth }) {
     }
   }, [showSuccess]);
 
+  const normalizeAuthError = (error) => {
+    if (!error?.message) return '';
+    return error.message === 'Invalid login credentials'
+      ? 'メールアドレスまたはパスワードが正しくありません。'
+      : error.message.includes('Email address') && error.message.includes('invalid')
+      ? '有効なメールアドレスを入力してください（例: your-email@gmail.com）'
+      : error.message;
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     
@@ -97,6 +106,29 @@ export default function Auth({ onSkipAuth }) {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!supabase) {
+      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setMessage('パスワードリセットのメールを送信しました。');
+    } catch (error) {
+      setError(normalizeAuthError(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLocalMode = () => {
     // ローカルストレージモードで起動
     localStorage.setItem('localMode', 'true');
@@ -145,16 +177,46 @@ export default function Auth({ onSkipAuth }) {
               戻る
             </button>
           </div>
-        ) : (
-          <>
-            {message && (
-              <div className="auth-message success">{message}</div>
-            )}
-            {error && (
-              <div className="auth-message error">{error}</div>
-            )}
-            {/* ローカルモードボタン */}
-            <div style={{ marginBottom: '1.5rem' }}>
+{/* 成功/エラーのメッセージパネル */}
+{message && <div className="auth-message success">{message}</div>}
+{error   && <div className="auth-message error">{error}</div>}
+<div style={{ marginBottom: '1.5rem' }} />
+
+<form onSubmit={handleSubmit}>
+  <button
+    type="submit"
+    className="auth-button primary"
+    disabled={loading}
+  >
+    {loading ? '処理中…' : (isSignUp ? '登録' : 'ログイン')}
+  </button>
+
+  {!isSignUp && (
+    <div className="forgot-password">
+      <button
+        type="button"
+        className="auth-link"
+        onClick={handlePasswordReset}
+      >
+        パスワードをお忘れですか？
+      </button>
+    </div>
+  )}
+</form>
+
+<div className="auth-switch">
+  {/* 既存の切替ハンドラがあれば使用してください（例: toggleAuthMode） */}
+  <span>{isSignUp ? '既にアカウントをお持ちですか？' : ''}</span>
+</div>
+
+{/* main 側のローカルモードボタンを活かす */}
+<button
+  onClick={handleLocalMode}
+  className="auth-button primary"
+  disabled={loading}
+>
+  ローカルモードで試す
+</button>
               <button
                 onClick={handleLocalMode}
                 className="auth-button primary"
