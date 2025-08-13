@@ -13,8 +13,16 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
     setOpen(false);
   };
   
-  const handlePCSubmit = () => {
-    onAdd(cat, mode);
+  const handlePCSubmit = (e) => {
+    e.preventDefault();
+    console.log('PC Button clicked - cat:', cat, 'mode:', mode);
+    console.log('onAdd function:', onAdd);
+    try {
+      onAdd(cat, mode);
+      console.log('onAdd called successfully');
+    } catch (error) {
+      console.error('Error calling onAdd:', error);
+    }
   };
 
   return (
@@ -28,7 +36,7 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
       <td style={{ borderBottom: '1px solid #f0f0f0', padding: 6 }}>
         {isMobile ? (
           <>
-            <button onClick={() => setOpen(true)}>ルール追加</button>
+            <button type="button" onClick={() => setOpen(true)}>ルール追加</button>
             <FullScreenModal
               open={open}
               onClose={() => setOpen(false)}
@@ -56,7 +64,7 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
               <option value="contains">正規表現なし</option>
               <option value="regex">正規表現</option>
             </select>
-            <button onClick={handlePCSubmit}>ルール追加</button>
+            <button type="button" onClick={handlePCSubmit}>ルール追加</button>
           </>
         )}
       </td>

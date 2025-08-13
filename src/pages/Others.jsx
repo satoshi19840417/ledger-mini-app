@@ -19,8 +19,11 @@ export default function Others({ yenUnit }) {
   }, [state.transactions, selectedKind]);
 
   const addRule = newRule => {
+    console.log('addRule called with:', newRule);
+    console.log('Current rules:', state.rules);
     dispatch({ type: 'setRules', payload: [...state.rules, newRule] });
     dispatch({ type: 'applyRules' });
+    console.log('Rule added and applied');
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
