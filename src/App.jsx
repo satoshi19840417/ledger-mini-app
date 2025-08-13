@@ -685,5 +685,7 @@ function Dashboard({
   .drawer-panel{position:fixed;right:0;left:auto;top:0;bottom:0}
   .content{margin-right:min(82vw,320px);margin-left:0}
 }
-`;
 `}</style>
+    </section>
+  );
+}
