@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient.js';
 import './Auth.css';
 
@@ -98,29 +99,6 @@ export default function Auth({ onSkipAuth }) {
     }
   };
 
-  const handlePasswordReset = async () => {
-    if (!supabase) {
-      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
-      return;
-    }
-
-    setLoading(true);
-    setMessage('');
-    setError('');
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin,
-      });
-      if (error) throw error;
-      setMessage('パスワードリセットのメールを送信しました。');
-    } catch (error) {
-      setError(normalizeAuthError(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLocalMode = () => {
     // ローカルストレージモードで起動
     localStorage.setItem('localMode', 'true');
@@ -213,35 +191,34 @@ export default function Auth({ onSkipAuth }) {
             </small>
           </div>
           
-          <div className="form-group">
-            <label htmlFor="password">パスワード</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              minLength={6}
-            />
-          </div>
-          
-          <button
-            type="submit"
-            className="auth-button primary"
-            disabled={loading}
-          >
-            {loading ? '処理中...' : (isSignUp ? '登録' : 'ログイン')}
-          </button>
-          {!isSignUp && (
-            <div className="forgot-password">
-              <button type="button" className="auth-link" onClick={handlePasswordReset}>
-                パスワードをお忘れですか？
-              </button>
+            <div className="form-group">
+              <label htmlFor="password">パスワード</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={6}
+              />
             </div>
-          )}
-        </form>
+
+            {!isSignUp && (
+              <div className="auth-forgot">
+                <Link to="/forgot" className="auth-link">パスワードをお忘れですか？</Link>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="auth-button primary"
+              disabled={loading}
+            >
+              {loading ? '処理中...' : (isSignUp ? '登録' : 'ログイン')}
+            </button>
+          </form>
 
         <div className="auth-switch">
           {isSignUp ? (
