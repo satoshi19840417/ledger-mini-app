@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient.js';
+import { normalizeAuthError } from '../utils/authErrors.js';
 import './Auth.css';
 
 export default function Auth({ onSkipAuth }) {
@@ -9,15 +10,6 @@ export default function Auth({ onSkipAuth }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-
-  const normalizeAuthError = (error) => {
-    if (!error?.message) return '';
-    return error.message === 'Invalid login credentials'
-      ? 'メールアドレスまたはパスワードが正しくありません。'
-      : error.message.includes('Email address') && error.message.includes('invalid')
-      ? '有効なメールアドレスを入力してください（例: your-email@gmail.com）'
-      : error.message;
-  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -63,11 +55,7 @@ export default function Auth({ onSkipAuth }) {
         window.location.reload();
       }
     } catch (error) {
-      setError(error.message === 'Invalid login credentials' 
-        ? 'メールアドレスまたはパスワードが正しくありません。' 
-        : error.message.includes('Email address') && error.message.includes('invalid')
-        ? '有効なメールアドレスを入力してください（例: your-email@gmail.com）'
-        : error.message);
+      setError(normalizeAuthError(error));
     } finally {
       setLoading(false);
     }
