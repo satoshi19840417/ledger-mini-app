@@ -75,6 +75,9 @@ export default function Auth({ onSkipAuth }) {
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('Google Sign-In clicked');
+    console.log('Supabase client:', supabase);
+    
     if (!supabase) {
       setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
       return;
@@ -84,22 +87,44 @@ export default function Auth({ onSkipAuth }) {
     setError('');
 
     try {
+      console.log('Attempting Google OAuth sign-in...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin },
+        options: { 
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
       });
 
-      if (error) throw error;
+      console.log('OAuth response:', { data, error });
 
-      if (data?.url) window.location.href = data.url;
+      if (error) {
+        console.error('OAuth error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('Redirecting to:', data.url);
+        window.location.href = data.url;
+      } else {
+        console.error('No redirect URL received');
+        setError('認証URLが取得できませんでした');
+      }
     } catch (error) {
-      setError(error.message);
+      console.error('Google sign-in error:', error);
+      setError(error.message || '認証に失敗しました');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGitHubSignIn = async () => {
+    console.log('GitHub Sign-In clicked');
+    console.log('Supabase client:', supabase);
+    
     if (!supabase) {
       setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
       return;
@@ -109,6 +134,7 @@ export default function Auth({ onSkipAuth }) {
     setError('');
 
     try {
+      console.log('Attempting GitHub OAuth sign-in...');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
@@ -117,12 +143,23 @@ export default function Auth({ onSkipAuth }) {
         },
       });
 
-      if (error) throw error;
+      console.log('OAuth response:', { data, error });
 
-      if (data?.url) window.location.href = data.url;
+      if (error) {
+        console.error('OAuth error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log('Redirecting to:', data.url);
+        window.location.href = data.url;
+      } else {
+        console.error('No redirect URL received');
+        setError('認証URLが取得できませんでした');
+      }
     } catch (error) {
-      toast.error(error.message);
-      setError('');
+      console.error('GitHub sign-in error:', error);
+      setError(error.message || '認証に失敗しました');
     } finally {
       setLoading(false);
     }
