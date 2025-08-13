@@ -7,6 +7,7 @@ import NetBalance from './NetBalance.jsx';
 import PieByCategory from './PieByCategory.jsx';
 import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
+import PasswordReset from './components/PasswordReset.jsx';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
 const MonthlyAnalysis = lazy(() => import('./pages/MonthlyAnalysis.jsx'));
@@ -345,6 +346,14 @@ function Dashboard({
   );
 }
 
+  
+  // パスワードリセットのコールバック処理を確認
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const isPasswordReset = hashParams.get('type') === 'recovery' && hashParams.get('access_token');
+  
+  if (isPasswordReset) {
+    return <PasswordReset />;
+  }
   
   // ローディング中は何も表示しない
   if (loading && !isLocalMode) {

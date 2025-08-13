@@ -133,6 +133,11 @@ export default function Auth({ onSkipAuth }) {
       setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
       return;
     }
+    
+    if (!email) {
+      setError('メールアドレスを入力してください。');
+      return;
+    }
 
     setLoading(true);
     setMessage('');
@@ -140,10 +145,10 @@ export default function Auth({ onSkipAuth }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}/#type=recovery`,
       });
       if (error) throw error;
-      setMessage('パスワードリセットのメールを送信しました。');
+      setMessage('パスワードリセットのメールを送信しました。メールをご確認ください。');
     } catch (error) {
       setError(normalizeAuthError(error));
     } finally {

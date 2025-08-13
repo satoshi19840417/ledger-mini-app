@@ -13,7 +13,15 @@
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(git cherry-pick:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(claude usage)",
+      "Bash(clear)",
+      "Bash(npm run build:*)",
+      "Bash(pnpm run:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm build:*)"
     ],
     "deny": [],
     "ask": []
