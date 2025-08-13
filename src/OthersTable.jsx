@@ -12,6 +12,10 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
     onAdd(cat, mode);
     setOpen(false);
   };
+  
+  const handlePCSubmit = () => {
+    onAdd(cat, mode);
+  };
 
   return (
     <tr>
@@ -52,10 +56,7 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
               <option value="contains">正規表現なし</option>
               <option value="regex">正規表現</option>
             </select>
-            <button onClick={() => {
-              console.log('Button clicked with:', cat, mode);
-              onAdd(cat, mode);
-            }}>ルール追加</button>
+            <button onClick={handlePCSubmit}>ルール追加</button>
           </>
         )}
       </td>
@@ -99,16 +100,13 @@ export default function OthersTable({ rows, addRule, isMobile, kind, yenUnit }) 
             <OthersRow
               key={row.name}
               row={row}
-              onAdd={(cat, mode) => {
-                console.log('onAdd called with:', { cat, mode, rowName: row.name });
-                addRule({
-                  pattern: row.name,
-                  mode,
-                  target: 'memo',
-                  category: cat,
-                  kind
-                });
-              }}
+              onAdd={(cat, mode) => addRule({
+                pattern: row.name,
+                mode,
+                target: 'memo',
+                category: cat,
+                kind
+              })}
               isMobile={isMobile}
               yenUnit={yenUnit}
             />
