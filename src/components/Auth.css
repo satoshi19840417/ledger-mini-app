@@ -120,16 +120,25 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.auth-button.google {
+.auth-button.oauth {
   background: white;
   color: #374151;
   border: 1px solid #d1d5db;
+}
+
+.auth-button.oauth:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.oauth-buttons {
+  display: flex;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.auth-button.google:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+.oauth-buttons .auth-button {
+  flex: 1;
 }
 
 .auth-button:disabled {

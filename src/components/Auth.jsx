@@ -89,6 +89,35 @@ export default function Auth({ onSkipAuth }) {
     }
   };
 
+  const handleGitHubSignIn = async () => {
+    if (!supabase) {
+      setError('Supabase接続が利用できません。ローカルモードをご利用ください。');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: window.location.origin,
+          scopes: 'read:user user:email',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) window.location.href = data.url;
+    } catch (error) {
+      setError(error.message);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLocalMode = () => {
     // ローカルストレージモードで起動
     localStorage.setItem('localMode', 'true');
@@ -142,14 +171,24 @@ export default function Auth({ onSkipAuth }) {
           <span>または</span>
         </div>
 
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          className="auth-button google"
-          disabled={loading || !supabase}
-        >
-          Google でログイン
-        </button>
+        <div className="oauth-buttons">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="auth-button oauth"
+            disabled={loading || !supabase}
+          >
+            Google でログイン
+          </button>
+          <button
+            type="button"
+            onClick={handleGitHubSignIn}
+            className="auth-button oauth"
+            disabled={loading || !supabase}
+          >
+            GitHubでサインイン
+          </button>
+        </div>
         {!supabase && (
           <p
             style={{
