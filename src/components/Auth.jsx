@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import './Auth.css';
 
@@ -9,6 +9,14 @@ export default function Auth({ onSkipAuth }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const successRef = useRef(null);
+
+  useEffect(() => {
+    if (showSuccess && successRef.current) {
+      successRef.current.focus();
+    }
+  }, [showSuccess]);
 
   const normalizeAuthError = (error) => {
     if (!error?.message) return '';
@@ -49,7 +57,7 @@ export default function Auth({ onSkipAuth }) {
           setMessage('登録が完了しました！自動的にログインしています...');
           window.location.reload();
         } else {
-          setMessage('確認メールを送信しました。メールをご確認ください。');
+          setShowSuccess(true);
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -147,145 +155,185 @@ export default function Auth({ onSkipAuth }) {
         <h1 className="auth-title">家計簿カテゴリ管理</h1>
         <h2 className="auth-subtitle">{isSignUp ? '新規登録' : 'ログイン'}</h2>
         
-        {message && (
-          <div className="auth-message success">{message}</div>
-        )}
-        
-        {error && (
-          <div className="auth-message error">{error}</div>
-        )}
-
-        {/* ローカルモードボタン */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <button
-            onClick={handleLocalMode}
-            className="auth-button primary"
-            disabled={loading}
-            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+        {showSuccess ? (
+          <div
+            ref={successRef}
+            tabIndex="-1"
+            className="auth-message success"
+            aria-live="assertive"
           >
-            💾 ローカルストレージモードで開始
-          </button>
-          <p style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center', marginTop: '0.5rem' }}>
-            アカウント登録なしで、ブラウザ内にデータを保存します
-          </p>
-        </div>
-
-        <div className="auth-divider">
-          <span>または</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          className="auth-button google"
-          disabled={loading || !supabase}
-        >
-          Google でログイン
-        </button>
-        {!supabase && (
-          <p
-            style={{
-              fontSize: '0.75rem',
-              color: '#dc2626',
-              textAlign: 'center',
-              marginTop: '-0.5rem',
-              marginBottom: '1rem',
-            }}
-          >
-            Supabase設定が必要
-          </p>
-        )}
-
-        <form onSubmit={handleAuth} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email">メールアドレス</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-            <small style={{ color: '#6b7280', fontSize: '0.75rem' }}>
-              ※ クラウド同期には実際のメールアドレスが必要です
-            </small>
+            <p>確認メールを送信しました。受信トレイと迷惑メールフォルダーを確認してください。</p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSuccess(false);
+                setMessage('');
+                setError('');
+              }}
+              className="auth-button primary"
+              aria-label="登録フォームに戻る"
+              style={{ marginTop: '1rem' }}
+            >
+              戻る
+            </button>
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="password">パスワード</label>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              minLength={6}
-            />
-          </div>
-          
-          <button
-            type="submit"
-            className="auth-button primary"
-            disabled={loading}
-          >
-            {loading ? '処理中...' : (isSignUp ? '登録' : 'ログイン')}
-          </button>
-          {!isSignUp && (
-            <div className="forgot-password">
-              <button type="button" className="auth-link" onClick={handlePasswordReset}>
-                パスワードをお忘れですか？
+{/* 成功/エラーのメッセージパネル */}
+{message && <div className="auth-message success">{message}</div>}
+{error   && <div className="auth-message error">{error}</div>}
+<div style={{ marginBottom: '1.5rem' }} />
+
+<form onSubmit={handleSubmit}>
+  <button
+    type="submit"
+    className="auth-button primary"
+    disabled={loading}
+  >
+    {loading ? '処理中…' : (isSignUp ? '登録' : 'ログイン')}
+  </button>
+
+  {!isSignUp && (
+    <div className="forgot-password">
+      <button
+        type="button"
+        className="auth-link"
+        onClick={handlePasswordReset}
+      >
+        パスワードをお忘れですか？
+      </button>
+    </div>
+  )}
+</form>
+
+<div className="auth-switch">
+  {/* 既存の切替ハンドラがあれば使用してください（例: toggleAuthMode） */}
+  <span>{isSignUp ? '既にアカウントをお持ちですか？' : ''}</span>
+</div>
+
+{/* main 側のローカルモードボタンを活かす */}
+<button
+  onClick={handleLocalMode}
+  className="auth-button primary"
+  disabled={loading}
+>
+  ローカルモードで試す
+</button>
+              <button
+                onClick={handleLocalMode}
+                className="auth-button primary"
+                disabled={loading}
+                style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+              >
+                💾 ローカルストレージモードで開始
               </button>
+              <p style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center', marginTop: '0.5rem' }}>
+                アカウント登録なしで、ブラウザ内にデータを保存します
+              </p>
             </div>
-          )}
-        </form>
-
-        <div className="auth-switch">
-          {isSignUp ? (
-            <>
-              既にアカウントをお持ちですか？{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(false);
-                  setMessage('');
-                  setError('');
+            <div className="auth-divider">
+              <span>または</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="auth-button google"
+              disabled={loading || !supabase}
+            >
+              Google でログイン
+            </button>
+            {!supabase && (
+              <p
+                style={{
+                  fontSize: '0.75rem',
+                  color: '#dc2626',
+                  textAlign: 'center',
+                  marginTop: '-0.5rem',
+                  marginBottom: '1rem',
                 }}
-                className="auth-link"
               >
-                ログイン
-              </button>
-            </>
-          ) : (
-            <>
-              アカウントをお持ちでないですか？{' '}
+                Supabase設定が必要
+              </p>
+            )}
+            <form onSubmit={handleAuth} className="auth-form">
+              <div className="form-group">
+                <label htmlFor="email">メールアドレス</label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <small style={{ color: '#6b7280', fontSize: '0.75rem' }}>
+                  ※ クラウド同期には実際のメールアドレスが必要です
+                </small>
+              </div>
+              <div className="form-group">
+                <label htmlFor="password">パスワード</label>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  minLength={6}
+                />
+              </div>
               <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(true);
-                  setMessage('');
-                  setError('');
-                }}
-                className="auth-link"
+                type="submit"
+                className="auth-button primary"
+                disabled={loading}
               >
-                新規登録
+                {loading ? '処理中...' : (isSignUp ? '登録' : 'ログイン')}
               </button>
-            </>
-          )}
-        </div>
-
-        <div style={{ marginTop: '2rem', padding: '1rem', background: '#f3f4f6', borderRadius: '0.5rem' }}>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
-            💡 選択できるモード
-          </h3>
-          <ul style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '1rem', lineHeight: '1.5' }}>
-            <li><strong>ローカルストレージモード:</strong> データはブラウザに保存（同期なし）</li>
-            <li><strong>クラウド同期モード:</strong> 複数デバイスでデータ共有（要登録）</li>
-          </ul>
-        </div>
+            </form>
+            <div className="auth-switch">
+              {isSignUp ? (
+                <>
+                  既にアカウントをお持ちですか？{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSignUp(false);
+                      setMessage('');
+                      setError('');
+                    }}
+                    className="auth-link"
+                  >
+                    ログイン
+                  </button>
+                </>
+              ) : (
+                <>
+                  アカウントをお持ちでないですか？{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSignUp(true);
+                      setMessage('');
+                      setError('');
+                    }}
+                    className="auth-link"
+                  >
+                    新規登録
+                  </button>
+                </>
+              )}
+            </div>
+            <div style={{ marginTop: '2rem', padding: '1rem', background: '#f3f4f6', borderRadius: '0.5rem' }}>
+              <h3 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
+                💡 選択できるモード
+              </h3>
+              <ul style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '1rem', lineHeight: '1.5' }}>
+                <li><strong>ローカルストレージモード:</strong> データはブラウザに保存（同期なし）</li>
+                <li><strong>クラウド同期モード:</strong> 複数デバイスでデータ共有（要登録）</li>
+              </ul>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
