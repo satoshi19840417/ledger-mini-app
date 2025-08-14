@@ -64,13 +64,12 @@ export const dbService = {
           user_id: userId,
           date: dateValue,
           amount: amount !== undefined && !isNaN(amount) ? amount : 0,
-          category: tx.category || tx.カテゴリ || null,
-          description: tx.description || tx.説明 || null,
-          detail: tx.detail || tx.詳細 || null,
-          memo: tx.memo || tx.メモ || null,
-          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'),
-          created_at: tx.created_at || new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          category: tx.category || tx.カテゴリ || '',  // nullの代わりに空文字列を使用
+          description: tx.description || tx.説明 || '',  // nullの代わりに空文字列を使用
+          detail: tx.detail || tx.詳細 || '',  // nullの代わりに空文字列を使用
+          memo: tx.memo || tx.メモ || '',  // nullの代わりに空文字列を使用
+          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income')
+          // created_atとupdated_atはデータベースで自動設定されるため削除
         };
       });
 
@@ -79,13 +78,10 @@ export const dbService = {
       console.log('Sample transaction:', mappedTransactions[0]);
 
       // 複合主キー(id, user_id)に対してupsert
-      // 注: SupabaseのバージョンによってはonConflictの指定方法が異なる
+      // 注: onConflictを指定しない場合、主キーで自動的に判定される
       const { data, error } = await supabase
         .from('transactions')
-        .upsert(mappedTransactions, {
-          onConflict: 'id',  // idのみで試す
-          ignoreDuplicates: false
-        });
+        .upsert(mappedTransactions);
       
       if (error) {
         console.error('Supabase error details:', {
@@ -156,8 +152,8 @@ export const dbService = {
           rules.map(rule => ({
             ...rule,
             user_id: userId,
-            id: rule.id || crypto.randomUUID(),
-            created_at: rule.created_at || new Date().toISOString(),
+            id: rule.id || crypto.randomUUID()
+            // created_atはデータベースで自動設定されるため削除
           }))
         );
       
