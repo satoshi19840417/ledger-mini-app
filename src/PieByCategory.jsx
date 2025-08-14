@@ -25,22 +25,30 @@ function ScrollableLegend({ payload }) {
       style={{
         listStyle: 'none',
         margin: 0,
-        padding: 0,
+        padding: isMobile ? '0 8px' : 0,
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         flexWrap: isMobile ? 'nowrap' : 'wrap',
-        maxHeight: isMobile ? 72 : undefined,
+        maxHeight: isMobile ? 100 : undefined,
         overflowY: isMobile ? 'auto' : undefined,
+        fontSize: isMobile ? '12px' : '14px',
+        justifyContent: isMobile ? 'flex-start' : 'center',
+        gap: isMobile ? '4px' : '8px',
       }}
     >
       {payload?.map(entry => {
         const label = entry.value || '';
-        const truncated = label.length > 8 ? `${label.slice(0, 8)}…` : label;
+        const truncated = isMobile && label.length > 10 ? `${label.slice(0, 10)}…` : label;
         return (
           <li
             key={label}
             title={`${label} ${entry.formatted ?? ''}`}
-            style={{ marginRight: 12, display: 'flex', alignItems: 'center' }}
+            style={{ 
+              marginRight: isMobile ? 0 : 12, 
+              display: 'flex', 
+              alignItems: 'center',
+              padding: isMobile ? '2px 0' : '0'
+            }}
           >
             <span
               style={{
@@ -49,11 +57,17 @@ function ScrollableLegend({ payload }) {
                 height: 10,
                 backgroundColor: entry.color,
                 marginRight: 4,
+                flexShrink: 0,
               }}
             />
-            <span>{truncated}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{truncated}</span>
             {entry.formatted && (
-              <span style={{ marginLeft: 4, color: 'var(--muted)' }}>
+              <span style={{ 
+                marginLeft: 4, 
+                color: 'var(--muted)',
+                fontSize: isMobile ? '11px' : '12px',
+                whiteSpace: 'nowrap'
+              }}>
                 {entry.formatted}
               </span>
             )}
@@ -165,24 +179,47 @@ export default function PieByCategory({
   };
 
   return (
-    <ResponsiveContainer width="100%" height={isMobile ? 250 : 200}>
-      <RePieChart margin={{ top: 0, right: 0, bottom: isMobile ? 50 : 0, left: 0 }}>
-        <Pie 
-          data={dataWithColors} 
-          dataKey="value" 
-          nameKey="name" 
-          label={renderCustomLabel}
-          labelLine={false}
-          outerRadius={isMobile ? "70%" : "80%"}
-        >
-          {dataWithColors.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.fill} />
-          ))}
-        </Pie>
-        <Legend content={<ScrollableLegend />} payload={legendPayload} />
-        <Tooltip formatter={tooltipFormatter} />
-      </RePieChart>
-    </ResponsiveContainer>
+    <div style={{ 
+      width: '100%',
+      maxWidth: isMobile ? '100%' : 'none',
+      margin: '0 auto'
+    }}>
+      <ResponsiveContainer width="100%" height={isMobile ? 300 : 250}>
+        <RePieChart margin={{ 
+          top: isMobile ? 10 : 0, 
+          right: isMobile ? 10 : 30, 
+          bottom: isMobile ? 80 : 20, 
+          left: isMobile ? 10 : 30 
+        }}>
+          <Pie 
+            data={dataWithColors} 
+            dataKey="value" 
+            nameKey="name" 
+            label={renderCustomLabel}
+            labelLine={false}
+            outerRadius={isMobile ? "65%" : "80%"}
+            cx={isMobile ? "50%" : "50%"}
+            cy={isMobile ? "45%" : "50%"}
+          >
+            {dataWithColors.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
+          </Pie>
+          <Legend 
+            content={<ScrollableLegend />} 
+            payload={legendPayload}
+            wrapperStyle={{
+              paddingTop: isMobile ? '10px' : '0px',
+              maxWidth: '100%',
+              overflow: 'auto'
+            }}
+            verticalAlign={isMobile ? "bottom" : "middle"}
+            align={isMobile ? "center" : "right"}
+          />
+          <Tooltip formatter={tooltipFormatter} />
+        </RePieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 

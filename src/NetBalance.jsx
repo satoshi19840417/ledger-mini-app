@@ -23,17 +23,27 @@ export default function NetBalance({ transactions, period, yenUnit }) {
 
   const diff = incomeTotal - expenseTotal;
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   return (
-    <div className='net-balance'>
+    <div className='net-balance' style={{ 
+      fontSize: isMobile ? '14px' : '16px',
+      padding: isMobile ? '8px' : '0'
+    }}>
       <div className='net-balance-row'>
         <span>収入</span>
-        <span>{formatAmount(incomeTotal, yenUnit)}</span>
+        <span style={{ fontWeight: 'bold' }}>{formatAmount(incomeTotal, yenUnit)}</span>
       </div>
       <div className='net-balance-row'>
         <span>支出</span>
-        <span>{formatAmount(expenseTotal, yenUnit)}</span>
+        <span style={{ fontWeight: 'bold' }}>{formatAmount(expenseTotal, yenUnit)}</span>
       </div>
-      <div className={`net-balance-row${diff < 0 ? ' negative' : ''}`}>
+      <div className={`net-balance-row${diff < 0 ? ' negative' : ''}`} style={{
+        marginTop: '8px',
+        paddingTop: '8px',
+        borderTop: '2px solid #e5e7eb',
+        fontWeight: 'bold'
+      }}>
         <span>差分</span>
         <span>{formatAmount(diff, yenUnit)}</span>
       </div>

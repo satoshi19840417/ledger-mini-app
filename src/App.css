@@ -341,6 +341,54 @@
   color: #b91c1c;
 }
 
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .card {
+    padding: 12px;
+    margin: 8px;
+    border-radius: 8px;
+  }
+  
+  .quick {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+  
+  .quick label {
+    font-size: 14px;
+    padding: 4px 8px;
+  }
+  
+  /* モバイルでのチャート表示を最適化 */
+  .recharts-wrapper {
+    font-size: 12px !important;
+  }
+  
+  .recharts-cartesian-axis-tick-value {
+    font-size: 10px !important;
+  }
+  
+  /* スクロール可能な領域のスタイル改善 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
 /* App Shell Styles */
 :root { 
   --bg:#fff; 
