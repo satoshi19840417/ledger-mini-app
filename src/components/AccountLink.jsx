@@ -103,7 +103,8 @@ export default function AccountLink({ user }) {
       if (error) throw error;
 
       toast.success('アカウント連携を解除しました');
-      await fetchIdentities(); // リストを更新
+      await supabase.auth.refreshSession();
+      await fetchIdentities();
     } catch (error) {
       console.error('Unlink account error:', error);
       toast.error(`連携解除に失敗しました: ${error.message}`);
