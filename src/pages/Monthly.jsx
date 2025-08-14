@@ -59,6 +59,37 @@ export default function Monthly({
     <section>
       <h1 className="text-2xl font-bold mb-4">月次分析</h1>
       <div className='card'>
+        {months.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ marginRight: 8 }}>月選択:</label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            >
+              {months.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 12 }}>
+            {selectedMonth ? `${selectedMonth} カテゴリー別内訳` : 'カテゴリー別内訳'}
+          </h3>
+          <PieByCategory
+            transactions={monthTxs}
+            period="all"
+            yenUnit={yenUnit}
+            lockColors={lockColors}
+            hideOthers={hideOthers}
+            kind={kind}
+          />
+        </div>
+
         <div style={{ marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <label style={{ display: 'flex', alignItems: 'center' }}>
             <input
@@ -76,38 +107,8 @@ export default function Monthly({
             />
             <span className='ml-2'>家賃を除外して分析</span>
           </label>
-          {months.length > 0 && (
-            <div style={{ marginLeft: 'auto' }}>
-              <label style={{ marginRight: 8 }}>月選択:</label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd' }}
-              >
-                {months.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
-        
-        <div style={{ marginBottom: 24 }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 12 }}>
-            {selectedMonth ? `${selectedMonth} カテゴリー別内訳` : 'カテゴリー別内訳'}
-          </h3>
-          <PieByCategory
-            transactions={monthTxs}
-            period="all"
-            yenUnit={yenUnit}
-            lockColors={lockColors}
-            hideOthers={hideOthers}
-            kind={kind}
-          />
-        </div>
-        
+
         <div ref={chartContainerRef} style={{ position: 'relative' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 12 }}>月次推移</h3>
           <BarByMonth
