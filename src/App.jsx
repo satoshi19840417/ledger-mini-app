@@ -14,6 +14,7 @@ const MonthlyAnalysis = lazy(() => import('./pages/MonthlyAnalysis.jsx'));
 const Yearly = lazy(() => import('./pages/Yearly.jsx'));
 const ImportCsv = lazy(() => import('./pages/ImportCsv.jsx'));
 const ExportCsv = lazy(() => import('./pages/ExportCsv.jsx'));
+const DataCleanup = lazy(() => import('./pages/DataCleanup.jsx'));
 const Rules = lazy(() => import('./pages/Rules.jsx'));
 const Transactions = lazy(() => import('./pages/Transactions.jsx'));
 const Others = lazy(() => import('./pages/Others.jsx'));
@@ -30,6 +31,7 @@ const NAV = {
   data: [
     { key: 'import', label: 'CSV取込' },
     { key: 'export', label: 'CSVエクスポート' },
+    { key: 'cleanup', label: 'データクリーンアップ' },
     { key: 'rules', label: '再分類ルール' },
     { key: 'others', label: 'その他集計' },
     { key: 'tx', label: '取引一覧' },
@@ -630,6 +632,7 @@ function Dashboard({
           )}
           {page === 'import' && <ImportCsv />}
           {page === 'export' && <ExportCsv />}
+          {page === 'cleanup' && <DataCleanup />}
           {page === 'rules' && <Rules />}
           {page === 'others' && <Others yenUnit={yenUnit} />}
           {page === 'tx' && <Transactions />}

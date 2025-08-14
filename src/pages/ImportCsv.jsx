@@ -98,7 +98,7 @@ export default function ImportCsv() {
 
   return (
     <section>
-      <h2>CSV取込</h2>
+      <h1 className="text-2xl font-bold mb-4">CSV取込</h1>
       <div className='card' style={{ overflow: 'visible' }}>
         <div className='space-y-2'>
           <input type='file' multiple onChange={handleChange} />

@@ -47,6 +47,7 @@ export default function Monthly({
 
   return (
     <section>
+      <h1 className="text-2xl font-bold mb-4">月次分析</h1>
       <div className='card'>
         <div style={{ marginBottom: 16 }}>
           <label>

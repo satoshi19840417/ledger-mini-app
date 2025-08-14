@@ -142,7 +142,7 @@ export default function Transactions() {
 
   return (
     <section>
-      <h2>取引一覧</h2>
+      <h1 className="text-2xl font-bold mb-4">取引一覧</h1>
       <div className='card'>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <div>（{filtered.length} 件の取引）</div>

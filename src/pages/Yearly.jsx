@@ -21,6 +21,7 @@ export default function Yearly({
 
   return (
     <section>
+      <h1 className="text-2xl font-bold mb-4">年次分析</h1>
       <div className='card'>
         <div style={{ marginBottom: 16 }}>
           <label>
