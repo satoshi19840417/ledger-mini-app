@@ -10,7 +10,7 @@ export default function Monthly({
   hideOthers,
   kind,
 }) {
-  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [excludeCardPayments, setExcludeCardPayments] = useState(true);
   const [excludeRent, setExcludeRent] = useState(false);
   const chartContainerRef = useRef(null);
   // カード支払いと家賃を除外するかどうかでフィルタリング
