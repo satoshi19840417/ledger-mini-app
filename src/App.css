@@ -530,6 +530,11 @@ body {
   z-index:101;
 }
 
+.user-display {
+  font-weight:600;
+  margin-bottom:.75rem;
+}
+
 .drawer-panel h4 {
   margin:.75rem 0 .25rem;
   color:var(--muted);
