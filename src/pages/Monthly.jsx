@@ -10,14 +10,23 @@ export default function Monthly({
   hideOthers,
   kind,
 }) {
+  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  // カード支払いを除外するかどうかでフィルタリング
+  const filteredTransactions = useMemo(() => {
+    if (excludeCardPayments) {
+      return transactions.filter(tx => tx.category !== 'カード支払い');
+    }
+    return transactions;
+  }, [transactions, excludeCardPayments]);
+
   const months = useMemo(() => {
     const set = new Set(
-      transactions
+      filteredTransactions
         .filter((tx) => tx.kind === kind)
         .map((tx) => tx.date.slice(0, 7)),
     );
     return Array.from(set).sort();
-  }, [transactions, kind]);
+  }, [filteredTransactions, kind]);
 
   const [selectedMonth, setSelectedMonth] = useState(
     months[months.length - 1] || '',
@@ -29,18 +38,28 @@ export default function Monthly({
 
   const monthTxs = useMemo(
     () =>
-      transactions.filter(
+      filteredTransactions.filter(
         (tx) =>
           tx.kind === kind && tx.date.slice(0, 7) === selectedMonth,
       ),
-    [transactions, selectedMonth, kind],
+    [filteredTransactions, selectedMonth, kind],
   );
 
   return (
     <section>
       <div className='card'>
+        <div style={{ marginBottom: 16 }}>
+          <label>
+            <input
+              type='checkbox'
+              checked={excludeCardPayments}
+              onChange={(e) => setExcludeCardPayments(e.target.checked)}
+            />
+            <span className='ml-2'>カード支払いを除外して分析</span>
+          </label>
+        </div>
         <BarByMonth
-          transactions={transactions}
+          transactions={filteredTransactions}
           period={period}
           yenUnit={yenUnit}
           lockColors={lockColors}

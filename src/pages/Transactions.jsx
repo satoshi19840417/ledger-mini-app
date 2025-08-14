@@ -21,6 +21,7 @@ export default function Transactions() {
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState(null);
   const [editedCategories, setEditedCategories] = useState({});
+  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
   const [newRule, setNewRule] = useState({
     pattern: '',
     mode: 'contains',
@@ -31,6 +32,7 @@ export default function Transactions() {
 
   const filtered = useMemo(() => {
     return txs.filter(tx => {
+      if (excludeCardPayments && tx.category === 'カード支払い') return false;
       if (startDate && tx.date < startDate) return false;
       if (endDate && tx.date > endDate) return false;
       if (categories.length && !categories.includes(tx.category)) return false;
@@ -46,11 +48,11 @@ export default function Transactions() {
       if (type === 'expense' && tx.kind !== 'expense') return false;
       return true;
     });
-  }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type]);
+  }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments]);
 
   useEffect(() => {
     setPage(1);
-  }, [startDate, endDate, categories, keyword, minAmount, maxAmount, type]);
+  }, [startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -134,6 +136,7 @@ export default function Transactions() {
     setMinAmount('');
     setMaxAmount('');
     setType('all');
+    setExcludeCardPayments(false);
     setPage(1);
   };
 
@@ -198,6 +201,14 @@ export default function Transactions() {
             <option value='expense'>支出</option>
             <option value='income'>収入</option>
           </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type='checkbox'
+              checked={excludeCardPayments}
+              onChange={(e) => setExcludeCardPayments(e.target.checked)}
+            />
+            <span>カード支払い除外</span>
+          </label>
           <button 
             onClick={clearFilters}
             style={{ 

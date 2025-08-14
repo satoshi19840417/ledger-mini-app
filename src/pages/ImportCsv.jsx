@@ -9,6 +9,7 @@ export default function ImportCsv() {
   const [headerMap, setHeaderMap] = useState({});
   const [errors, setErrors] = useState([]);
   const [importInfo, setImportInfo] = useState(null);
+  const [autoDetectCardPayments, setAutoDetectCardPayments] = useState(true);
 
   useEffect(() => {
     if (state.lastImportInfo) {
@@ -26,14 +27,63 @@ export default function ImportCsv() {
       headerMap: map,
       errors: errs,
     } = await parseCsvFiles(files);
-    setPreview(transactions);
+    
+    // カード引き落としの自動判定
+    const processedTransactions = autoDetectCardPayments 
+      ? detectCardPayments(transactions)
+      : transactions;
+    
+    setPreview(processedTransactions);
     setHeaderMap(map);
     setErrors(errs);
-    if (transactions.length > 0) {
-      dispatch({ type: 'importTransactions', payload: transactions, append });
+    if (processedTransactions.length > 0) {
+      dispatch({ type: 'importTransactions', payload: processedTransactions, append });
       dispatch({ type: 'applyRules' });
     }
     e.target.value = '';
+  }
+
+  // カード引き落としパターンを検出してカテゴリを設定
+  function detectCardPayments(transactions) {
+    const cardPatterns = [
+      /カード.*引.*落/i,
+      /クレジット.*引.*落/i,
+      /VISA.*引.*落/i,
+      /JCB.*引.*落/i,
+      /AMEX.*引.*落/i,
+      /マスターカード/i,
+      /楽天カード/i,
+      /イオンカード/i,
+      /セゾンカード/i,
+      /三井住友カード/i,
+      /UCカード/i,
+      /DCカード/i,
+      /ニコスカード/i,
+      /オリコカード/i,
+      /ジャックスカード/i,
+      /エポスカード/i,
+      /ビューカード/i,
+      /ダイナースカード/i,
+      /カード.*支払/i,
+      /カード.*決済/i,
+    ];
+    
+    return transactions.map(tx => {
+      const searchText = [
+        tx.description,
+        tx.detail,
+        tx.memo
+      ].filter(Boolean).join(' ');
+      
+      const isCardPayment = cardPatterns.some(pattern => 
+        pattern.test(searchText)
+      );
+      
+      if (isCardPayment && tx.amount < 0) {
+        return { ...tx, category: 'カード支払い' };
+      }
+      return tx;
+    });
   }
 
   const KNOWN_FIELDS = [
@@ -59,6 +109,14 @@ export default function ImportCsv() {
               onChange={(e) => setAppend(e.target.checked)}
             />
             <span className='ml-2'>既存の取引に追加する</span>
+          </label>
+          <label className='block'>
+            <input
+              type='checkbox'
+              checked={autoDetectCardPayments}
+              onChange={(e) => setAutoDetectCardPayments(e.target.checked)}
+            />
+            <span className='ml-2'>カード引き落としを自動判定して「カード支払い」カテゴリに分類</span>
           </label>
         </div>
         {(preview.length > 0 || errors.length > 0) && (
