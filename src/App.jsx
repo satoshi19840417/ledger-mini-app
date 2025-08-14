@@ -458,16 +458,6 @@ function Dashboard({
         </div>
         <div className='title'>
           <span>家計簿カテゴリ管理</span>
-          {state.profile?.display_name && (
-            <span style={{ 
-              fontSize: '0.8em', 
-              marginLeft: '8px',
-              color: '#6b7280',
-              fontWeight: 'normal'
-            }}>
-              ({state.profile.display_name})
-            </span>
-          )}
         </div>
         <button
           ref={burgerRef}
@@ -491,6 +481,9 @@ function Dashboard({
           className='drawer-panel'
           onClick={e => e.stopPropagation()}
         >
+          {state.profile?.display_name && (
+            <div className='user-display'>{state.profile.display_name}</div>
+          )}
           <h4>メイン</h4>
           {NAV.main.map(i => (
             <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
