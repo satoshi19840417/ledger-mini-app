@@ -115,17 +115,17 @@ export default function DataCleanup() {
     try {
       // ローカルストレージから削除
       const remainingTransactions = state.transactions.filter(tx => !selectedIds.has(tx.id));
-      
+
       // ストアを更新
       dispatch({
         type: 'importTransactions',
         payload: remainingTransactions,
         append: false
       });
-      
-      // データベースと同期
+
+      // データベースと同期（stateの更新を待たずに送信）
       if (session?.user?.id) {
-        await syncWithDatabase();
+        await syncWithDatabase(remainingTransactions);
       }
       
       toast.success(`${selectedIds.size}件のデータを削除しました`);

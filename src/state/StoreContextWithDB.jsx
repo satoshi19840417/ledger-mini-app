@@ -215,38 +215,42 @@ export function StoreProvider({ children }) {
     return stored !== null ? stored === 'true' : true;
   });
 
-  const syncWithDatabase = useCallback(async () => {
-    console.log('syncWithDatabase called');
-    console.log('Session:', session);
-    console.log('User ID:', session?.user?.id);
-    
-    if (!session?.user?.id) {
-      console.log('No user ID, returning false');
-      return false;
-    }
+  const syncWithDatabase = useCallback(
+    async (overrideTransactions) => {
+      console.log('syncWithDatabase called');
+      console.log('Session:', session);
+      console.log('User ID:', session?.user?.id);
 
-    console.log('Starting sync with transactions:', state.transactions.length);
-    dispatch({ type: 'setSyncStatus', payload: 'syncing' });
+      if (!session?.user?.id) {
+        console.log('No user ID, returning false');
+        return false;
+      }
 
-    try {
-      const [txResult, rulesResult] = await Promise.all([
-        dbService.syncTransactions(session.user.id, state.transactions),
-        dbService.syncRules(session.user.id, state.rules),
-      ]);
+      const txToSync = overrideTransactions ?? state.transactions;
+      console.log('Starting sync with transactions:', txToSync.length);
+      dispatch({ type: 'setSyncStatus', payload: 'syncing' });
 
-      if (txResult.success && rulesResult.success) {
-        dispatch({ type: 'syncComplete' });
-        return true;
-      } else {
+      try {
+        const [txResult, rulesResult] = await Promise.all([
+          dbService.syncTransactions(session.user.id, txToSync),
+          dbService.syncRules(session.user.id, state.rules),
+        ]);
+
+        if (txResult.success && rulesResult.success) {
+          dispatch({ type: 'syncComplete' });
+          return true;
+        } else {
+          dispatch({ type: 'setSyncStatus', payload: 'error' });
+          return false;
+        }
+      } catch (error) {
+        console.error('Sync error:', error);
         dispatch({ type: 'setSyncStatus', payload: 'error' });
         return false;
       }
-    } catch (error) {
-      console.error('Sync error:', error);
-      dispatch({ type: 'setSyncStatus', payload: 'error' });
-      return false;
-    }
-  }, [session, state.transactions, state.rules]);
+    },
+    [session, state.transactions, state.rules]
+  );
 
   const loadFromDatabase = useCallback(async () => {
     if (!session?.user?.id) return;
