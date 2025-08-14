@@ -12,30 +12,39 @@ export const dbService = {
         return { success: true, data: [] };
       }
 
-      // 全てのフィールドを確実にマッピング
-      const mappedTransactions = transactions.map(tx => ({
-        id: tx.id || crypto.randomUUID(),
-        user_id: userId,
-        occurred_on: tx.date || tx.occurred_on || new Date().toISOString().split('T')[0],  // 必須フィールド
-        date: tx.date || new Date().toISOString().split('T')[0],
-        amount: tx.amount !== undefined ? tx.amount : 0,
-        category: tx.category || '',
-        description: tx.description || '',
-        detail: tx.detail || '',
-        memo: tx.memo || '',
-        kind: tx.kind || 'expense',
-        hash: tx.hash || '',
-        created_at: tx.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }));
+      // 全てのフィールドを確実にマッピング（データベーススキーマに合わせる）
+      const mappedTransactions = transactions.map(tx => {
+        // 金額を数値に変換
+        let amount = tx.amount;
+        if (typeof amount === 'string') {
+          amount = parseFloat(amount.replace(/,/g, ''));
+        }
+        
+        return {
+          id: tx.id || tx.ID || crypto.randomUUID(),  // CSVのIDフィールドも考慮
+          user_id: userId,
+          date: tx.date || tx.日付 || new Date().toISOString().split('T')[0],
+          amount: amount !== undefined && !isNaN(amount) ? amount : 0,
+          category: tx.category || tx.カテゴリ || null,
+          description: tx.description || tx.説明 || null,
+          detail: tx.detail || tx.詳細 || null,
+          memo: tx.memo || tx.メモ || null,
+          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'),
+          created_at: tx.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      });
 
       console.log('Original transactions:', transactions);
       console.log('Mapped transactions:', mappedTransactions);
 
-      // onConflictを使わない方法で試す
+      // 複合主キー(id, user_id)に対してupsert
       const { data, error } = await supabase
         .from('transactions')
-        .upsert(mappedTransactions);
+        .upsert(mappedTransactions, {
+          onConflict: 'id,user_id',
+          ignoreDuplicates: false
+        });
       
       if (error) {
         console.error('Supabase error details:', {

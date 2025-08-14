@@ -20,6 +20,7 @@ const HEADER_ALIASES = {
   memo: ['memo', 'メモ', '摘要', '備考', 'コメント', '支払区分', 'お支払開始月'],
   category: ['category', 'カテゴリ', '費目', '科目', '分類', '項目', 'ラベル'],
   kind: ['kind', '収支', 'タイプ', '種別', '入出金', '取引種別', '種別（ショッピング、キャッシング、その他）'],
+  id: ['id', 'ID', 'トランザクションID', '取引ID'],
 };
 
 // Normalize header names using aliases above
@@ -112,6 +113,7 @@ function rowToTransaction(row) {
     amount,
     kind,
   };
+  if (row.id) tx.id = row.id;  // IDフィールドを保持
   if (row.description) tx.description = row.description;
   if (row.detail) tx.detail = row.detail;
   if (row.memo) tx.memo = row.memo;
