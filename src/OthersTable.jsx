@@ -88,9 +88,9 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
  *   yenUnit: 'yen' | 'man';
  * }} props
  * `addRule` は新しいルールを上位コンポーネントで保存するためのコールバック。
- * 利用側では `dispatch({ type: 'setRules', payload: [...rules, newRule] })`
- * および `dispatch({ type: 'applyRules' })` を実行する想定。
- */
+ * 利用側では `dispatch({ type: 'setRules', payload: [...rules, newRule] })` を実行した後、
+ * ルール画面の「データ反映」ボタンを押して取引に反映してください。
+*/
 export default function OthersTable({ rows, addRule, isMobile, kind, yenUnit }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>

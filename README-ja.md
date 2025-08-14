@@ -27,6 +27,7 @@ npm run dev
 ## できること
 - 複数CSVのドラッグ＆ドロップ取り込み（SJIS/UTF-8、自動ヘッダースキップ）
 - ルール管理（保存は localStorage）
+  - ルールを追加・変更した後はルール画面の「データ反映」ボタンを押して取引データに反映させます
 - 可視化（Recharts）
 - Excel/CSV 出力（xlsx/papaparse）
 
