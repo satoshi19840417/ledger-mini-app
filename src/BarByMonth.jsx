@@ -74,7 +74,7 @@ export default function BarByMonth({
   lockColors,
   hideOthers,
   kind = 'expense',
-  height = 350,
+  height = 500,
 }) {
   const scrollRef = useRef(null);
   const [touchStart, setTouchStart] = useState(null);
@@ -143,7 +143,7 @@ export default function BarByMonth({
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   // データの数に応じてグラフの最小幅を計算（1項目あたり最低80px）
-  const minBarWidth = Math.max(dataWithColors.length * 80, 350);
+  const minBarWidth = Math.max(dataWithColors.length * 80, 500);
   const chartWidth = isMobile ? Math.max(minBarWidth, width) : '100%';
   
   // タッチイベントのハンドラー
