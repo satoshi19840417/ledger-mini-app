@@ -408,45 +408,13 @@ function Dashboard({
     <div className='app-shell'>
       {/* ヘッダー */}
       <header className='header'>
-        <div className='header-controls' style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className='header-controls'>
           <select value={period} onChange={e => setPeriod(e.target.value)}>
             <option value='3m'>最近3ヶ月</option>
             <option value='6m'>半年</option>
             <option value='1y'>1年</option>
             <option value='all'>全期間</option>
           </select>
-          {session && (
-            <button
-              className='sync-btn'
-              style={{
-                padding: '0.4rem 0.6rem',
-                border: '1px solid var(--line)',
-                borderRadius: '0.5rem',
-                background: syncing ? '#e5e7eb' : '#fafafa',
-                cursor: syncing ? 'wait' : 'pointer',
-                fontSize: '0.9rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              disabled={syncing}
-              onClick={async () => {
-                setSyncing(true);
-                try {
-                  await loadFromDatabase();
-                  alert('データを同期しました');
-                } catch (error) {
-                  console.error('Sync error:', error);
-                  alert('同期に失敗しました');
-                } finally {
-                  setSyncing(false);
-                }
-              }}
-              title="他のデバイスのデータを同期"
-            >
-              {syncing ? '同期中...' : '🔄 同期'}
-            </button>
-          )}
         </div>
         <div className='title'>
           <span>家計簿カテゴリ管理</span>
@@ -499,17 +467,45 @@ function Dashboard({
             <>
               <h4>アカウント</h4>
               {session ? (
-                <button 
-                  type="button"
-                  className='nav-item logout-btn' 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                >
-                  ログアウト
-                </button>
+                <>
+                  <button 
+                    type="button"
+                    className='nav-item logout-btn' 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleLogout();
+                    }}
+                  >
+                    ログアウト
+                  </button>
+                  <button
+                    type="button"
+                    className='nav-item'
+                    style={{ 
+                      background: syncing ? '#e5e7eb' : 'transparent',
+                      color: '#10b981'
+                    }}
+                    disabled={syncing}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSyncing(true);
+                      try {
+                        await loadFromDatabase();
+                        alert('データを同期しました');
+                      } catch (error) {
+                        console.error('Sync error:', error);
+                        alert('同期に失敗しました');
+                      } finally {
+                        setSyncing(false);
+                        setOpen(false);
+                      }
+                    }}
+                  >
+                    {syncing ? '同期中...' : '🔄 データを同期'}
+                  </button>
+                </>
               ) : (
                 <button 
                   className='nav-item' 
