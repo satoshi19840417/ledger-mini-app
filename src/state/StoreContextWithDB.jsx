@@ -155,17 +155,15 @@ function reducer(state, action) {
         ...rule,
         id: rule.id || crypto.randomUUID(),
       }));
-      const transactions = applyRulesToTransactions(state.transactions, rules);
-      const updatedState = { ...state, transactions, rules, syncStatus: 'pending' };
-      localStorage.setItem('lm_rules_v1', JSON.stringify(updatedState.rules));
+      localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
       localStorage.setItem(
         'lm_tx_v1',
         JSON.stringify({
-          transactions: updatedState.transactions,
+          transactions: state.transactions,
           lastImportAt: state.lastImportAt,
         })
       );
-      return updatedState;
+      return { ...state, rules, syncStatus: 'pending' };
     }
     
     case 'applyRules': {
