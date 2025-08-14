@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense, useRef } from 'react';
+import { useEffect, useState, lazy, Suspense, useRef, useMemo } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './App.css';
 import { useStore } from './state/StoreContextWithDB.jsx';
@@ -289,6 +289,25 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
+  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [excludeRent, setExcludeRent] = useState(false);
+  
+  // カード支払いと家賃を除外するかどうかでフィルタリング
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+    if (excludeCardPayments) {
+      filtered = filtered.filter(
+        tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い'
+      );
+    }
+    if (excludeRent) {
+      filtered = filtered.filter(
+        tx => tx.category !== '家賃'
+      );
+    }
+    return filtered;
+  }, [transactions, excludeCardPayments, excludeRent]);
+  
   return (
     <section>
       <div className="quick">
@@ -340,11 +359,29 @@ function Dashboard({
           />
           「その他」を除外
         </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={excludeCardPayments}
+            onChange={(e) => setExcludeCardPayments(e.target.checked)}
+          />
+          カード支払いを除外
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={excludeRent}
+            onChange={(e) => setExcludeRent(e.target.checked)}
+          />
+          家賃を除外
+        </label>
       </div>
 
       <div className="card">
         <NetBalance
-          transactions={transactions}
+          transactions={filteredTransactions}
           period={period}
           yenUnit={yenUnit}
         />
@@ -353,7 +390,7 @@ function Dashboard({
       <div className="card">
         <div style={{ overflowX: 'auto' }}>
           <BarByMonth
-            transactions={transactions}
+            transactions={filteredTransactions}
             period={period}
             yenUnit={yenUnit}
             lockColors={lockColors}
@@ -366,7 +403,7 @@ function Dashboard({
 
       <div className="card">
         <PieByCategory
-          transactions={transactions}
+          transactions={filteredTransactions}
           period={period}
           yenUnit={yenUnit}
           lockColors={lockColors}

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import BarByMonth from '../BarByMonth.jsx';
 import PieByCategory from '../PieByCategory.jsx';
 
@@ -11,15 +11,23 @@ export default function Monthly({
   kind,
 }) {
   const [excludeCardPayments, setExcludeCardPayments] = useState(false);
-  // カード支払いを除外するかどうかでフィルタリング
+  const [excludeRent, setExcludeRent] = useState(false);
+  const chartContainerRef = useRef(null);
+  // カード支払いと家賃を除外するかどうかでフィルタリング
   const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
     if (excludeCardPayments) {
-      return transactions.filter(
+      filtered = filtered.filter(
         tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い'
       );
     }
-    return transactions;
-  }, [transactions, excludeCardPayments]);
+    if (excludeRent) {
+      filtered = filtered.filter(
+        tx => tx.category !== '家賃'
+      );
+    }
+    return filtered;
+  }, [transactions, excludeCardPayments, excludeRent]);
 
   const months = useMemo(() => {
     const set = new Set(
@@ -51,8 +59,8 @@ export default function Monthly({
     <section>
       <h1 className="text-2xl font-bold mb-4">月次分析</h1>
       <div className='card'>
-        <div style={{ marginBottom: 16 }}>
-          <label>
+        <div style={{ marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
             <input
               type='checkbox'
               checked={excludeCardPayments}
@@ -60,8 +68,16 @@ export default function Monthly({
             />
             <span className='ml-2'>カード支払いを除外して分析</span>
           </label>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              type='checkbox'
+              checked={excludeRent}
+              onChange={(e) => setExcludeRent(e.target.checked)}
+            />
+            <span className='ml-2'>家賃を除外して分析</span>
+          </label>
         </div>
-        <div style={{ overflowX: 'auto' }}>
+        <div ref={chartContainerRef} style={{ position: 'relative' }}>
           <BarByMonth
             transactions={filteredTransactions}
             period={period}

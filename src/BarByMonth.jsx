@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { convertAmount, formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
@@ -75,6 +75,11 @@ export default function BarByMonth({
   kind = 'expense',
   height = 350,
 }) {
+  const scrollRef = useRef(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  
   const monthMap = {};
   transactions
     .filter((tx) => tx.kind === kind)
@@ -131,19 +136,66 @@ export default function BarByMonth({
   // データの数に応じてグラフの最小幅を計算（1項目あたり最低80px）
   const minBarWidth = Math.max(dataWithColors.length * 80, 350);
   const chartWidth = isMobile ? Math.max(minBarWidth, width) : '100%';
+  
+  // タッチイベントのハンドラー
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+    
+    if (scrollRef.current) {
+      const scrollWidth = scrollRef.current.scrollWidth;
+      const clientWidth = scrollRef.current.clientWidth;
+      const currentScroll = scrollRef.current.scrollLeft;
+      
+      if (isLeftSwipe && currentScroll < scrollWidth - clientWidth) {
+        // 左スワイプ（右へスクロール）
+        scrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+      }
+      if (isRightSwipe && currentScroll > 0) {
+        // 右スワイプ（左へスクロール）
+        scrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+      }
+    }
+  };
+  
+  // モバイルでスワイプヒントを表示
+  useEffect(() => {
+    if (isMobile && dataWithColors.length > 3) {
+      setShowSwipeHint(true);
+      const timer = setTimeout(() => setShowSwipeHint(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, dataWithColors.length]);
 
   return (
-    <div style={{ 
-      width: '100%', 
-      overflowX: isMobile ? 'auto' : 'hidden',
-      overflowY: 'hidden',
-      WebkitOverflowScrolling: 'touch', // iOS用のスムーズスクロール
-      position: 'relative',
-      // スクロールバーのスタイリング
-      scrollbarWidth: 'thin',
-      scrollbarColor: '#cbd5e1 #f1f5f9'
-    }}>
-      {isMobile && dataWithColors.length > 3 && (
+    <div 
+      ref={scrollRef}
+      style={{ 
+        width: '100%', 
+        overflowX: isMobile ? 'auto' : 'hidden',
+        overflowY: 'hidden',
+        WebkitOverflowScrolling: 'touch', // iOS用のスムーズスクロール
+        position: 'relative',
+        // スクロールバーのスタイリング
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#cbd5e1 #f1f5f9'
+      }}
+      onTouchStart={isMobile ? onTouchStart : undefined}
+      onTouchMove={isMobile ? onTouchMove : undefined}
+      onTouchEnd={isMobile ? onTouchEnd : undefined}
+    >
+      {isMobile && dataWithColors.length > 3 && showSwipeHint && (
         <div style={{
           position: 'sticky',
           left: '50%',
@@ -159,7 +211,8 @@ export default function BarByMonth({
           pointerEvents: 'none',
           width: 'fit-content',
           margin: '0 auto',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          animation: 'fadeInOut 5s ease-in-out'
         }}>
           ← スワイプで他の月を表示 →
         </div>
