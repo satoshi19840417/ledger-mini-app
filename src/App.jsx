@@ -156,9 +156,6 @@ export default function App() {
     }
   }, []);
 
-  // applyRulesは手動でルールが変更された時のみ実行する
-  // 自動実行を削除して無限ループを防ぐ
-
   useEffect(() => {
     const onHash = () => {
       const h = parseHash(window.location.hash || '');
