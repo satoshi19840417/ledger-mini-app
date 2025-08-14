@@ -59,15 +59,17 @@ export default function Monthly({
             <span className='ml-2'>カード支払いを除外して分析</span>
           </label>
         </div>
-        <BarByMonth
-          transactions={filteredTransactions}
-          period={period}
-          yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-          height={350}
-        />
+        <div style={{ overflowX: 'auto' }}>
+          <BarByMonth
+            transactions={filteredTransactions}
+            period={period}
+            yenUnit={yenUnit}
+            lockColors={lockColors}
+            hideOthers={hideOthers}
+            kind={kind}
+            height={350}
+          />
+        </div>
         <div style={{ marginTop: 16 }}>
           {months.length > 0 && (
             <div style={{ marginBottom: 8 }}>
