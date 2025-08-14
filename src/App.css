@@ -396,6 +396,7 @@ body {
   inset:0;
   display:none;
   background:rgba(0,0,0,.2);
+  z-index:100;
 }
 
 .drawer.open {
@@ -410,6 +411,7 @@ body {
   border-left:1px solid var(--line);
   padding:1rem;
   overflow:auto;
+  z-index:101;
 }
 
 .drawer-panel h4 {
