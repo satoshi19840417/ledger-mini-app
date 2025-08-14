@@ -210,24 +210,27 @@ export function StoreProvider({ children }) {
   const session = useSession();
 
   const syncWithDatabase = useCallback(async () => {
-    if (!session?.user?.id) return;
-    
+    if (!session?.user?.id) return false;
+
     dispatch({ type: 'setSyncStatus', payload: 'syncing' });
-    
+
     try {
       const [txResult, rulesResult] = await Promise.all([
         dbService.syncTransactions(session.user.id, state.transactions),
         dbService.syncRules(session.user.id, state.rules),
       ]);
-      
+
       if (txResult.success && rulesResult.success) {
         dispatch({ type: 'syncComplete' });
+        return true;
       } else {
         dispatch({ type: 'setSyncStatus', payload: 'error' });
+        return false;
       }
     } catch (error) {
       console.error('Sync error:', error);
       dispatch({ type: 'setSyncStatus', payload: 'error' });
+      return false;
     }
   }, [session, state.transactions, state.rules]);
 

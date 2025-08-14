@@ -6,7 +6,7 @@ import { dbService } from '../services/database.js';
 import { useStore } from '../state/StoreContextWithDB.jsx';
 
 export default function Settings() {
-  const { state, dispatch, loadFromDatabase } = useStore();
+  const { state, dispatch, loadFromDatabase, syncWithDatabase } = useStore();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('account');
@@ -14,6 +14,7 @@ export default function Settings() {
   const [editingName, setEditingName] = useState(false);
   const [tempDisplayName, setTempDisplayName] = useState('');
   const [syncing, setSyncing] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -285,7 +286,7 @@ export default function Settings() {
                   <p className="text-sm text-gray-600 mb-3">
                     クラウドから最新のデータを取得します。他のデバイスで追加・変更したデータを反映させる場合に使用してください。
                   </p>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 mb-4">
                     <button
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                       disabled={syncing}
@@ -310,6 +311,31 @@ export default function Settings() {
                       </span>
                     )}
                   </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    未同期のローカルデータをクラウドに送信します。
+                  </p>
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    disabled={uploading}
+                    onClick={async () => {
+                      setUploading(true);
+                      try {
+                        const success = await syncWithDatabase();
+                        if (success) {
+                          toast.success('未同期データを送信しました');
+                        } else {
+                          toast.error('送信に失敗しました');
+                        }
+                      } catch (error) {
+                        console.error('Upload error:', error);
+                        toast.error('送信に失敗しました');
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                  >
+                    {uploading ? '送信中...' : '未同期データを送信'}
+                  </button>
                 </div>
 
                 <div className="p-4 bg-gray-50 rounded-lg">
