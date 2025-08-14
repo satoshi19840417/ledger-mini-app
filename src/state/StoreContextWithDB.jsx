@@ -207,11 +207,19 @@ const StoreContext = createContext();
 
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const session = useSession();
+  const { session, loading } = useSession();
 
   const syncWithDatabase = useCallback(async () => {
-    if (!session?.user?.id) return false;
+    console.log('syncWithDatabase called');
+    console.log('Session:', session);
+    console.log('User ID:', session?.user?.id);
+    
+    if (!session?.user?.id) {
+      console.log('No user ID, returning false');
+      return false;
+    }
 
+    console.log('Starting sync with transactions:', state.transactions.length);
     dispatch({ type: 'setSyncStatus', payload: 'syncing' });
 
     try {

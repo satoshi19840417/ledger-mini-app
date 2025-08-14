@@ -318,9 +318,12 @@ export default function Settings() {
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     disabled={uploading}
                     onClick={async () => {
+                      console.log('未同期データ送信ボタンがクリックされました');
                       setUploading(true);
                       try {
+                        console.log('syncWithDatabase関数を呼び出します');
                         const success = await syncWithDatabase();
+                        console.log('syncWithDatabase結果:', success);
                         if (success) {
                           toast.success('未同期データを送信しました');
                         } else {

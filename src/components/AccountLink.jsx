@@ -96,11 +96,29 @@ export default function AccountLink({ user }) {
     setLoading(true);
     
     try {
+      // Manual linkingが無効の場合のエラーハンドリング
       const { error } = await supabase.auth.unlinkIdentity({
         identity_id: identity.id,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes('Manual linking is disabled')) {
+          toast.error(
+            'アカウント連携の解除機能は現在利用できません。\n' +
+            'Supabaseダッシュボードで「Manual linking」を有効にする必要があります。'
+          );
+          
+          // 管理者向けの情報を表示
+          console.info(
+            '連携解除を有効にする方法:\n' +
+            '1. Supabaseダッシュボードにログイン\n' +
+            '2. Authentication > Providers に移動\n' + 
+            '3. 「Allow Manual Linking」を有効化'
+          );
+          return;
+        }
+        throw error;
+      }
 
       toast.success('アカウント連携を解除しました');
       await supabase.auth.refreshSession();
@@ -205,6 +223,24 @@ export default function AccountLink({ user }) {
           <li>• 最低1つの認証方法は維持する必要があります</li>
         </ul>
       </div>
+
+      {/* Manual linking無効時の案内 */}
+      {identities.length > 1 && (
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <h4 className="font-medium text-amber-900 mb-2">⚠️ 連携解除について</h4>
+          <p className="text-sm text-amber-800 mb-2">
+            連携解除機能を利用するには、Supabaseの設定変更が必要です：
+          </p>
+          <ol className="text-sm text-amber-700 space-y-1 list-decimal list-inside">
+            <li>Supabaseダッシュボードにログイン</li>
+            <li>Authentication → Providers に移動</li>
+            <li>「Allow Manual Linking」を有効化</li>
+          </ol>
+          <p className="text-xs text-amber-600 mt-2">
+            ※この設定は管理者のみ変更可能です
+          </p>
+        </div>
+      )}
     </div>
   );
 }

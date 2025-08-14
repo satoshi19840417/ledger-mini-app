@@ -7,19 +7,45 @@ export const dbService = {
     }
     
     try {
+      // 空の配列の場合は成功として返す
+      if (!transactions || transactions.length === 0) {
+        return { success: true, data: [] };
+      }
+
+      // 全てのフィールドを確実にマッピング
+      const mappedTransactions = transactions.map(tx => ({
+        id: tx.id || crypto.randomUUID(),
+        user_id: userId,
+        occurred_on: tx.date || tx.occurred_on || new Date().toISOString().split('T')[0],  // 必須フィールド
+        date: tx.date || new Date().toISOString().split('T')[0],
+        amount: tx.amount !== undefined ? tx.amount : 0,
+        category: tx.category || '',
+        description: tx.description || '',
+        detail: tx.detail || '',
+        memo: tx.memo || '',
+        kind: tx.kind || 'expense',
+        hash: tx.hash || '',
+        created_at: tx.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
+      console.log('Original transactions:', transactions);
+      console.log('Mapped transactions:', mappedTransactions);
+
+      // onConflictを使わない方法で試す
       const { data, error } = await supabase
         .from('transactions')
-        .upsert(
-          transactions.map(tx => ({
-            ...tx,
-            user_id: userId,
-            id: tx.id || crypto.randomUUID(),
-            created_at: tx.created_at || new Date().toISOString(),
-          })),
-          { onConflict: 'id,user_id' }
-        );
+        .upsert(mappedTransactions);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
       return { success: true, data };
     } catch (error) {
       console.error('Error syncing transactions:', error);
@@ -53,6 +79,11 @@ export const dbService = {
     }
     
     try {
+      // 空の配列の場合は成功として返す
+      if (!rules || rules.length === 0) {
+        return { success: true, data: [] };
+      }
+
       const { data, error } = await supabase
         .from('rules')
         .upsert(
@@ -61,8 +92,7 @@ export const dbService = {
             user_id: userId,
             id: rule.id || crypto.randomUUID(),
             created_at: rule.created_at || new Date().toISOString(),
-          })),
-          { onConflict: 'id,user_id' }
+          }))
         );
       
       if (error) throw error;
