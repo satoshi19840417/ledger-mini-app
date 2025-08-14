@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient.js';
+import { clampFutureDate } from './dateUtils.js';
 
 export const dbService = {
   // テスト用: テーブル構造を確認
@@ -60,13 +61,13 @@ export const dbService = {
           amount = parseFloat(amount.replace(/,/g, ''));
         }
         
-        // 日付の検証と修正（未来の日付を2024年に修正）
+        // 日付の検証と修正（未来の日付を当日に変更）
         let dateValue = tx.date || tx.日付 || new Date().toISOString().split('T')[0];
-        if (dateValue && dateValue.startsWith('2025-')) {
-          // 2025年の日付を2024年に修正
-          dateValue = dateValue.replace('2025-', '2024-');
-          console.warn(`Future date detected and corrected: ${tx.date} -> ${dateValue}`);
+        const correctedDate = clampFutureDate(dateValue);
+        if (correctedDate !== dateValue) {
+          console.warn(`未来の日付を当日に変更: ${tx.date} -> ${correctedDate}`);
         }
+        dateValue = correctedDate;
         
         // ハッシュ値を生成（重複チェック用）- より詳細な情報を含める
         const descText = tx.description || tx.説明 || '';
