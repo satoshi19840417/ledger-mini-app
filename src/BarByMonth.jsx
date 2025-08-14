@@ -1,5 +1,5 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
-import { convertAmount, formatAmount } from './utils/currency.js';
+import { formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
   BarChart as ReBarChart,
@@ -114,10 +114,15 @@ export default function BarByMonth({
     () => Math.max(...dataWithColors.map(d => d.total), 0),
     [dataWithColors]
   );
-  const ticks = useMemo(() => {
-    const step = maxTotal / 4;
-    return [0, step, step * 2, step * 3, maxTotal];
-  }, [maxTotal]);
+  const ticks = useMemo(
+    () => [
+      maxTotal * 0.25,
+      maxTotal * 0.5,
+      maxTotal * 0.75,
+      maxTotal,
+    ],
+    [maxTotal]
+  );
 
   const average = useMemo(() => {
     if (dataWithColors.length === 0) return 0;
@@ -125,10 +130,7 @@ export default function BarByMonth({
     return sum / dataWithColors.length;
   }, [dataWithColors]);
 
-  const tickFormatter = (v) => {
-    const value = convertAmount(v, yenUnit);
-    return yenUnit === 'man' ? value.toFixed(1) : value.toLocaleString();
-  };
+  const tickFormatter = (v) => `${Math.round((v / maxTotal) * 100)}%`;
   const formatValue = (v) => formatAmount(v, yenUnit);
   const tooltipFormatter = (v) => [formatValue(v), '合計'];
   const legendPayload = dataWithColors.map((d) => ({
