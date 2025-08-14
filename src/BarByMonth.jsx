@@ -104,6 +104,15 @@ export default function BarByMonth({
     return data.map((d) => ({ ...d, fill: colorMap.current[d.month] }));
   }, [data, lockColors]);
 
+  const maxTotal = useMemo(
+    () => Math.max(...dataWithColors.map(d => d.total), 0),
+    [dataWithColors]
+  );
+  const ticks = useMemo(() => {
+    const step = maxTotal / 4;
+    return [0, step, step * 2, step * 3, maxTotal];
+  }, [maxTotal]);
+
   const tickFormatter = (v) => {
     const value = convertAmount(v, yenUnit);
     return yenUnit === 'man' ? value.toFixed(1) : value.toLocaleString();
@@ -170,6 +179,8 @@ export default function BarByMonth({
             tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
           />
           <YAxis
+            domain={[0, maxTotal]}
+            ticks={ticks}
             tickFormatter={tickFormatter}
             width={isMobile ? 45 : 60}
             label={{
