@@ -10,27 +10,43 @@ export default function MonthlyAnalysis({
   lockColors,
   hideOthers,
 }) {
+  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [excludeRent, setExcludeRent] = useState(false);
+
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+    if (excludeCardPayments) {
+      filtered = filtered.filter(
+        tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い',
+      );
+    }
+    if (excludeRent) {
+      filtered = filtered.filter(tx => tx.category !== '家賃');
+    }
+    return filtered;
+  }, [transactions, excludeCardPayments, excludeRent]);
+
   const months = useMemo(() => {
     const monthSet = new Set();
-    transactions.forEach(tx => {
+    filteredTransactions.forEach(tx => {
       monthSet.add(tx.date.slice(0, 7));
     });
     return Array.from(monthSet).sort();
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const rows = useMemo(
     () =>
       months.map(m => {
         let incomeTotal = 0;
         let expenseTotal = 0;
-        transactions.forEach(tx => {
+        filteredTransactions.forEach(tx => {
           if (tx.date.slice(0, 7) !== m) return;
           if (tx.kind === 'income') incomeTotal += Math.abs(tx.amount);
           if (tx.kind === 'expense') expenseTotal += Math.abs(tx.amount);
         });
         return { month: m, incomeTotal, expenseTotal, diff: incomeTotal - expenseTotal };
       }),
-    [months, transactions],
+    [months, filteredTransactions],
   );
 
   const [selectedMonth, setSelectedMonth] = useState(months[months.length - 1] || '');
@@ -40,8 +56,9 @@ export default function MonthlyAnalysis({
   }, [months]);
 
   const monthTxs = useMemo(
-    () => transactions.filter(tx => tx.date.slice(0, 7) === selectedMonth),
-    [transactions, selectedMonth],
+    () =>
+      filteredTransactions.filter(tx => tx.date.slice(0, 7) === selectedMonth),
+    [filteredTransactions, selectedMonth],
   );
 
   return (
@@ -58,6 +75,24 @@ export default function MonthlyAnalysis({
             </select>
           </div>
         )}
+        <div style={{ marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              type='checkbox'
+              checked={excludeCardPayments}
+              onChange={e => setExcludeCardPayments(e.target.checked)}
+            />
+            <span className='ml-2'>カード支払いを除外して分析</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              type='checkbox'
+              checked={excludeRent}
+              onChange={e => setExcludeRent(e.target.checked)}
+            />
+            <span className='ml-2'>家賃を除外して分析</span>
+          </label>
+        </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 300 }}>
             <h3 style={{ textAlign: 'center', marginBottom: 8 }}>支出</h3>
@@ -85,7 +120,7 @@ export default function MonthlyAnalysis({
         <div style={{ marginBottom: 16 }}>
           <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収支推移</h3>
           <BalanceChart
-            transactions={transactions}
+            transactions={filteredTransactions}
             period={period}
             yenUnit={yenUnit}
           />
