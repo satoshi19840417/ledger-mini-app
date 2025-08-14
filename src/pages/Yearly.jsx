@@ -14,7 +14,9 @@ export default function Yearly({
   // カード支払いを除外するかどうかでフィルタリング
   const filteredTransactions = useMemo(() => {
     if (excludeCardPayments) {
-      return transactions.filter(tx => tx.category !== 'カード支払い');
+      return transactions.filter(
+        tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い'
+      );
     }
     return transactions;
   }, [transactions, excludeCardPayments]);

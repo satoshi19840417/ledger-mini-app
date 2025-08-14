@@ -32,7 +32,11 @@ export default function Transactions() {
 
   const filtered = useMemo(() => {
     return txs.filter(tx => {
-      if (excludeCardPayments && tx.category === 'カード支払い') return false;
+      if (
+        excludeCardPayments &&
+        (tx.category === 'カード支払い' || tx.category === 'カード払い')
+      )
+        return false;
       if (startDate && tx.date < startDate) return false;
       if (endDate && tx.date > endDate) return false;
       if (categories.length && !categories.includes(tx.category)) return false;
