@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
-import BarByMonth from '../BarByMonth.jsx';
+import BalanceChart from '../BalanceChart.jsx';
 import MonthlyComparisonTable from '../MonthlyComparisonTable.jsx';
 
 export default function MonthlyAnalysis({
@@ -82,33 +82,13 @@ export default function MonthlyAnalysis({
             />
           </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-          <div style={{ flex: 1, minWidth: 300 }}>
-            <div style={{ overflowX: 'auto' }}>
-              <BarByMonth
-                transactions={transactions}
-                period={period}
-                yenUnit={yenUnit}
-                lockColors={lockColors}
-                hideOthers={hideOthers}
-                kind='expense'
-                height={200}
-              />
-            </div>
-          </div>
-          <div style={{ flex: 1, minWidth: 300 }}>
-            <div style={{ overflowX: 'auto' }}>
-              <BarByMonth
-                transactions={transactions}
-                period={period}
-                yenUnit={yenUnit}
-                lockColors={lockColors}
-                hideOthers={hideOthers}
-                kind='income'
-                height={200}
-              />
-            </div>
-          </div>
+        <div style={{ marginBottom: 16 }}>
+          <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収支推移</h3>
+          <BalanceChart
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
+          />
         </div>
         <div style={{ marginTop: 16 }}>
           <MonthlyComparisonTable
