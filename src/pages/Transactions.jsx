@@ -252,13 +252,13 @@ export default function Transactions() {
         <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
           <thead>
-            <tr style={{ textAlign: 'left' }}>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>日付</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>カテゴリ</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>金額</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4, minWidth: '150px' }}>内容</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4, minWidth: '100px' }}>メモ</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>操作</th>
+            <tr style={{ textAlign: 'left', backgroundColor: '#f0f0f0' }}>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, whiteSpace: 'nowrap', fontWeight: 'bold' }}>日付</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, whiteSpace: 'nowrap', fontWeight: 'bold' }}>カテゴリ</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, whiteSpace: 'nowrap', fontWeight: 'bold' }}>金額</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, minWidth: '150px', fontWeight: 'bold' }}>内容</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, minWidth: '100px', fontWeight: 'bold' }}>メモ</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, whiteSpace: 'nowrap', fontWeight: 'bold' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -270,9 +270,12 @@ export default function Transactions() {
               </tr>
             ) : (
               pageTxs.map((tx, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                  <td style={{ padding: 4 }}>{tx.date}</td>
-                  <td style={{ padding: 4 }}>
+                <tr key={idx} style={{ 
+                  borderBottom: '1px solid #f0f0f0',
+                  backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9f9f9'
+                }}>
+                  <td style={{ padding: 6 }}>{tx.date}</td>
+                  <td style={{ padding: 6 }}>
                     <select
                       value={editedCategories[tx.id] || tx.category || ''}
                       onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
@@ -289,12 +292,12 @@ export default function Transactions() {
                       ))}
                     </select>
                   </td>
-                  <td style={{ padding: 4, textAlign: 'right' }}>
+                  <td style={{ padding: 6, textAlign: 'right' }}>
                     {tx.amount.toLocaleString()}
                   </td>
-                  <td style={{ padding: 4 }}>{tx.description || tx.detail || ''}</td>
-                  <td style={{ padding: 4 }}>{tx.memo || ''}</td>
-                  <td style={{ padding: 4 }}>
+                  <td style={{ padding: 6 }}>{tx.description || tx.detail || ''}</td>
+                  <td style={{ padding: 6 }}>{tx.memo || ''}</td>
+                  <td style={{ padding: 6 }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button 
                         type="button"

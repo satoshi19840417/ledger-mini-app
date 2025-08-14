@@ -117,13 +117,13 @@ export default function Rules() {
         <div style={{ marginBottom: 8 }}>（{rules.length}件のルール）</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ textAlign: 'left' }}>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>パターン</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>モード</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>対象</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>カテゴリ</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>種別</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>操作</th>
+            <tr style={{ textAlign: 'left', backgroundColor: '#f0f0f0' }}>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>パターン</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>モード</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>対象</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>カテゴリ</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>種別</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -135,7 +135,10 @@ export default function Rules() {
               </tr>
             ) : (
               rules.map((rule, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <tr key={idx} style={{ 
+                  borderBottom: '1px solid #f0f0f0',
+                  backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9f9f9'
+                }}>
                   {editingIndex === idx ? (
                     <>
                       <td style={{ padding: 4 }}>
