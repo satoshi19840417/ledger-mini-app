@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
-import { CATEGORIES } from '../categories';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 /** @typedef {import('../types').Transaction} Transaction */
@@ -10,10 +9,11 @@ export default function Transactions() {
   const { state, dispatch } = useStore();
   /** @type {Transaction[]} */
   const txs = state.transactions;
+  const categories = state.categories;
   const unclassifiedCount = txs.filter(tx => !tx.category).length;
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [keyword, setKeyword] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
@@ -29,7 +29,7 @@ export default function Transactions() {
     pattern: '',
     mode: 'contains',
     target: 'description',
-    category: CATEGORIES[0],
+    category: categories[0],
     kind: 'both',
   });
 
@@ -43,7 +43,7 @@ export default function Transactions() {
         return false;
       if (startDate && tx.date < startDate) return false;
       if (endDate && tx.date > endDate) return false;
-      if (categories.length && !categories.includes(tx.category)) return false;
+      if (selectedCategories.length && !selectedCategories.includes(tx.category)) return false;
       if (keyword) {
         const k = keyword.toLowerCase();
         const target = `${tx.description || ''} ${tx.detail || ''} ${tx.memo || ''}`.toLowerCase();
@@ -56,11 +56,11 @@ export default function Transactions() {
       if (type === 'expense' && tx.kind !== 'expense') return false;
       return true;
     });
-  }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+  }, [txs, startDate, endDate, selectedCategories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
 
   useEffect(() => {
     setPage(1);
-  }, [startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+  }, [startDate, endDate, selectedCategories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -90,7 +90,7 @@ export default function Transactions() {
       pattern: tx.description || tx.detail || '',
       mode: 'contains',
       target: 'description',
-      category: tx.category || CATEGORIES[0],
+      category: tx.category || categories[0],
       kind: tx.kind || 'both',
     });
     setShowRuleModal(true);
@@ -217,10 +217,14 @@ export default function Transactions() {
           <input type='date' value={endDate} onChange={e => setEndDate(e.target.value)} />
           <select
             multiple
-            value={categories}
-            onChange={e => setCategories(Array.from(e.target.selectedOptions).map(o => o.value))}
+            value={selectedCategories}
+            onChange={e =>
+              setSelectedCategories(
+                Array.from(e.target.selectedOptions).map(o => o.value)
+              )
+            }
           >
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -331,7 +335,7 @@ export default function Transactions() {
                       }}
                     >
                       <option value="">未分類</option>
-                      {CATEGORIES.map(c => (
+                      {categories.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
@@ -492,7 +496,7 @@ export default function Transactions() {
                   onChange={e => setNewRule(r => ({ ...r, category: e.target.value }))}
                   style={{ width: '100%', padding: 6 }}
                 >
-                  {CATEGORIES.map(c => (
+                  {categories.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>

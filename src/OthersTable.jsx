@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FullScreenModal from './FullScreenModal';
-import { CATEGORIES } from './categories';
 import { formatAmount } from './utils/currency.js';
+import { useStore } from './state/StoreContextWithDB';
 
-function OthersRow({ row, onAdd, isMobile, yenUnit }) {
-  const [cat, setCat] = useState('食費');
+function OthersRow({ row, onAdd, isMobile, yenUnit, categories }) {
+  const [cat, setCat] = useState(categories[0] || '');
   const [mode, setMode] = useState('contains');
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (categories.length) {
+      setCat(categories[0]);
+    }
+  }, [categories]);
 
   const submit = () => {
     onAdd(cat, mode);
@@ -46,7 +52,7 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <select value={cat} onChange={e => setCat(e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <select value={mode} onChange={e => setMode(e.target.value)}>
                   <option value="contains">正規表現なし</option>
@@ -58,7 +64,7 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
         ) : (
           <>
             <select value={cat} onChange={e => setCat(e.target.value)} style={{ marginRight: 8 }}>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <select value={mode} onChange={e => setMode(e.target.value)} style={{ marginRight: 8 }}>
               <option value="contains">正規表現なし</option>
@@ -92,6 +98,9 @@ function OthersRow({ row, onAdd, isMobile, yenUnit }) {
  * ルール画面の「データ反映」ボタンを押して取引に反映してください。
 */
 export default function OthersTable({ rows, addRule, isMobile, kind, yenUnit }) {
+  const { state } = useStore();
+  const categories = state.categories;
+
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
@@ -123,6 +132,7 @@ export default function OthersTable({ rows, addRule, isMobile, kind, yenUnit }) 
               })}
               isMobile={isMobile}
               yenUnit={yenUnit}
+              categories={categories}
             />
           ))
         )}

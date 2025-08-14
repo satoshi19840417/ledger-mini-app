@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
-import { CATEGORIES } from '../categories';
 /** @typedef {import('../types').Rule} Rule */
 
 export default function Rules() {
   const { state, dispatch } = useStore();
   /** @type {Rule[]} */
   const rules = state.rules;
+  const categories = state.categories;
 
   const [newRule, setNewRule] = useState({
     pattern: '',
     mode: 'contains',
     target: 'description',
-    category: CATEGORIES[0],
+    category: categories[0],
     kind: 'both',
   });
 
@@ -46,7 +46,7 @@ export default function Rules() {
       pattern: '',
       mode: 'contains',
       target: 'description',
-      category: CATEGORIES[0],
+      category: categories[0],
       kind: 'both',
     });
   };
@@ -175,12 +175,12 @@ export default function Rules() {
                       </td>
                       <td style={{ padding: 4 }}>
                         <select
-                          value={editingRule.category || CATEGORIES[0]}
+                          value={editingRule.category || categories[0]}
                           onChange={e =>
                             setEditingRule(r => ({ ...r, category: e.target.value }))
                           }
                         >
-                          {CATEGORIES.map(c => (
+                          {categories.map(c => (
                             <option key={c} value={c}>
                               {c}
                             </option>
@@ -263,16 +263,16 @@ export default function Rules() {
             <option value='detail'>detail</option>
             <option value='memo'>memo</option>
           </select>
-          <select
-            value={newRule.category}
-            onChange={e => setNewRule(r => ({ ...r, category: e.target.value }))}
-          >
-            {CATEGORIES.map(c => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+                        <select
+                          value={newRule.category}
+                          onChange={e => setNewRule(r => ({ ...r, category: e.target.value }))}
+                        >
+                          {categories.map(c => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
           <select
             value={newRule.kind}
             onChange={e => setNewRule(r => ({ ...r, kind: e.target.value }))}

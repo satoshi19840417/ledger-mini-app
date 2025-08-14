@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 import { dbService } from '../services/database';
 import { useSession } from '../useSession';
+import { DEFAULT_CATEGORIES } from '../defaultCategories';
 
 const initialState = {
   transactions: [],
@@ -9,6 +10,7 @@ const initialState = {
   syncStatus: 'idle',
   lastSyncAt: null,
   profile: null,
+  categories: DEFAULT_CATEGORIES,
 };
 
 function applyRulesToTransactions(transactions, rules) {
@@ -44,6 +46,7 @@ function reducer(state, action) {
     case 'loadFromStorage': {
       let transactions = [];
       let lastImportAt = null;
+      let categories = DEFAULT_CATEGORIES;
       const txRaw = localStorage.getItem('lm_tx_v1');
       if (txRaw) {
         try {
@@ -76,7 +79,18 @@ function reducer(state, action) {
           // ignore
         }
       }
-      return { ...state, transactions, rules, lastImportAt };
+      const catRaw = localStorage.getItem('lm_categories_v1');
+      if (catRaw) {
+        try {
+          const parsed = JSON.parse(catRaw);
+          if (Array.isArray(parsed)) categories = parsed;
+        } catch {
+          // ignore
+        }
+      } else {
+        localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
+      }
+      return { ...state, transactions, rules, categories, lastImportAt };
     }
     
     case 'loadFromDatabase': {
@@ -165,6 +179,51 @@ function reducer(state, action) {
       );
       return { ...state, rules, syncStatus: 'pending' };
     }
+
+    case 'addCategory': {
+      const category = action.payload;
+      const categories = state.categories.includes(category)
+        ? state.categories
+        : state.categories.concat(category);
+      localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
+      return { ...state, categories };
+    }
+
+    case 'updateCategory': {
+      const { oldCategory, newCategory } = action.payload || {};
+      const categories = state.categories.map(c =>
+        c === oldCategory ? newCategory : c
+      );
+      const transactions = state.transactions.map(tx =>
+        tx.category === oldCategory ? { ...tx, category: newCategory } : tx
+      );
+      const rules = state.rules.map(rule =>
+        rule.category === oldCategory ? { ...rule, category: newCategory } : rule
+      );
+      localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
+      localStorage.setItem(
+        'lm_tx_v1',
+        JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
+      );
+      localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
+      return { ...state, categories, transactions, rules, syncStatus: 'pending' };
+    }
+
+    case 'deleteCategory': {
+      const category = action.payload;
+      const categories = state.categories.filter(c => c !== category);
+      const transactions = state.transactions.map(tx =>
+        tx.category === category ? { ...tx, category: '' } : tx
+      );
+      const rules = state.rules.filter(rule => rule.category !== category);
+      localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
+      localStorage.setItem(
+        'lm_tx_v1',
+        JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
+      );
+      localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
+      return { ...state, categories, transactions, rules, syncStatus: 'pending' };
+    }
     
     case 'applyRules': {
       const originalTransactions = state.transactions;
@@ -213,6 +272,7 @@ function reducer(state, action) {
     case 'clearAll': {
       localStorage.removeItem('lm_tx_v1');
       localStorage.removeItem('lm_rules_v1');
+      localStorage.removeItem('lm_categories_v1');
       return initialState;
     }
     
