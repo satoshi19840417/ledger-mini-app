@@ -81,12 +81,21 @@ function reducer(state, action) {
     
     case 'loadFromDatabase': {
       const { transactions = [], rules = [], profile = null } = action.payload;
+      const normalizedTransactions = transactions.map(tx => ({
+        ...tx,
+        kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
+      }));
+      localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
+      localStorage.setItem(
+        'lm_tx_v1',
+        JSON.stringify({
+          transactions: normalizedTransactions,
+          lastImportAt: state.lastImportAt,
+        })
+      );
       return {
         ...state,
-        transactions: transactions.map(tx => ({
-          ...tx,
-          kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
-        })),
+        transactions: normalizedTransactions,
         rules,
         profile,
         syncStatus: 'synced',
