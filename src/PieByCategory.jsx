@@ -129,16 +129,22 @@ export default function PieByCategory({
   }));
 
   // カスタムラベル関数を追加
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const renderCustomLabel = ({
-    cx, cy, midAngle, innerRadius, outerRadius, value, index
+    cx, cy, midAngle, innerRadius, outerRadius, value, index, percent
   }) => {
+    // モバイルでは5%未満のラベルを非表示
+    if (isMobile && percent < 0.05) return null;
+    
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
-    // 値をカンマ区切りでフォーマット
-    const formattedValue = Math.round(value).toLocaleString();
+    // モバイルではパーセンテージのみ表示
+    const displayValue = isMobile 
+      ? `${(percent * 100).toFixed(0)}%`
+      : Math.round(value).toLocaleString();
     
     return (
       <text 
@@ -147,23 +153,27 @@ export default function PieByCategory({
         fill="white" 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        style={{ fontSize: '12px', fontWeight: 'bold' }}
+        style={{ 
+          fontSize: isMobile ? '10px' : '12px', 
+          fontWeight: 'bold',
+          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+        }}
       >
-        {formattedValue}
+        {displayValue}
       </text>
     );
   };
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <RePieChart>
+    <ResponsiveContainer width="100%" height={isMobile ? 250 : 200}>
+      <RePieChart margin={{ top: 0, right: 0, bottom: isMobile ? 50 : 0, left: 0 }}>
         <Pie 
           data={dataWithColors} 
           dataKey="value" 
           nameKey="name" 
           label={renderCustomLabel}
           labelLine={false}
-          outerRadius="80%"
+          outerRadius={isMobile ? "70%" : "80%"}
         >
           {dataWithColors.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />

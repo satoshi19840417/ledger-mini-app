@@ -49,7 +49,7 @@ export default function ImportCsv() {
   return (
     <section>
       <h2>CSV取込</h2>
-      <div className='card'>
+      <div className='card' style={{ overflow: 'visible' }}>
         <div className='space-y-2'>
           <input type='file' multiple onChange={handleChange} />
           <label className='block'>
@@ -72,8 +72,8 @@ export default function ImportCsv() {
                     </span>
                   ))}
                 </div>
-                <div className='overflow-x-auto'>
-                  <table className='min-w-full text-sm'>
+                <div className='overflow-x-auto' style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <table className='min-w-full text-sm' style={{ minWidth: '600px' }}>
                     <thead>
                       <tr>
                         {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (

@@ -119,16 +119,48 @@ export default function BarByMonth({
   }));
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const minWidth = Math.max(width, 300);
+  // データの数に応じてグラフの最小幅を計算（1項目あたり最低80px）
+  const minBarWidth = Math.max(dataWithColors.length * 80, 350);
+  const chartWidth = isMobile ? Math.max(minBarWidth, width) : '100%';
 
   return (
     <div style={{ 
       width: '100%', 
-      overflowX: isMobile && width > window.innerWidth - 32 ? 'auto' : 'visible',
-      overflowY: 'hidden'
+      overflowX: isMobile ? 'auto' : 'hidden',
+      overflowY: 'hidden',
+      WebkitOverflowScrolling: 'touch', // iOS用のスムーズスクロール
+      position: 'relative',
+      // スクロールバーのスタイリング
+      scrollbarWidth: 'thin',
+      scrollbarColor: '#cbd5e1 #f1f5f9'
     }}>
-      <ResponsiveContainer width={isMobile ? minWidth : '100%'} height={height}>
-        <ReBarChart data={dataWithColors} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
+      {isMobile && dataWithColors.length > 3 && (
+        <div style={{
+          position: 'sticky',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          bottom: '5px',
+          zIndex: 10,
+          background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.95), rgba(99, 102, 241, 0.95))',
+          color: 'white',
+          padding: '4px 10px',
+          borderRadius: '16px',
+          fontSize: '11px',
+          fontWeight: '600',
+          pointerEvents: 'none',
+          width: 'fit-content',
+          margin: '0 auto',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+        }}>
+          ← スワイプで他の月を表示 →
+        </div>
+      )}
+      <div style={{ 
+        width: isMobile ? chartWidth : '100%',
+        minWidth: isMobile ? minBarWidth : 'auto'
+      }}>
+        <ResponsiveContainer width='100%' height={height}>
+          <ReBarChart data={dataWithColors} margin={{ top: 8, right: isMobile ? 8 : 16, left: isMobile ? -10 : 0, bottom: 28 }}>
           <XAxis
             dataKey="month"
             interval={0}
@@ -139,11 +171,14 @@ export default function BarByMonth({
           />
           <YAxis
             tickFormatter={tickFormatter}
+            width={isMobile ? 45 : 60}
             label={{
               value: yenUnit === 'man' ? '万円' : '円',
               angle: -90,
               position: 'insideLeft',
+              style: { fontSize: isMobile ? 10 : 12 }
             }}
+            tick={{ fontSize: isMobile ? 10 : 12 }}
           />
           <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
           <Legend content={<ScrollableLegend />} payload={legendPayload} />
@@ -154,6 +189,7 @@ export default function BarByMonth({
           </Bar>
         </ReBarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

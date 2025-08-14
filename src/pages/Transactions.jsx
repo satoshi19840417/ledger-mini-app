@@ -213,15 +213,16 @@ export default function Transactions() {
           </button>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
           <thead>
             <tr style={{ textAlign: 'left' }}>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>日付</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>カテゴリ</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>金額</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>内容</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>メモ</th>
-              <th style={{ borderBottom: '1px solid #eee', padding: 4 }}>操作</th>
+              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>日付</th>
+              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>カテゴリ</th>
+              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>金額</th>
+              <th style={{ borderBottom: '1px solid #eee', padding: 4, minWidth: '150px' }}>内容</th>
+              <th style={{ borderBottom: '1px solid #eee', padding: 4, minWidth: '100px' }}>メモ</th>
+              <th style={{ borderBottom: '1px solid #eee', padding: 4, whiteSpace: 'nowrap' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -307,6 +308,7 @@ export default function Transactions() {
             )}
           </tbody>
         </table>
+        </div>
 
         <div
           style={{
