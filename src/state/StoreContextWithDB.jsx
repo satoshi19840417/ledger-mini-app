@@ -94,21 +94,48 @@ function reducer(state, action) {
     
     case 'importTransactions': {
       const append = action.append !== false;
-      const newTx = append
-        ? state.transactions.concat(action.payload || [])
-        : action.payload || [];
-      const newTxWithKind = newTx.map(tx => ({
+      const importedTransactions = (action.payload || []).map(tx => ({
         ...tx,
         id: tx.id || crypto.randomUUID(),
         kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
       }));
-      const transactions = applyRulesToTransactions(newTxWithKind, state.rules);
+      
+      let finalTransactions;
+      let duplicateCount = 0;
+      
+      if (append) {
+        // 重複チェック: 日付、金額、説明が同じものを重複とみなす
+        const uniqueTransactions = importedTransactions.filter(newTx => {
+          const isDuplicate = state.transactions.some(existingTx => 
+            existingTx.date === newTx.date &&
+            existingTx.amount === newTx.amount &&
+            existingTx.description === newTx.description
+          );
+          if (isDuplicate) duplicateCount++;
+          return !isDuplicate;
+        });
+        finalTransactions = state.transactions.concat(uniqueTransactions);
+      } else {
+        finalTransactions = importedTransactions;
+      }
+      
+      const transactions = applyRulesToTransactions(finalTransactions, state.rules);
       const lastImportAt = new Date().toISOString();
       localStorage.setItem(
         'lm_tx_v1',
         JSON.stringify({ transactions, lastImportAt })
       );
-      return { ...state, transactions, lastImportAt, syncStatus: 'pending' };
+      return { 
+        ...state, 
+        transactions, 
+        lastImportAt, 
+        syncStatus: 'pending',
+        lastImportInfo: {
+          totalCount: importedTransactions.length,
+          duplicateCount,
+          importedCount: importedTransactions.length - duplicateCount
+        }
+      };
     }
     
     case 'setRules': {

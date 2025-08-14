@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
 import { parseCsvFiles } from '../utils/csv.js';
 
 export default function ImportCsv() {
-  const { dispatch } = useStore();
+  const { state, dispatch } = useStore();
   const [append, setAppend] = useState(true);
   const [preview, setPreview] = useState([]);
   const [headerMap, setHeaderMap] = useState({});
   const [errors, setErrors] = useState([]);
+  const [importInfo, setImportInfo] = useState(null);
+
+  useEffect(() => {
+    if (state.lastImportInfo) {
+      setImportInfo(state.lastImportInfo);
+      const timer = setTimeout(() => setImportInfo(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.lastImportInfo]);
 
   async function handleChange(e) {
     const files = e.target.files;
@@ -95,6 +104,18 @@ export default function ImportCsv() {
                   <li key={i}>{err}</li>
                 ))}
               </ul>
+            )}
+            {importInfo && append && (
+              <div className='p-3 bg-blue-50 border border-blue-200 rounded text-sm'>
+                <p className='text-blue-800'>
+                  インポート結果: {importInfo.totalCount}件中 {importInfo.importedCount}件を追加
+                  {importInfo.duplicateCount > 0 && (
+                    <span className='text-orange-600 ml-2'>
+                      ({importInfo.duplicateCount}件の重複をスキップ)
+                    </span>
+                  )}
+                </p>
+              </div>
             )}
           </div>
         )}
