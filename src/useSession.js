@@ -39,15 +39,21 @@ export function useSession() {
 }
 
 export async function logout() {
+  console.log('logout関数が呼ばれました');
+  
   if (!supabase) {
     console.warn('No supabase client, cannot log out');
     return false;
   }
   
+  console.log('Supabaseのsignoutを実行します');
   const { error } = await supabase.auth.signOut();
+  
   if (error) {
     console.error('Error signing out:', error);
     return false;
   }
+  
+  console.log('ログアウトに成功しました');
   return true;
 }

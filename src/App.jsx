@@ -190,11 +190,36 @@ export default function App() {
 
   // ログアウト処理
   const handleLogout = async () => {
-    const success = await logout();
-    if (success) {
-      // Clear local storage
+    console.log('ログアウトボタンがクリックされました');
+    try {
+      // ローカルモードの場合は直接クリアしてリロード
+      if (localStorage.getItem('localMode') === 'true') {
+        console.log('ローカルモードでのログアウト');
+        localStorage.clear();
+        window.location.reload();
+        return;
+      }
+      
+      // Supabase認証のログアウト
+      const success = await logout();
+      console.log('ログアウト結果:', success);
+      if (success) {
+        console.log('ローカルストレージをクリアします');
+        // Clear local storage
+        localStorage.clear();
+        // Reload the page to reset the app state
+        console.log('ページをリロードします');
+        window.location.reload();
+      } else {
+        console.error('ログアウトに失敗しました');
+        // 失敗してもローカルストレージをクリアしてリロード
+        localStorage.clear();
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+      // エラーが発生してもローカルストレージをクリアしてリロード
       localStorage.clear();
-      // Reload the page to reset the app state
       window.location.reload();
     }
   };
@@ -425,7 +450,15 @@ function Dashboard({
             <>
               <h4>アカウント</h4>
               {session ? (
-                <button className='nav-item logout-btn' onClick={handleLogout}>
+                <button 
+                  type="button"
+                  className='nav-item logout-btn' 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleLogout();
+                  }}
+                >
                   ログアウト
                 </button>
               ) : (
