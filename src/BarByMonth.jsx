@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
   Cell,
+  ReferenceLine,
 } from 'recharts';
 
 const BAR_COLORS = [
@@ -117,6 +118,12 @@ export default function BarByMonth({
     const step = maxTotal / 4;
     return [0, step, step * 2, step * 3, maxTotal];
   }, [maxTotal]);
+
+  const average = useMemo(() => {
+    if (dataWithColors.length === 0) return 0;
+    const sum = dataWithColors.reduce((acc, d) => acc + d.total, 0);
+    return sum / dataWithColors.length;
+  }, [dataWithColors]);
 
   const tickFormatter = (v) => {
     const value = convertAmount(v, yenUnit);
@@ -246,6 +253,12 @@ export default function BarByMonth({
           />
           <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
           <Legend content={<ScrollableLegend />} payload={legendPayload} />
+          <ReferenceLine
+            y={average}
+            stroke="#ef4444"
+            strokeDasharray="3 3"
+            label={{ position: 'right', value: `平均: ${formatValue(average)}` }}
+          />
           <Bar dataKey="total" name="合計">
             {dataWithColors.map((entry, idx) => (
               <Cell key={`cell-${idx}`} fill={entry.fill} />
