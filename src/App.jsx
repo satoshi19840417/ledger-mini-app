@@ -582,49 +582,49 @@ function Dashboard({
           />
         )}
         <Suspense fallback={<div>Loading...</div>}>
-          {page === 'monthly' && (
-            <>
-              <div className='quick'>
-                <label>
-                  <input
-                    type='radio'
-                    name='kind'
-                    value='expense'
-                    checked={kind === 'expense'}
-                    onChange={() => setKind('expense')}
-                  />
-                  支出
-                </label>
-                <label>
-                  <input
-                    type='radio'
-                    name='kind'
-                    value='income'
-                    checked={kind === 'income'}
-                    onChange={() => setKind('income')}
-                  />
-                  収入
-                </label>
-              </div>
-              <Monthly
+            {page === 'monthly' && (
+              <MonthlyAnalysis
                 transactions={state.transactions}
                 period={period}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
                 hideOthers={hideOthers}
-                kind={kind}
               />
-            </>
-          )}
-          {page === 'analysis' && (
-            <MonthlyAnalysis
-              transactions={state.transactions}
-              period={period}
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-            />
-          )}
+            )}
+            {page === 'analysis' && (
+              <>
+                <div className='quick'>
+                  <label>
+                    <input
+                      type='radio'
+                      name='kind'
+                      value='expense'
+                      checked={kind === 'expense'}
+                      onChange={() => setKind('expense')}
+                    />
+                    支出
+                  </label>
+                  <label>
+                    <input
+                      type='radio'
+                      name='kind'
+                      value='income'
+                      checked={kind === 'income'}
+                      onChange={() => setKind('income')}
+                    />
+                    収入
+                  </label>
+                </div>
+                <Monthly
+                  transactions={state.transactions}
+                  period={period}
+                  yenUnit={yenUnit}
+                  lockColors={lockColors}
+                  hideOthers={hideOthers}
+                  kind={kind}
+                />
+              </>
+            )}
           {page === 'yearly' && (
             <>
               <div className='quick'>
