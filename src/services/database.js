@@ -63,6 +63,7 @@ export const dbService = {
           id: tx.id || tx.ID || crypto.randomUUID(),  // CSVのIDフィールドも考慮
           user_id: userId,
           date: dateValue,
+          occurred_on: dateValue,  // occurred_onフィールドも必須のため追加
           amount: amount !== undefined && !isNaN(amount) ? amount : 0,
           category: tx.category || tx.カテゴリ || '',  // nullの代わりに空文字列を使用
           description: tx.description || tx.説明 || '',  // nullの代わりに空文字列を使用

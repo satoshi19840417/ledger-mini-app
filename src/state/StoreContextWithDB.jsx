@@ -83,6 +83,7 @@ function reducer(state, action) {
       const { transactions = [], rules = [], profile = null } = action.payload;
       const normalizedTransactions = transactions.map(tx => ({
         ...tx,
+        date: tx.date || tx.occurred_on,  // occurred_onフィールドからdateを復元
         kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
       }));
       localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
