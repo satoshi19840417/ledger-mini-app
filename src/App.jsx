@@ -4,6 +4,7 @@ import './App.css';
 import { useStore } from './state/StoreContextWithDB.jsx';
 import BarByMonth from './BarByMonth.jsx';
 import NetBalance from './NetBalance.jsx';
+import NetBalanceLineChart from './NetBalanceLineChart.jsx';
 import PieByCategory from './PieByCategory.jsx';
 import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
@@ -382,6 +383,14 @@ function Dashboard({
 
       <div className="card">
         <NetBalance
+          transactions={filteredTransactions}
+          period={period}
+          yenUnit={yenUnit}
+        />
+      </div>
+
+      <div className="card">
+        <NetBalanceLineChart
           transactions={filteredTransactions}
           period={period}
           yenUnit={yenUnit}
