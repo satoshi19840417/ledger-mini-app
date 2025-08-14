@@ -68,8 +68,11 @@ export const dbService = {
           console.warn(`Future date detected and corrected: ${tx.date} -> ${dateValue}`);
         }
         
-        // ハッシュ値を生成（重複チェック用）
-        const hashString = `${dateValue}_${amount}_${tx.description || tx.説明 || ''}_${tx.detail || tx.詳細 || ''}`;
+        // ハッシュ値を生成（重複チェック用）- より詳細な情報を含める
+        const descText = tx.description || tx.説明 || '';
+        const detailText = tx.detail || tx.詳細 || '';
+        const memoText = tx.memo || tx.メモ || '';
+        const hashString = `${userId}_${dateValue}_${amount}_${descText}_${detailText}_${memoText}_${tx.id || Math.random()}`;
         const hash = tx.hash || hashString;
         
         return {
@@ -102,10 +105,35 @@ export const dbService = {
         console.error('Error deleting existing transactions:', deleteError);
       }
 
-      // その後、新しいトランザクションを挿入
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert(mappedTransactions);
+      // バッチサイズを設定（一度に送信する件数）
+      const BATCH_SIZE = 50;
+      let allData = [];
+      let hasError = false;
+      
+      // トランザクションを分割して送信
+      for (let i = 0; i < mappedTransactions.length; i += BATCH_SIZE) {
+        const batch = mappedTransactions.slice(i, i + BATCH_SIZE);
+        console.log(`Inserting batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(mappedTransactions.length / BATCH_SIZE)}`);
+        
+        const { data: batchData, error: batchError } = await supabase
+          .from('transactions')
+          .insert(batch);
+        
+        if (batchError) {
+          console.error(`Error in batch ${Math.floor(i / BATCH_SIZE) + 1}:`, batchError);
+          hasError = true;
+          // エラーがあっても続行
+        } else if (batchData) {
+          allData = allData.concat(batchData);
+        }
+      }
+      
+      if (hasError) {
+        return { success: false, error: 'Some batches failed to insert' };
+      }
+      
+      const data = allData;
+      const error = null;
       
       if (error) {
         console.error('Supabase error details:', {
