@@ -118,34 +118,43 @@ export default function BarByMonth({
     color: d.fill,
   }));
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const minWidth = Math.max(width, 300);
+
   return (
-    <ResponsiveContainer width={width} height={height}>
-      <ReBarChart data={dataWithColors} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
-        <XAxis
-          dataKey="month"
-          interval={0}
-          angle={-45}
-          textAnchor="end"
-          height={60}
-          tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
-        />
-        <YAxis
-          tickFormatter={tickFormatter}
-          label={{
-            value: yenUnit === 'man' ? '万円' : '円',
-            angle: -90,
-            position: 'insideLeft',
-          }}
-        />
-        <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
-        <Legend content={<ScrollableLegend />} payload={legendPayload} />
-        <Bar dataKey="total" name="合計">
-          {dataWithColors.map((entry, idx) => (
-            <Cell key={`cell-${idx}`} fill={entry.fill} />
-          ))}
-        </Bar>
-      </ReBarChart>
-    </ResponsiveContainer>
+    <div style={{ 
+      width: '100%', 
+      overflowX: isMobile && width > window.innerWidth - 32 ? 'auto' : 'visible',
+      overflowY: 'hidden'
+    }}>
+      <ResponsiveContainer width={isMobile ? minWidth : '100%'} height={height}>
+        <ReBarChart data={dataWithColors} margin={{ top: 8, right: 16, left: 0, bottom: 28 }}>
+          <XAxis
+            dataKey="month"
+            interval={0}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+            tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
+          />
+          <YAxis
+            tickFormatter={tickFormatter}
+            label={{
+              value: yenUnit === 'man' ? '万円' : '円',
+              angle: -90,
+              position: 'insideLeft',
+            }}
+          />
+          <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
+          <Legend content={<ScrollableLegend />} payload={legendPayload} />
+          <Bar dataKey="total" name="合計">
+            {dataWithColors.map((entry, idx) => (
+              <Cell key={`cell-${idx}`} fill={entry.fill} />
+            ))}
+          </Bar>
+        </ReBarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
