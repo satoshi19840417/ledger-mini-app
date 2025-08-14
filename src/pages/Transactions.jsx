@@ -126,6 +126,17 @@ export default function Transactions() {
     setEditedCategories({});
   };
 
+  const clearFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    setCategories([]);
+    setKeyword('');
+    setMinAmount('');
+    setMaxAmount('');
+    setType('all');
+    setPage(1);
+  };
+
   return (
     <section>
       <h2>取引一覧</h2>
@@ -150,7 +161,7 @@ export default function Transactions() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8, alignItems: 'center' }}>
           <input type='date' value={startDate} onChange={e => setStartDate(e.target.value)} />
           <input type='date' value={endDate} onChange={e => setEndDate(e.target.value)} />
           <select
@@ -187,6 +198,19 @@ export default function Transactions() {
             <option value='expense'>支出</option>
             <option value='income'>収入</option>
           </select>
+          <button 
+            onClick={clearFilters}
+            style={{ 
+              padding: '6px 12px',
+              background: '#f44336',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            条件クリア
+          </button>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
