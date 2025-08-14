@@ -3,6 +3,7 @@ node_modules/
 
 # build outputs
 dist/
+dev-dist/
 .vite/
 build/
 .netlify/
@@ -15,5 +16,6 @@ build/
 
 # editor/OS
 .vscode/
+.claude/
 .DS_Store
 Thumbs.db
