@@ -310,6 +310,7 @@ function Dashboard({
   
   return (
     <section>
+      <h1 className="text-2xl font-bold mb-4">ダッシュボード</h1>
       <div className="quick">
         <label>
           <input
