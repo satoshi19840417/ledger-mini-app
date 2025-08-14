@@ -290,7 +290,7 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
-  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [excludeCardPayments, setExcludeCardPayments] = useState(true);
   const [excludeRent, setExcludeRent] = useState(false);
   
   // カード支払いと家賃を除外するかどうかでフィルタリング

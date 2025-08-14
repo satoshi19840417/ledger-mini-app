@@ -22,7 +22,7 @@ export default function Transactions() {
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState(null);
   const [editedCategories, setEditedCategories] = useState({});
-  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [excludeCardPayments, setExcludeCardPayments] = useState(true);
   const [showUnclassifiedOnly, setShowUnclassifiedOnly] = useState(false);
   const [ruleAppliedMessage, setRuleAppliedMessage] = useState('');
   const [newRule, setNewRule] = useState({
