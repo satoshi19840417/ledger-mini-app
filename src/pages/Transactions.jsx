@@ -15,6 +15,7 @@ export default function Transactions() {
   const [endDate, setEndDate] = useState('');
   const [categories, setCategories] = useState([]);
   const [keyword, setKeyword] = useState('');
+  const [categoryQuery, setCategoryQuery] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
   const [type, setType] = useState('all');
@@ -44,6 +45,10 @@ export default function Transactions() {
       if (startDate && tx.date < startDate) return false;
       if (endDate && tx.date > endDate) return false;
       if (categories.length && !categories.includes(tx.category)) return false;
+      if (categoryQuery) {
+        const c = (tx.category || '').toLowerCase();
+        if (!c.includes(categoryQuery.toLowerCase())) return false;
+      }
       if (keyword) {
         const k = keyword.toLowerCase();
         const target = `${tx.description || ''} ${tx.detail || ''} ${tx.memo || ''}`.toLowerCase();
@@ -56,11 +61,11 @@ export default function Transactions() {
       if (type === 'expense' && tx.kind !== 'expense') return false;
       return true;
     });
-  }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+  }, [txs, startDate, endDate, categories, categoryQuery, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
 
   useEffect(() => {
     setPage(1);
-  }, [startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+  }, [startDate, endDate, categories, categoryQuery, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -146,6 +151,7 @@ export default function Transactions() {
     setStartDate('');
     setEndDate('');
     setCategories([]);
+    setCategoryQuery('');
     setKeyword('');
     setMinAmount('');
     setMaxAmount('');
@@ -226,6 +232,12 @@ export default function Transactions() {
               </option>
             ))}
           </select>
+          <input
+            type='text'
+            placeholder='カテゴリ検索'
+            value={categoryQuery}
+            onChange={e => setCategoryQuery(e.target.value)}
+          />
           <input
             type='text'
             placeholder='キーワード'
