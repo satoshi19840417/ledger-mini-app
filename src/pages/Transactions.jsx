@@ -22,6 +22,7 @@ export default function Transactions() {
   const [selectedTx, setSelectedTx] = useState(null);
   const [editedCategories, setEditedCategories] = useState({});
   const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [ruleAppliedMessage, setRuleAppliedMessage] = useState('');
   const [newRule, setNewRule] = useState({
     pattern: '',
     mode: 'contains',
@@ -95,8 +96,14 @@ export default function Transactions() {
   const saveRule = () => {
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
-    // ルールを追加・変更した後はルール画面の「データ反映」ボタンを押して取引に反映してください
     dispatch({ type: 'setRules', payload: updatedRules });
+    // ルール保存後、自動的に未分類の取引にルールを適用
+    setRuleAppliedMessage('ルールを保存し、全取引に適用しています...');
+    setTimeout(() => {
+      dispatch({ type: 'applyRules' });
+      setRuleAppliedMessage('ルールが適用されました');
+      setTimeout(() => setRuleAppliedMessage(''), 3000);
+    }, 100);
     setShowRuleModal(false);
     setSelectedTx(null);
   };
@@ -147,6 +154,20 @@ export default function Transactions() {
   return (
     <section>
       <h1 className="text-2xl font-bold mb-4">取引一覧</h1>
+      {ruleAppliedMessage && (
+        <div style={{ 
+          backgroundColor: '#4CAF50', 
+          color: 'white', 
+          padding: '12px', 
+          borderRadius: '4px',
+          marginBottom: '16px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }}>
+          {ruleAppliedMessage}
+        </div>
+      )}
       <div className='card'>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <div>（{filtered.length} 件の取引）</div>

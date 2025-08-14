@@ -167,12 +167,31 @@ function reducer(state, action) {
     }
     
     case 'applyRules': {
+      const originalTransactions = state.transactions;
       const transactions = applyRulesToTransactions(state.transactions, state.rules);
+      
+      // カテゴリが変更された取引の数をカウント
+      let changedCount = 0;
+      transactions.forEach((tx, index) => {
+        if (tx.category !== originalTransactions[index].category) {
+          changedCount++;
+        }
+      });
+      
       localStorage.setItem(
         'lm_tx_v1',
         JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
       );
-      return { ...state, transactions, syncStatus: 'pending' };
+      return { 
+        ...state, 
+        transactions, 
+        syncStatus: 'pending',
+        lastApplyResult: {
+          totalTransactions: transactions.length,
+          changedTransactions: changedCount,
+          timestamp: new Date().toISOString()
+        }
+      };
     }
     
     case 'setSyncStatus': {

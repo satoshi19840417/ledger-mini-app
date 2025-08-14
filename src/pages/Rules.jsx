@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
 import { CATEGORIES } from '../categories';
 /** @typedef {import('../types').Rule} Rule */
@@ -18,6 +18,21 @@ export default function Rules() {
 
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingRule, setEditingRule] = useState({});
+  const [applyMessage, setApplyMessage] = useState('');
+
+  // lastApplyResultの変更を監視
+  useEffect(() => {
+    if (state.lastApplyResult) {
+      const { totalTransactions, changedTransactions } = state.lastApplyResult;
+      setApplyMessage(
+        changedTransactions > 0
+          ? `✅ ${totalTransactions}件の取引中、${changedTransactions}件のカテゴリを更新しました`
+          : `ℹ️ ${totalTransactions}件の取引を確認しましたが、変更はありませんでした`
+      );
+      const timer = setTimeout(() => setApplyMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.lastApplyResult]);
 
   const saveRules = updated => {
     dispatch({ type: 'setRules', payload: updated });
@@ -72,8 +87,32 @@ export default function Rules() {
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <h2>再分類ルール</h2>
-        <button onClick={() => dispatch({ type: 'applyRules' })}>データ反映</button>
+        <button 
+          onClick={() => {
+            dispatch({ type: 'applyRules' });
+            setApplyMessage('ルールを適用中...');
+          }}
+          disabled={state.transactions.length === 0}
+          style={{
+            opacity: state.transactions.length === 0 ? 0.5 : 1,
+            cursor: state.transactions.length === 0 ? 'not-allowed' : 'pointer'
+          }}
+        >
+          データ反映
+        </button>
       </div>
+      {applyMessage && (
+        <div style={{ 
+          backgroundColor: '#4CAF50', 
+          color: 'white', 
+          padding: '8px', 
+          borderRadius: '4px',
+          marginTop: '8px',
+          textAlign: 'center'
+        }}>
+          {applyMessage}
+        </div>
+      )}
       <div className='card'>
         <div style={{ marginBottom: 8 }}>（{rules.length}件のルール）</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
