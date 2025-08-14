@@ -38,8 +38,17 @@ export const dbService = {
     }
     
     try {
-      // 空の配列の場合は成功として返す
+      // 空の配列の場合は、既存データを削除
       if (!transactions || transactions.length === 0) {
+        const { error: deleteError } = await supabase
+          .from('transactions')
+          .delete()
+          .eq('user_id', userId);
+        
+        if (deleteError) {
+          console.error('Error deleting transactions:', deleteError);
+          return { success: false, error: deleteError };
+        }
         return { success: true, data: [] };
       }
 
@@ -83,11 +92,20 @@ export const dbService = {
       console.log('Mapped transactions:', mappedTransactions);
       console.log('Sample transaction:', mappedTransactions[0]);
 
-      // 複合主キー(id, user_id)に対してupsert
-      // 注: onConflictを指定しない場合、主キーで自動的に判定される
+      // まず既存のユーザーのトランザクションを削除
+      const { error: deleteError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (deleteError) {
+        console.error('Error deleting existing transactions:', deleteError);
+      }
+
+      // その後、新しいトランザクションを挿入
       const { data, error } = await supabase
         .from('transactions')
-        .upsert(mappedTransactions);
+        .insert(mappedTransactions);
       
       if (error) {
         console.error('Supabase error details:', {
