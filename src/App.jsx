@@ -354,15 +354,17 @@ function Dashboard({
       </div>
 
       <div className="card">
-        <BarByMonth
-          transactions={transactions}
-          period={period}
-          yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-          height={350}
-        />
+        <div style={{ overflowX: 'auto' }}>
+          <BarByMonth
+            transactions={transactions}
+            period={period}
+            yenUnit={yenUnit}
+            lockColors={lockColors}
+            hideOthers={hideOthers}
+            kind={kind}
+            height={350}
+          />
+        </div>
       </div>
 
       <div className="card">
