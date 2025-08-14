@@ -59,18 +59,23 @@ export const dbService = {
           console.warn(`Future date detected and corrected: ${tx.date} -> ${dateValue}`);
         }
         
+        // ハッシュ値を生成（重複チェック用）
+        const hashString = `${dateValue}_${amount}_${tx.description || tx.説明 || ''}_${tx.detail || tx.詳細 || ''}`;
+        const hash = tx.hash || hashString;
+        
         return {
           id: tx.id || tx.ID || crypto.randomUUID(),  // CSVのIDフィールドも考慮
           user_id: userId,
-          date: dateValue,
-          occurred_on: dateValue,  // occurred_onフィールドも必須のため追加
+          date: dateValue,  // timestampz型
+          occurred_on: dateValue,  // date型（必須）
           amount: amount !== undefined && !isNaN(amount) ? amount : 0,
-          category: tx.category || tx.カテゴリ || '',  // nullの代わりに空文字列を使用
-          description: tx.description || tx.説明 || '',  // nullの代わりに空文字列を使用
-          detail: tx.detail || tx.詳細 || '',  // nullの代わりに空文字列を使用
-          memo: tx.memo || tx.メモ || '',  // nullの代わりに空文字列を使用
-          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income')
-          // created_atとupdated_atはデータベースで自動設定されるため削除
+          category: tx.category || tx.カテゴリ || '',  // text型
+          description: tx.description || tx.説明 || '',  // text型
+          detail: tx.detail || tx.詳細 || '',  // text型
+          memo: tx.memo || tx.メモ || '',  // text型
+          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'),  // text型
+          hash: hash,  // text型（テーブルに存在）
+          created_at: tx.created_at || new Date().toISOString()  // timestampz型
         };
       });
 
