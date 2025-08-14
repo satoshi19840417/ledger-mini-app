@@ -40,7 +40,7 @@ export default function Others({ yenUnit }) {
   const addRule = newRule => {
     console.log('addRule called with:', newRule);
     console.log('Current rules:', state.rules);
-    // setRulesアクションが自動的にルールを適用するため、applyRulesは不要
+    // ルールを追加・変更した後はルール画面の「データ反映」ボタンを押して取引に反映してください
     dispatch({ type: 'setRules', payload: [...state.rules, newRule] });
     console.log('Rule added and applied');
   };

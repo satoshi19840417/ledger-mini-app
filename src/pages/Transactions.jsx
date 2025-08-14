@@ -91,7 +91,7 @@ export default function Transactions() {
   const saveRule = () => {
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
-    // setRulesアクションが自動的にルールを適用するため、applyRulesは不要
+    // ルールを追加・変更した後はルール画面の「データ反映」ボタンを押して取引に反映してください
     dispatch({ type: 'setRules', payload: updatedRules });
     setShowRuleModal(false);
     setSelectedTx(null);
