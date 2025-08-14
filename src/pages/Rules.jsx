@@ -21,7 +21,6 @@ export default function Rules() {
 
   const saveRules = updated => {
     dispatch({ type: 'setRules', payload: updated });
-    dispatch({ type: 'applyRules' });
   };
 
   const addRule = e => {
@@ -69,7 +68,12 @@ export default function Rules() {
 
   return (
     <section>
-      <h2>再分類ルール</h2>
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
+        <h2>再分類ルール</h2>
+        <button onClick={() => dispatch({ type: 'applyRules' })}>データ反映</button>
+      </div>
       <div className='card'>
         <div style={{ marginBottom: 8 }}>（{rules.length}件のルール）</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
