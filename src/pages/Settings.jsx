@@ -6,7 +6,7 @@ import { dbService } from '../services/database.js';
 import { useStore } from '../state/StoreContextWithDB.jsx';
 
 export default function Settings() {
-  const { state, dispatch, loadFromDatabase, syncWithDatabase } = useStore();
+  const { state, dispatch, loadFromDatabase, syncWithDatabase, autoSyncEnabled, toggleAutoSync } = useStore();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('account');
@@ -283,6 +283,35 @@ export default function Settings() {
               <div className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <h3 className="font-medium mb-2">データ同期</h3>
+                  
+                  {/* 自動同期のON/OFFトグル */}
+                  <div className="mb-4 p-3 bg-white rounded border">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-sm">自動同期</h4>
+                        <p className="text-xs text-gray-600 mt-1">
+                          データ変更時に自動的にクラウドと同期します
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => toggleAutoSync(!autoSyncEnabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          autoSyncEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span className="sr-only">自動同期を切り替え</span>
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            autoSyncEnabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      現在: {autoSyncEnabled ? '有効 ✅' : '無効 ⏸️'}
+                    </div>
+                  </div>
+                  
                   <p className="text-sm text-gray-600 mb-3">
                     クラウドから最新のデータを取得します。他のデバイスで追加・変更したデータを反映させる場合に使用してください。
                   </p>
