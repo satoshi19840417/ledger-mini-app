@@ -1,6 +1,37 @@
 import { supabase } from '../lib/supabaseClient.js';
 
 export const dbService = {
+  // テスト用: テーブル構造を確認
+  async testConnection(userId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
+    try {
+      // まず1件だけ取得を試みる
+      const { data, error, count } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: false })
+        .eq('user_id', userId)
+        .limit(1);
+      
+      if (error) {
+        console.error('Test query error:', error);
+        return { success: false, error };
+      }
+      
+      console.log('Test query successful:', { 
+        hasData: !!data, 
+        dataLength: data?.length,
+        totalCount: count 
+      });
+      
+      return { success: true, data, count };
+    } catch (error) {
+      console.error('Test connection error:', error);
+      return { success: false, error };
+    }
+  },
   async syncTransactions(userId, transactions) {
     if (!supabase) {
       return { success: false, error: 'Supabase not initialized' };
@@ -20,10 +51,18 @@ export const dbService = {
           amount = parseFloat(amount.replace(/,/g, ''));
         }
         
+        // 日付の検証と修正（未来の日付を2024年に修正）
+        let dateValue = tx.date || tx.日付 || new Date().toISOString().split('T')[0];
+        if (dateValue && dateValue.startsWith('2025-')) {
+          // 2025年の日付を2024年に修正
+          dateValue = dateValue.replace('2025-', '2024-');
+          console.warn(`Future date detected and corrected: ${tx.date} -> ${dateValue}`);
+        }
+        
         return {
           id: tx.id || tx.ID || crypto.randomUUID(),  // CSVのIDフィールドも考慮
           user_id: userId,
-          date: tx.date || tx.日付 || new Date().toISOString().split('T')[0],
+          date: dateValue,
           amount: amount !== undefined && !isNaN(amount) ? amount : 0,
           category: tx.category || tx.カテゴリ || null,
           description: tx.description || tx.説明 || null,
@@ -37,12 +76,14 @@ export const dbService = {
 
       console.log('Original transactions:', transactions);
       console.log('Mapped transactions:', mappedTransactions);
+      console.log('Sample transaction:', mappedTransactions[0]);
 
       // 複合主キー(id, user_id)に対してupsert
+      // 注: SupabaseのバージョンによってはonConflictの指定方法が異なる
       const { data, error } = await supabase
         .from('transactions')
         .upsert(mappedTransactions, {
-          onConflict: 'id,user_id',
+          onConflict: 'id',  // idのみで試す
           ignoreDuplicates: false
         });
       
@@ -51,8 +92,24 @@ export const dbService = {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          code: error.code
+          code: error.code,
+          statusCode: error.statusCode
         });
+        
+        // 詳細なエラー情報を出力
+        if (error.message?.includes('duplicate key')) {
+          console.error('Duplicate key error - existing IDs might be conflicting');
+          console.error('First transaction ID:', mappedTransactions[0]?.id);
+        }
+        
+        if (error.message?.includes('null value')) {
+          console.error('Null value error - required field might be missing');
+          const nullFields = Object.entries(mappedTransactions[0] || {})
+            .filter(([_, value]) => value === null || value === undefined)
+            .map(([key]) => key);
+          console.error('Null or undefined fields:', nullFields);
+        }
+        
         throw error;
       }
       return { success: true, data };

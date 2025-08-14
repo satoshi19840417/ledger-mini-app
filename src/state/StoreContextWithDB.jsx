@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 import { dbService } from '../services/database';
 import { useSession } from '../useSession';
 
@@ -208,6 +208,11 @@ const StoreContext = createContext();
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { session, loading } = useSession();
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(() => {
+    // ローカルストレージから自動同期の設定を読み込み（デフォルトは有効）
+    const stored = localStorage.getItem('autoSyncEnabled');
+    return stored !== null ? stored === 'true' : true;
+  });
 
   const syncWithDatabase = useCallback(async () => {
     console.log('syncWithDatabase called');
@@ -284,13 +289,21 @@ export function StoreProvider({ children }) {
   }, [session, loadFromDatabase]);
 
   useEffect(() => {
-    if (session?.user?.id && state.syncStatus === 'pending') {
+    // 自動同期が有効な場合のみ実行
+    if (autoSyncEnabled && session?.user?.id && state.syncStatus === 'pending') {
       const timer = setTimeout(() => {
         syncWithDatabase();
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [session, state.syncStatus, syncWithDatabase]);
+  }, [autoSyncEnabled, session, state.syncStatus, syncWithDatabase]);
+  
+  // 自動同期の設定を変更する関数
+  const toggleAutoSync = useCallback((enabled) => {
+    setAutoSyncEnabled(enabled);
+    localStorage.setItem('autoSyncEnabled', enabled.toString());
+    console.log('Auto sync:', enabled ? 'enabled' : 'disabled');
+  }, []);
 
   return (
     <StoreContext.Provider 
@@ -298,7 +311,9 @@ export function StoreProvider({ children }) {
         state, 
         dispatch, 
         syncWithDatabase, 
-        loadFromDatabase 
+        loadFromDatabase,
+        autoSyncEnabled,
+        toggleAutoSync
       }}
     >
       {children}
