@@ -10,6 +10,7 @@ export default function Transactions() {
   const { state, dispatch } = useStore();
   /** @type {Transaction[]} */
   const txs = state.transactions;
+  const unclassifiedCount = txs.filter(tx => !tx.category).length;
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [categories, setCategories] = useState([]);
@@ -22,6 +23,7 @@ export default function Transactions() {
   const [selectedTx, setSelectedTx] = useState(null);
   const [editedCategories, setEditedCategories] = useState({});
   const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [showUnclassifiedOnly, setShowUnclassifiedOnly] = useState(false);
   const [ruleAppliedMessage, setRuleAppliedMessage] = useState('');
   const [newRule, setNewRule] = useState({
     pattern: '',
@@ -33,6 +35,7 @@ export default function Transactions() {
 
   const filtered = useMemo(() => {
     return txs.filter(tx => {
+      if (showUnclassifiedOnly && tx.category) return false;
       if (
         excludeCardPayments &&
         (tx.category === 'カード支払い' || tx.category === 'カード払い')
@@ -53,11 +56,11 @@ export default function Transactions() {
       if (type === 'expense' && tx.kind !== 'expense') return false;
       return true;
     });
-  }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments]);
+  }, [txs, startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
 
   useEffect(() => {
     setPage(1);
-  }, [startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments]);
+  }, [startDate, endDate, categories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -148,6 +151,7 @@ export default function Transactions() {
     setMaxAmount('');
     setType('all');
     setExcludeCardPayments(false);
+    setShowUnclassifiedOnly(false);
     setPage(1);
   };
 
@@ -170,7 +174,26 @@ export default function Transactions() {
       )}
       <div className='card'>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div>（{filtered.length} 件の取引）</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span>（{filtered.length} 件の取引）</span>
+            {!showUnclassifiedOnly && unclassifiedCount > 0 && (
+              <button
+                onClick={() => setShowUnclassifiedOnly(true)}
+                style={{
+                  padding: '4px 12px',
+                  background: '#ff5722',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                未分類 {unclassifiedCount}件を表示
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {Object.keys(editedCategories).length > 0 && (
               <button 
@@ -233,6 +256,27 @@ export default function Transactions() {
               onChange={(e) => setExcludeCardPayments(e.target.checked)}
             />
             <span>カード支払い除外</span>
+          </label>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 4,
+            padding: '4px 8px',
+            borderRadius: '4px',
+            backgroundColor: showUnclassifiedOnly ? '#fff3e0' : 'transparent',
+            border: showUnclassifiedOnly ? '2px solid #ff5722' : '1px solid transparent'
+          }}>
+            <input
+              type='checkbox'
+              checked={showUnclassifiedOnly}
+              onChange={(e) => setShowUnclassifiedOnly(e.target.checked)}
+            />
+            <span style={{ 
+              fontWeight: showUnclassifiedOnly ? 'bold' : 'normal',
+              color: showUnclassifiedOnly ? '#ff5722' : 'inherit'
+            }}>
+              未分類のみ {unclassifiedCount > 0 && `(${unclassifiedCount}件)`}
+            </span>
           </label>
           <button 
             onClick={clearFilters}
