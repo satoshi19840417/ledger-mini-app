@@ -214,12 +214,32 @@ export const dbService = {
     }
     
     try {
-      const { data, error } = await supabase
+      // まずプロフィールが存在するか確認
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update(updates)
+        .select('*')
         .eq('id', userId)
-        .select()
         .single();
+      
+      let data;
+      let error;
+      
+      if (!existingProfile) {
+        // プロフィールが存在しない場合は作成
+        ({ data, error } = await supabase
+          .from('profiles')
+          .insert({ id: userId, ...updates })
+          .select()
+          .single());
+      } else {
+        // プロフィールが存在する場合は更新
+        ({ data, error } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', userId)
+          .select()
+          .single());
+      }
       
       if (error) throw error;
       return { success: true, data };
