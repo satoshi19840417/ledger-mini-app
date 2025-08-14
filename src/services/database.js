@@ -174,4 +174,58 @@ export const dbService = {
       return { success: false, error };
     }
   },
+
+  async loadProfile(userId) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
+      
+      // プロフィールが存在しない場合は作成
+      if (!data) {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({ id: userId, display_name: null })
+          .select()
+          .single();
+        
+        if (insertError) throw insertError;
+        return { success: true, data: newProfile };
+      }
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      return { success: false, error };
+    }
+  },
+
+  async updateProfile(userId, updates) {
+    if (!supabase) {
+      return { success: false, error: 'Supabase not initialized' };
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { success: false, error };
+    }
+  },
 };

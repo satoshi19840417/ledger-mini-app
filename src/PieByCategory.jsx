@@ -128,10 +128,43 @@ export default function PieByCategory({
     )})`,
   }));
 
+  // カスタムラベル関数を追加
+  const renderCustomLabel = ({
+    cx, cy, midAngle, innerRadius, outerRadius, value, index
+  }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    // 値をカンマ区切りでフォーマット
+    const formattedValue = Math.round(value).toLocaleString();
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        style={{ fontSize: '12px', fontWeight: 'bold' }}
+      >
+        {formattedValue}
+      </text>
+    );
+  };
+
   return (
     <ResponsiveContainer width="100%" height={200}>
       <RePieChart>
-        <Pie data={dataWithColors} dataKey="value" nameKey="name" label outerRadius="80%">
+        <Pie 
+          data={dataWithColors} 
+          dataKey="value" 
+          nameKey="name" 
+          label={renderCustomLabel}
+          labelLine={false}
+          outerRadius="80%"
+        >
           {dataWithColors.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}

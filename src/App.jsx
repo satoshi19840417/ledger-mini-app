@@ -17,6 +17,7 @@ const Rules = lazy(() => import('./pages/Rules.jsx'));
 const Transactions = lazy(() => import('./pages/Transactions.jsx'));
 const Others = lazy(() => import('./pages/Others.jsx'));
 const Prefs = lazy(() => import('./pages/Prefs.jsx'));
+const Settings = lazy(() => import('./pages/Settings.jsx'));
 
 const NAV = {
   main: [
@@ -31,7 +32,10 @@ const NAV = {
     { key: 'others', label: 'その他集計' },
     { key: 'tx', label: '取引一覧' },
   ],
-  settings: [{ key: 'prefs', label: '設定' }],
+  settings: [
+    { key: 'prefs', label: '設定' },
+    { key: 'settings', label: 'アカウント設定' }
+  ],
 };
 
 const exists = k =>
@@ -411,7 +415,19 @@ function Dashboard({
             <option value='all'>全期間</option>
           </select>
         </div>
-        <div className='title'>家計簿カテゴリ管理</div>
+        <div className='title'>
+          <span>家計簿カテゴリ管理</span>
+          {state.profile?.display_name && (
+            <span style={{ 
+              fontSize: '0.8em', 
+              marginLeft: '8px',
+              color: '#6b7280',
+              fontWeight: 'normal'
+            }}>
+              ({state.profile.display_name})
+            </span>
+          )}
+        </div>
         <button
           ref={burgerRef}
           className='burger'
@@ -586,6 +602,7 @@ function Dashboard({
           {page === 'others' && <Others yenUnit={yenUnit} />}
           {page === 'tx' && <Transactions />}
           {page === 'prefs' && <Prefs />}
+          {page === 'settings' && <Settings />}
         </Suspense>
       </main>
 

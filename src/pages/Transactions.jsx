@@ -20,6 +20,7 @@ export default function Transactions() {
   const [page, setPage] = useState(1);
   const [showRuleModal, setShowRuleModal] = useState(false);
   const [selectedTx, setSelectedTx] = useState(null);
+  const [editedCategories, setEditedCategories] = useState({});
   const [newRule, setNewRule] = useState({
     pattern: '',
     mode: 'contains',
@@ -104,6 +105,27 @@ export default function Transactions() {
     setSelectedTx(null);
   };
 
+  const handleCategoryChange = (txId, newCategory) => {
+    setEditedCategories(prev => ({
+      ...prev,
+      [txId]: newCategory
+    }));
+  };
+
+  const applyEditedCategories = () => {
+    if (Object.keys(editedCategories).length === 0) return;
+    
+    const updatedTxs = state.transactions.map(tx => {
+      if (editedCategories[tx.id]) {
+        return { ...tx, category: editedCategories[tx.id] };
+      }
+      return tx;
+    });
+    
+    dispatch({ type: 'importTransactions', payload: updatedTxs, append: false });
+    setEditedCategories({});
+  };
+
   return (
     <section>
       <h2>取引一覧</h2>
@@ -111,6 +133,18 @@ export default function Transactions() {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <div>（{filtered.length} 件の取引）</div>
           <div style={{ display: 'flex', gap: 8 }}>
+            {Object.keys(editedCategories).length > 0 && (
+              <button 
+                onClick={applyEditedCategories}
+                style={{ 
+                  background: '#4caf50', 
+                  color: '#fff',
+                  fontWeight: 'bold'
+                }}
+              >
+                変更を保存 ({Object.keys(editedCategories).length}件)
+              </button>
+            )}
             <button onClick={exportCsv}>CSV出力</button>
             <button onClick={exportExcel}>Excel出力</button>
           </div>
@@ -177,29 +211,72 @@ export default function Transactions() {
               pageTxs.map((tx, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
                   <td style={{ padding: 4 }}>{tx.date}</td>
-                  <td style={{ padding: 4 }}>{tx.category || ''}</td>
+                  <td style={{ padding: 4 }}>
+                    <select
+                      value={editedCategories[tx.id] || tx.category || ''}
+                      onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
+                      style={{ 
+                        width: '100%',
+                        padding: '2px 4px',
+                        background: editedCategories[tx.id] ? '#fffbf0' : '#fff',
+                        border: editedCategories[tx.id] ? '1px solid #ff9800' : '1px solid #ddd'
+                      }}
+                    >
+                      <option value="">未分類</option>
+                      {CATEGORIES.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </td>
                   <td style={{ padding: 4, textAlign: 'right' }}>
                     {tx.amount.toLocaleString()}
                   </td>
                   <td style={{ padding: 4 }}>{tx.description || tx.detail || ''}</td>
                   <td style={{ padding: 4 }}>{tx.memo || ''}</td>
                   <td style={{ padding: 4 }}>
-                    <button 
-                      type="button"
-                      onClick={() => openRuleModal(tx)}
-                      style={{ 
-                        fontSize: '0.85rem', 
-                        padding: '4px 8px',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        zIndex: 1,
-                        backgroundColor: '#fff',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      ルール作成
-                    </button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button 
+                        type="button"
+                        onClick={() => openRuleModal(tx)}
+                        style={{ 
+                          fontSize: '0.85rem', 
+                          padding: '4px 8px',
+                          cursor: 'pointer',
+                          backgroundColor: '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        ルール作成
+                      </button>
+                      {editedCategories[tx.id] && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const updatedTxs = state.transactions.map(t => 
+                              t.id === tx.id ? { ...t, category: editedCategories[tx.id] } : t
+                            );
+                            dispatch({ type: 'importTransactions', payload: updatedTxs, append: false });
+                            setEditedCategories(prev => {
+                              const newState = { ...prev };
+                              delete newState[tx.id];
+                              return newState;
+                            });
+                          }}
+                          style={{ 
+                            fontSize: '0.85rem', 
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                            backgroundColor: '#4caf50',
+                            color: '#fff',
+                            border: '1px solid #4caf50',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          データ反映
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

@@ -8,6 +8,7 @@ const initialState = {
   lastImportAt: null,
   syncStatus: 'idle',
   lastSyncAt: null,
+  profile: null,
 };
 
 function applyRulesToTransactions(transactions, rules) {
@@ -79,7 +80,7 @@ function reducer(state, action) {
     }
     
     case 'loadFromDatabase': {
-      const { transactions = [], rules = [] } = action.payload;
+      const { transactions = [], rules = [], profile = null } = action.payload;
       return {
         ...state,
         transactions: transactions.map(tx => ({
@@ -87,6 +88,7 @@ function reducer(state, action) {
           kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
         })),
         rules,
+        profile,
         syncStatus: 'synced',
         lastSyncAt: new Date().toISOString(),
       };
@@ -177,6 +179,10 @@ function reducer(state, action) {
       };
     }
     
+    case 'setProfile': {
+      return { ...state, profile: action.payload };
+    }
+    
     case 'clearAll': {
       localStorage.removeItem('lm_tx_v1');
       localStorage.removeItem('lm_rules_v1');
@@ -222,17 +228,19 @@ export function StoreProvider({ children }) {
     dispatch({ type: 'setSyncStatus', payload: 'loading' });
     
     try {
-      const [txResult, rulesResult] = await Promise.all([
+      const [txResult, rulesResult, profileResult] = await Promise.all([
         dbService.loadTransactions(session.user.id),
         dbService.loadRules(session.user.id),
+        dbService.loadProfile(session.user.id),
       ]);
       
-      if (txResult.success && rulesResult.success) {
+      if (txResult.success && rulesResult.success && profileResult.success) {
         dispatch({
           type: 'loadFromDatabase',
           payload: {
             transactions: txResult.data || [],
             rules: rulesResult.data || [],
+            profile: profileResult.data || null,
           },
         });
       } else {
