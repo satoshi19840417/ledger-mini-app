@@ -7,7 +7,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid
+  CartesianGrid,
+  ReferenceLine
 } from 'recharts';
 import { formatAmount } from './utils/currency.js';
 
@@ -64,6 +65,7 @@ export default function BalanceChart({ transactions, period, yenUnit }) {
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey='month' />
             <YAxis domain={domain} tickFormatter={v => formatAmount(v, yenUnit)} />
+            <ReferenceLine y={0} stroke='#000' strokeWidth={2} />
             <Tooltip formatter={tooltipFormatter} />
             <Bar dataKey='income' fill='#34d399' name='収入' />
             <Bar dataKey='expense' fill='#f87171' name='支出' />
