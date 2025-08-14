@@ -3,14 +3,17 @@ import { supabase } from '../lib/supabaseClient.js';
 import AccountLink from '../components/AccountLink.jsx';
 import { toast } from 'react-hot-toast';
 import { dbService } from '../services/database.js';
+import { useStore } from '../state/StoreContextWithDB.jsx';
 
 export default function Settings() {
+  const { state, dispatch, loadFromDatabase } = useStore();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('account');
   const [displayName, setDisplayName] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [tempDisplayName, setTempDisplayName] = useState('');
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -28,6 +31,13 @@ export default function Settings() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // StoreContextのprofileから表示名を同期
+  useEffect(() => {
+    if (state.profile?.display_name !== undefined) {
+      setDisplayName(state.profile.display_name || '');
+    }
+  }, [state.profile]);
 
   const fetchUser = async () => {
     try {
@@ -175,6 +185,11 @@ export default function Settings() {
                             if (result.success) {
                               setDisplayName(tempDisplayName);
                               setEditingName(false);
+                              // StoreContextのprofileを更新
+                              dispatch({
+                                type: 'updateProfile',
+                                payload: { display_name: tempDisplayName || null }
+                              });
                               toast.success('表示名を更新しました');
                             } else {
                               throw result.error;
@@ -265,6 +280,38 @@ export default function Settings() {
             <div>
               <h2 className="text-lg font-semibold mb-4">データ管理</h2>
               <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-medium mb-2">データ同期</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    クラウドから最新のデータを取得します。他のデバイスで追加・変更したデータを反映させる場合に使用してください。
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      disabled={syncing}
+                      onClick={async () => {
+                        setSyncing(true);
+                        try {
+                          await loadFromDatabase();
+                          toast.success('データを同期しました');
+                        } catch (error) {
+                          console.error('Sync error:', error);
+                          toast.error('同期に失敗しました');
+                        } finally {
+                          setSyncing(false);
+                        }
+                      }}
+                    >
+                      {syncing ? '同期中...' : 'データを同期'}
+                    </button>
+                    {state.lastSyncAt && (
+                      <span className="text-sm text-gray-500">
+                        最終同期: {new Date(state.lastSyncAt).toLocaleString('ja-JP')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-medium mb-2">データエクスポート</h3>
                   <p className="text-sm text-gray-600 mb-3">
