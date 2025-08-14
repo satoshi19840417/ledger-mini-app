@@ -47,6 +47,41 @@ export default function MonthlyAnalysis({
   return (
     <section>
       <div className='card'>
+        {months.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
+              {months.map(m => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
+          <div style={{ flex: 1, minWidth: 300 }}>
+            <h3 style={{ textAlign: 'center', marginBottom: 8 }}>支出</h3>
+            <PieByCategory
+              transactions={monthTxs}
+              period='all'
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+              kind='expense'
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 300 }}>
+            <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収入</h3>
+            <PieByCategory
+              transactions={monthTxs}
+              period='all'
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+              kind='income'
+            />
+          </div>
+        </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ flex: 1, minWidth: 300 }}>
             <div style={{ overflowX: 'auto' }}>
@@ -82,41 +117,6 @@ export default function MonthlyAnalysis({
             onSelectMonth={setSelectedMonth}
             yenUnit={yenUnit}
           />
-          {months.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
-                {months.map(m => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
-            <div style={{ flex: 1, minWidth: 300 }}>
-              <h3 style={{ textAlign: 'center', marginBottom: 8 }}>支出</h3>
-              <PieByCategory
-                transactions={monthTxs}
-                period='all'
-                yenUnit={yenUnit}
-                lockColors={lockColors}
-                hideOthers={hideOthers}
-                kind='expense'
-              />
-            </div>
-            <div style={{ flex: 1, minWidth: 300 }}>
-              <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収入</h3>
-              <PieByCategory
-                transactions={monthTxs}
-                period='all'
-                yenUnit={yenUnit}
-                lockColors={lockColors}
-                hideOthers={hideOthers}
-                kind='income'
-              />
-            </div>
-          </div>
         </div>
       </div>
     </section>
