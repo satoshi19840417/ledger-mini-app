@@ -4,6 +4,7 @@ import './App.css';
 import { useStore } from './state/StoreContextWithDB.jsx';
 import BarByMonth from './BarByMonth.jsx';
 import NetBalance from './NetBalance.jsx';
+import NetBalanceLineChart from './NetBalanceLineChart.jsx';
 import PieByCategory from './PieByCategory.jsx';
 import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
@@ -289,7 +290,7 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
-  const [excludeCardPayments, setExcludeCardPayments] = useState(false);
+  const [excludeCardPayments, setExcludeCardPayments] = useState(true);
   const [excludeRent, setExcludeRent] = useState(false);
   
   // カード支払いと家賃を除外するかどうかでフィルタリング
@@ -310,6 +311,7 @@ function Dashboard({
   
   return (
     <section>
+      <h1 className="text-2xl font-bold mb-4">ダッシュボード</h1>
       <div className="quick">
         <label>
           <input
@@ -381,6 +383,14 @@ function Dashboard({
 
       <div className="card">
         <NetBalance
+          transactions={filteredTransactions}
+          period={period}
+          yenUnit={yenUnit}
+        />
+      </div>
+
+      <div className="card">
+        <NetBalanceLineChart
           transactions={filteredTransactions}
           period={period}
           yenUnit={yenUnit}
@@ -582,49 +592,49 @@ function Dashboard({
           />
         )}
         <Suspense fallback={<div>Loading...</div>}>
-          {page === 'monthly' && (
-            <>
-              <div className='quick'>
-                <label>
-                  <input
-                    type='radio'
-                    name='kind'
-                    value='expense'
-                    checked={kind === 'expense'}
-                    onChange={() => setKind('expense')}
-                  />
-                  支出
-                </label>
-                <label>
-                  <input
-                    type='radio'
-                    name='kind'
-                    value='income'
-                    checked={kind === 'income'}
-                    onChange={() => setKind('income')}
-                  />
-                  収入
-                </label>
-              </div>
-              <Monthly
+            {page === 'monthly' && (
+              <MonthlyAnalysis
                 transactions={state.transactions}
                 period={period}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
                 hideOthers={hideOthers}
-                kind={kind}
               />
-            </>
-          )}
-          {page === 'analysis' && (
-            <MonthlyAnalysis
-              transactions={state.transactions}
-              period={period}
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-            />
-          )}
+            )}
+            {page === 'analysis' && (
+              <>
+                <div className='quick'>
+                  <label>
+                    <input
+                      type='radio'
+                      name='kind'
+                      value='expense'
+                      checked={kind === 'expense'}
+                      onChange={() => setKind('expense')}
+                    />
+                    支出
+                  </label>
+                  <label>
+                    <input
+                      type='radio'
+                      name='kind'
+                      value='income'
+                      checked={kind === 'income'}
+                      onChange={() => setKind('income')}
+                    />
+                    収入
+                  </label>
+                </div>
+                <Monthly
+                  transactions={state.transactions}
+                  period={period}
+                  yenUnit={yenUnit}
+                  lockColors={lockColors}
+                  hideOthers={hideOthers}
+                  kind={kind}
+                />
+              </>
+            )}
           {page === 'yearly' && (
             <>
               <div className='quick'>

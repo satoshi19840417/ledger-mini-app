@@ -117,6 +117,11 @@ export default function PieByCategory({
   if (!hideOthers && othersValue > 0) {
     items.push({ name: 'その他', value: othersValue });
   }
+  items.sort((a, b) => {
+    if (a.name === 'その他') return 1;
+    if (b.name === 'その他') return -1;
+    return b.value - a.value;
+  });
 
   const colorMap = useRef({});
   const dataWithColors = useMemo(() => {
