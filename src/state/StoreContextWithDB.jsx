@@ -425,13 +425,13 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     // 自動同期が有効な場合のみ実行
-    if (autoSyncEnabled && session?.user?.id && state.syncStatus === 'pending') {
-      const timer = setTimeout(() => {
+    if (autoSyncEnabled && session?.user?.id) {
+      const intervalId = setInterval(() => {
         syncWithDatabase();
-      }, 1000);
-      return () => clearTimeout(timer);
+      }, 15 * 60 * 1000);
+      return () => clearInterval(intervalId);
     }
-  }, [autoSyncEnabled, session, state.syncStatus, syncWithDatabase]);
+  }, [autoSyncEnabled, session, syncWithDatabase]);
   
   // 自動同期の設定を変更する関数
   const toggleAutoSync = useCallback((enabled) => {
