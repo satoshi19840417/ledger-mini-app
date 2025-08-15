@@ -107,6 +107,7 @@ useEffect(() => {
     loadFromDatabase({
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      skipRules: true,
     });
   }
 }, [startDate, endDate, loadFromDatabase]);
