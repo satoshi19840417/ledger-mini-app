@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
 import BarByMonth from '../BarByMonth.jsx';
+import AmountVisual from '../components/ui/AmountVisual.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,6 +39,18 @@ export default function Yearly({
         balance: data.income - data.expense
       }));
   }, [transactions, filterMode]);
+
+  // 年別データの最大値を計算（棒グラフのスケールに使用）
+  const maxAmount = useMemo(
+    () =>
+      yearlyStats.reduce(
+        (max, { income, expense }) => Math.max(max, income, expense),
+        0
+      ),
+    [yearlyStats]
+  );
+
+  const displayMax = yenUnit === 'man' ? maxAmount / 10000 : maxAmount;
 
   const currentYear = new Date().getFullYear().toString();
   const currentYearData = yearlyStats.find(s => s.year === currentYear);
@@ -147,23 +160,25 @@ export default function Yearly({
                         収支: ¥{balance.toLocaleString()}
                       </Badge>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">収入: </span>
-                        <span className="font-medium text-green-600">
-                          ¥{income.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">支出: </span>
-                        <span className="font-medium text-red-600">
-                          ¥{expense.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">取引: </span>
-                        <span className="font-medium">{count}件</span>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <AmountVisual
+                        amount={yenUnit === 'man' ? income / 10000 : income}
+                        label={`収入${yenUnit === 'man' ? '(万円)' : ''}`}
+                        isIncome={true}
+                        maxAmount={displayMax}
+                        showBar={true}
+                      />
+                      <AmountVisual
+                        amount={yenUnit === 'man' ? -expense / 10000 : -expense}
+                        label={`支出${yenUnit === 'man' ? '(万円)' : ''}`}
+                        isIncome={false}
+                        maxAmount={displayMax}
+                        showBar={true}
+                      />
+                    </div>
+                    <div className="text-sm mt-2">
+                      <span className="text-muted-foreground">取引: </span>
+                      <span className="font-medium">{count}件</span>
                     </div>
                   </div>
                 ))}
