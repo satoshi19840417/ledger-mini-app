@@ -44,8 +44,7 @@ export default function Monthly({
 
   const topCategories = useMemo(() => {
     const totals = {};
-    transactions.forEach((tx) => {
-      if (tx.kind !== kind) return;
+    monthTxs.forEach((tx) => {
       const cat = tx.category || 'その他';
       if (hideOthers && cat === 'その他') return;
       totals[cat] = (totals[cat] || 0) + Math.abs(tx.amount);
@@ -54,7 +53,7 @@ export default function Monthly({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([cat]) => cat);
-  }, [transactions, kind, hideOthers]);
+  }, [monthTxs, hideOthers]);
 
   // 月の合計金額を計算
   const monthTotal = useMemo(() => {
@@ -194,7 +193,7 @@ export default function Monthly({
             </CardHeader>
             <CardContent>
               <CategoryComparison
-                transactions={transactions}
+                transactions={monthTxs}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
                 hideOthers={hideOthers}
