@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useMemo } from 'react';
 import { formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
@@ -12,14 +12,7 @@ import {
 } from 'recharts';
 import { DEFAULT_CATEGORIES as CATEGORIES } from './defaultCategories.js';
 
-const BAR_COLORS = [
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#f87171',
-  '#a78bfa',
-  '#fb923c',
-];
+const DEFAULT_BAR_COLOR = '#3b82f6';
 
 function ScrollableLegend({ payload }) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -106,17 +99,10 @@ export default function BarByCategory({
     return ai - bi;
   });
 
-  const colorMap = useRef({});
+  void lockColors;
   const dataWithColors = useMemo(() => {
-    if (!lockColors) colorMap.current = {};
-    items.forEach((d) => {
-      if (!colorMap.current[d.category]) {
-        const used = Object.keys(colorMap.current).length;
-        colorMap.current[d.category] = BAR_COLORS[used % BAR_COLORS.length];
-      }
-    });
-    return items.map((d) => ({ ...d, fill: colorMap.current[d.category] }));
-  }, [items, lockColors]);
+    return items.map((d) => ({ ...d, fill: DEFAULT_BAR_COLOR }));
+  }, [items]);
 
   if (dataWithColors.length === 0) {
     return <p>データがありません</p>;

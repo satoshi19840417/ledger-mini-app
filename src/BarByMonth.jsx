@@ -13,14 +13,9 @@ import {
   Line,
 } from 'recharts';
 
-const BAR_COLORS = [
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#f87171',
-  '#a78bfa',
-  '#fb923c',
-];
+// デフォルトと強調表示のカラー
+const DEFAULT_BAR_COLOR = '#3b82f6';
+const HIGHLIGHT_BAR_COLOR = '#fb923c';
 
 function ScrollableLegend({ payload }) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -76,11 +71,13 @@ export default function BarByMonth({
   hideOthers,
   kind = 'expense',
   height = 500,
+  target,
 }) {
   const scrollRef = useRef(null);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  void lockColors;
   
   const monthMap = {};
   transactions
@@ -103,22 +100,35 @@ export default function BarByMonth({
 
   const width = data.length * 40;
 
-  const colorMap = useRef({});
-  const dataWithColors = useMemo(() => {
-    if (!lockColors) colorMap.current = {};
-    data.forEach((d) => {
-      if (!colorMap.current[d.month]) {
-        const used = Object.keys(colorMap.current).length;
-        colorMap.current[d.month] = BAR_COLORS[used % BAR_COLORS.length];
-      }
-    });
-      return data.map((d) => ({ ...d, fill: colorMap.current[d.month] }));
-    }, [data, lockColors]);
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const average = useMemo(() => {
+    if (data.length === 0) return 0;
+    const sum = data.reduce((acc, d) => acc + d.total, 0);
+    return sum / data.length;
+  }, [data]);
 
-  const maxTotal = useMemo(
-    () => Math.max(...dataWithColors.flatMap((d) => [d.total, d.cumulative]), 0),
-    [dataWithColors]
+ // （ここはそのまま）dataWithColors は直前の useMemo の実装を採用
+
+// 直近3点の移動平均を付与（凡例やラインで使う場合に備えて）
+const dataWithMovingAvg = useMemo(() => {
+  return dataWithColors.map((d, idx, arr) => {
+    const start = Math.max(0, idx - 2);
+    const subset = arr.slice(start, idx + 1);
+    const avg = subset.reduce((sum, item) => sum + (item.total ?? 0), 0) / subset.length;
+    return { ...d, movingAvg: avg };
+  });
+}, [dataWithColors]);
+
+// Y軸スケール用の最大値（total / cumulative / movingAvg を安全にカバー）
+const maxTotal = useMemo(() => {
+  return Math.max(
+    0,
+    ...dataWithMovingAvg.map(d =>
+      Math.max(d.total ?? 0, d.cumulative ?? 0, d.movingAvg ?? 0)
+    )
   );
+}, [dataWithMovingAvg]);
+
   
   // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
   const ticks = useMemo(() => {
@@ -136,12 +146,6 @@ export default function BarByMonth({
     }
     return result.filter(v => v <= maxTotal * 1.1); // 最大値の110%までのticksのみ表示
   }, [maxTotal]);
-
-  const average = useMemo(() => {
-    if (dataWithColors.length === 0) return 0;
-    const sum = dataWithColors.reduce((acc, d) => acc + d.total, 0);
-    return sum / dataWithColors.length;
-  }, [dataWithColors]);
 
   const tickFormatter = (v) => formatAmount(v, yenUnit);
   const formatValue = (v) => formatAmount(v, yenUnit);
@@ -243,7 +247,7 @@ export default function BarByMonth({
         minWidth: isMobile ? minBarWidth : 'auto'
       }}>
         <ResponsiveContainer width='100%' height={height}>
-          <ReBarChart data={dataWithColors} margin={{ top: 8, right: isMobile ? 8 : 16, left: isMobile ? -10 : 0, bottom: 28 }}>
+          <ReBarChart data={dataWithMovingAvg} margin={{ top: 8, right: isMobile ? 8 : 16, left: isMobile ? -10 : 0, bottom: 28 }}>
           <XAxis
             dataKey="month"
             interval={0}
@@ -268,18 +272,33 @@ export default function BarByMonth({
             label={{ position: 'right', value: `平均: ${formatValue(average)}` }}
           />
           <Bar dataKey="total" name="合計">
-            {dataWithColors.map((entry, idx) => (
+            {dataWithMovingAvg.map((entry, idx) => (
               <Cell key={`cell-${idx}`} fill={entry.fill} />
             ))}
           </Bar>
-          <Line
-            type="monotone"
-            dataKey="cumulative"
-            name="累積"
-            stroke="#6366f1"
-            strokeWidth={2}
-            dot={{ r: 3 }}
-          />
+{/* ライン（コンフリクト解消済み） */}
+{dataWithMovingAvg.some(d => (d.cumulative ?? 0) > 0) && (
+  <Line
+    type="monotone"
+    dataKey="cumulative"
+    name="累積"
+    stroke="#6366f1"
+    strokeWidth={2}
+    dot={{ r: 3 }}
+    isAnimationActive={false}
+  />
+)}
+
+<Line
+  type="monotone"
+  dataKey="movingAvg"
+  name="3ヶ月移動平均"
+  stroke="#0ea5e9"
+  strokeWidth={2}
+  dot={false}
+  isAnimationActive={false}
+/>
+
         </ReBarChart>
       </ResponsiveContainer>
       </div>
