@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
 /** @typedef {import('../types').Rule} Rule */
 
@@ -19,6 +19,7 @@ export default function Rules() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingRule, setEditingRule] = useState({});
   const [applyMessage, setApplyMessage] = useState('');
+  const [sortBy, setSortBy] = useState('order'); // 'order' | 'category'
 
   // lastApplyResultの変更を監視
   useEffect(() => {
@@ -81,6 +82,20 @@ export default function Rules() {
     saveRules(updated);
   };
 
+  // ソート済みのルールを取得
+  const sortedRules = useMemo(() => {
+    if (sortBy === 'category') {
+      return [...rules].sort((a, b) => {
+        // カテゴリでソート（同じカテゴリ内では元の順序を維持）
+        if (a.category === b.category) {
+          return rules.indexOf(a) - rules.indexOf(b);
+        }
+        return (a.category || '').localeCompare(b.category || '', 'ja');
+      });
+    }
+    return rules; // 元の順序を維持
+  }, [rules, sortBy]);
+
   return (
     <section>
       <div
@@ -114,32 +129,67 @@ export default function Rules() {
         </div>
       )}
       <div className='card'>
-        <div style={{ marginBottom: 8 }}>（{rules.length}件のルール）</div>
+        <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>（{rules.length}件のルール）</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setSortBy('order')}
+              style={{
+                padding: '4px 12px',
+                borderRadius: '4px',
+                backgroundColor: sortBy === 'order' ? '#4CAF50' : '#e0e0e0',
+                color: sortBy === 'order' ? 'white' : 'black',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              順序順
+            </button>
+            <button
+              onClick={() => setSortBy('category')}
+              style={{
+                padding: '4px 12px',
+                borderRadius: '4px',
+                backgroundColor: sortBy === 'category' ? '#4CAF50' : '#e0e0e0',
+                color: sortBy === 'category' ? 'white' : 'black',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              カテゴリ順
+            </button>
+          </div>
+        </div>
         <table className='text-left' style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr className='text-left' style={{ backgroundColor: '#f0f0f0' }}>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>パターン</th>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>モード</th>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>対象</th>
-              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>カテゴリ</th>
+              <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold', cursor: 'pointer', position: 'relative' }} onClick={() => setSortBy(sortBy === 'category' ? 'order' : 'category')}>
+                カテゴリ
+                {sortBy === 'category' && <span style={{ position: 'absolute', marginLeft: 4 }}>▼</span>}
+              </th>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>種別</th>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>操作</th>
             </tr>
           </thead>
           <tbody>
-            {rules.length === 0 ? (
+            {sortedRules.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ padding: 8, color: '#666' }}>
                   ルールがありません
                 </td>
               </tr>
             ) : (
-              rules.map((rule, idx) => (
+              sortedRules.map((rule, idx) => {
+                const originalIndex = rules.indexOf(rule);
+                return (
                 <tr key={idx} style={{ 
                   borderBottom: '1px solid #f0f0f0',
                   backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9f9f9'
                 }}>
-                  {editingIndex === idx ? (
+                  {editingIndex === originalIndex ? (
                     <>
                       <td style={{ padding: 4 }}>
                         <input
@@ -200,7 +250,7 @@ export default function Rules() {
                         </select>
                       </td>
                       <td style={{ padding: 4, display: 'flex', gap: 4 }}>
-                        <button onClick={() => saveEdit(idx)}>保存</button>
+                        <button onClick={() => saveEdit(originalIndex)}>保存</button>
                         <button onClick={cancelEdit}>取消</button>
                       </td>
                     </>
@@ -212,22 +262,27 @@ export default function Rules() {
                       <td style={{ padding: 4 }}>{rule.category || ''}</td>
                       <td style={{ padding: 4 }}>{rule.kind || ''}</td>
                       <td style={{ padding: 4, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        <button onClick={() => moveRule(idx, -1)} disabled={idx === 0}>
-                          ↑
-                        </button>
-                        <button
-                          onClick={() => moveRule(idx, 1)}
-                          disabled={idx === rules.length - 1}
-                        >
-                          ↓
-                        </button>
-                        <button onClick={() => startEdit(idx)}>編集</button>
-                        <button onClick={() => deleteRule(idx)}>削除</button>
+                        {sortBy === 'order' && (
+                          <>
+                            <button onClick={() => moveRule(originalIndex, -1)} disabled={originalIndex === 0}>
+                              ↑
+                            </button>
+                            <button
+                              onClick={() => moveRule(originalIndex, 1)}
+                              disabled={originalIndex === rules.length - 1}
+                            >
+                              ↓
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => startEdit(originalIndex)}>編集</button>
+                        <button onClick={() => deleteRule(originalIndex)}>削除</button>
                       </td>
                     </>
                   )}
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
