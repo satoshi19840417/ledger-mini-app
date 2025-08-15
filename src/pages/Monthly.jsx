@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
 import BarByCategory from '../BarByCategory.jsx';
-import { DEFAULT_CATEGORIES as CATEGORIES } from '../defaultCategories.js';
+import { useStore } from '../state/StoreContextWithDB';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,8 @@ export default function Monthly({
   filterMode,
   onFilterModeChange,
 }) {
+  const { state } = useStore();
+  const categories = state.categories;
   const [selectedCategory, setSelectedCategory] = useState('');
   const [comparePeriod, setComparePeriod] = useState('3m');
   
@@ -186,7 +188,7 @@ export default function Monthly({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">全カテゴリー</SelectItem>
-                  {CATEGORIES.map((c) => (
+                  {categories.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
