@@ -125,18 +125,26 @@ export const dbService = {
     }
   },
 
-  async loadTransactions(userId) {
+  async loadTransactions(userId, { startDate, endDate } = {}) {
     if (!supabase) {
       return { success: false, error: 'Supabase not initialized' };
     }
-    
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: false });
-      
+        .eq('user_id', userId);
+
+      if (startDate) {
+        query = query.gte('date', startDate);
+      }
+      if (endDate) {
+        query = query.lte('date', endDate);
+      }
+
+      const { data, error } = await query.order('date', { ascending: false });
+
       if (error) throw error;
       return { success: true, data };
     } catch (error) {
