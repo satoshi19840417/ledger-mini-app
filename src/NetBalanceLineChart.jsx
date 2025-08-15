@@ -29,7 +29,12 @@ function CustomTooltip({ active, payload, label, formatDiffValue, average }) {
   );
 }
 
-export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
+export default function NetBalanceLineChart({
+  transactions,
+  period,
+  yenUnit,
+  isAnimationActive = false,
+}) {
   const { data, average, quarterLines } = useMemo(() => {
     // ---- 集計 ----------------------------------------------------------
     const monthMap = {};
@@ -81,49 +86,51 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
         <LineChart
           data={data}
           margin={{ top: 16, right: 16, bottom: 8, left: 0 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
+          isAnimationActive={isAnimationActive}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
 
-        {/* 目盛りフォーマット */}
-        <YAxis tickFormatter={(v) => yFmt(v, yenUnit)} />
-        {/* 隔月表示: interval={1} で 2つに1つだけ表示 */}
-        <XAxis dataKey="month" tickFormatter={formatMonth} interval={1} />
+          {/* 目盛りフォーマット */}
+          <YAxis tickFormatter={(v) => yFmt(v, yenUnit)} />
+          {/* 隔月表示: interval={1} で 2つに1つだけ表示 */}
+          <XAxis dataKey="month" tickFormatter={formatMonth} interval={1} />
 
-        {/* 0円基準線 */}
-        <ReferenceLine y={0} stroke="#000" strokeWidth={1} />
+          {/* 0円基準線 */}
+          <ReferenceLine y={0} stroke="#000" strokeWidth={1} />
 
-        {/* 四半期の区切り線とラベル */}
-        {quarterLines.map((q) => (
-          <ReferenceLine
-            key={q.x}
-            x={q.x}
-            stroke="#ccc"
-            strokeWidth={1}
-            label={{ position: 'top', value: q.label, fill: '#94a3b8' }}
+          {/* 四半期の区切り線とラベル */}
+          {quarterLines.map((q) => (
+            <ReferenceLine
+              key={q.x}
+              x={q.x}
+              stroke="#ccc"
+              strokeWidth={1}
+              label={{ position: 'top', value: q.label, fill: '#94a3b8' }}
+            />
+          ))}
+
+          {/* ツールチップ（1つに統一） */}
+          <Tooltip
+            content={<CustomTooltip formatDiffValue={formatDiffValue} average={average} />}
           />
-        ))}
-
-        {/* ツールチップ（1つに統一） */}
-        <Tooltip
-          content={<CustomTooltip formatDiffValue={formatDiffValue} average={average} />}
-        />
-        <Line
-          type="monotone"
-          dataKey="diff"
-          stroke="#8884d8"
-          dot={{ r: 3 }}
-        />
-        {/* PCのみブラシ。直近6か月を初期表示 */}
-        {!isMobile && (
-          <Brush
-            dataKey="month"
-            height={20}
-            travellerWidth={10}
-            startIndex={Math.max(data.length - 6, 0)}
+          <Line
+            type="monotone"
+            dataKey="diff"
+            stroke="#8884d8"
+            dot={{ r: 3 }}
+            isAnimationActive={isAnimationActive}
           />
-        )}
-      </LineChart>
-    </ResponsiveContainer>
+          {/* PCのみブラシ。直近6か月を初期表示 */}
+          {!isMobile && (
+            <Brush
+              dataKey="month"
+              height={20}
+              travellerWidth={10}
+              startIndex={Math.max(data.length - 6, 0)}
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
   </div>
 );
 }
