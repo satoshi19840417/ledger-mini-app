@@ -1,5 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
-import BarByMonth from '../BarByMonth.jsx';
+import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
 import { DEFAULT_CATEGORIES as CATEGORIES } from '../defaultCategories.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +20,6 @@ export default function Monthly({
   const [excludeCardPayments, setExcludeCardPayments] = useState(true);
   const [excludeRent, setExcludeRent] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const chartContainerRef = useRef(null);
   // カード支払い・家賃・カテゴリを除外するかどうかでフィルタリング
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -211,25 +209,6 @@ export default function Monthly({
             </CardContent>
           </Card>
 
-          {/* 月次推移グラフ */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">月次推移</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div ref={chartContainerRef}>
-                <BarByMonth
-                  transactions={filteredTransactions}
-                  period={period}
-                  yenUnit={yenUnit}
-                  lockColors={lockColors}
-                  hideOthers={hideOthers}
-                  kind={kind}
-                  height={350}
-                />
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
