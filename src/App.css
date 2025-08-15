@@ -1,6 +1,7 @@
 @charset "UTF-8";
 @import "./styles/variables.css";
 @import "./styles/mobile-responsive.css";
+@import "./styles/select-override.css";
 
  :root {
   --app-bar-height: 56px;

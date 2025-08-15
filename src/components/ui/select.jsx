@@ -52,7 +52,7 @@ const SelectTrigger = React.forwardRef(({ className, children, ...props }, ref) 
       ref={triggerRef}
       type="button"
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       onClick={() => setIsOpen(!isOpen)}
@@ -104,7 +104,7 @@ const SelectContent = React.forwardRef(({ className, children, ...props }, ref) 
     <div
       ref={ref}
       className={cn(
-        "absolute z-50 mt-1 w-full min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md",
+        "absolute z-50 mt-1 w-full min-w-[8rem] overflow-hidden rounded-md border border-gray-200 bg-white text-gray-900 shadow-lg",
         className
       )}
       {...props}
@@ -127,8 +127,8 @@ const SelectItem = React.forwardRef(({ className, children, value, ...props }, r
       role="option"
       aria-selected={isSelected}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        isSelected && "bg-accent text-accent-foreground",
+        "relative flex w-full cursor-pointer select-none items-center px-3 py-2 text-sm outline-none hover:bg-blue-50 hover:text-blue-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        isSelected && "bg-blue-100 text-blue-900 font-medium",
         className
       )}
       onClick={() => onValueChange(value)}

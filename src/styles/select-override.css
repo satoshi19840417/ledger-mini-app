@@ -1,0 +1,160 @@
+/* セレクトボックスのスタイルオーバーライド */
+
+/* セレクトトリガー（閉じている状態）*/
+[role="combobox"],
+button[class*="select"],
+.select-trigger,
+[class*="SelectTrigger"] {
+  background-color: white !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+/* セレクトコンテンツ（開いている状態）*/
+[role="listbox"],
+.select-content,
+[class*="SelectContent"] {
+  background-color: white !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* セレクトアイテム */
+[role="option"],
+.select-item,
+[class*="SelectItem"] {
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+[role="option"]:hover,
+.select-item:hover,
+[class*="SelectItem"]:hover {
+  background-color: #eff6ff !important; /* blue-50 */
+}
+
+[role="option"][aria-selected="true"],
+.select-item.selected,
+[class*="SelectItem"].selected {
+  background-color: #dbeafe !important; /* blue-100 */
+  font-weight: 500;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+  [role="combobox"],
+  button[class*="select"],
+  .select-trigger,
+  [class*="SelectTrigger"] {
+    background-color: #1f2937 !important; /* gray-800 */
+    color: white !important;
+    border-color: #374151 !important; /* gray-700 */
+  }
+
+  [role="listbox"],
+  .select-content,
+  [class*="SelectContent"] {
+    background-color: #1f2937 !important; /* gray-800 */
+    border-color: #374151 !important; /* gray-700 */
+    color: white !important;
+  }
+
+  [role="option"]:hover,
+  .select-item:hover,
+  [class*="SelectItem"]:hover {
+    background-color: #374151 !important; /* gray-700 */
+  }
+
+  [role="option"][aria-selected="true"],
+  .select-item.selected,
+  [class*="SelectItem"].selected {
+    background-color: #4b5563 !important; /* gray-600 */
+  }
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  [role="listbox"],
+  .select-content,
+  [class*="SelectContent"] {
+    max-height: 50vh !important;
+  }
+  
+  [role="option"],
+  .select-item,
+  [class*="SelectItem"] {
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* フォーカス時のスタイル強化 */
+[role="combobox"]:focus,
+button[class*="select"]:focus,
+.select-trigger:focus,
+[class*="SelectTrigger"]:focus {
+  outline: 2px solid #3b82f6 !important; /* blue-500 */
+  outline-offset: 2px !important;
+}
+
+/* 無効化状態 */
+[role="combobox"]:disabled,
+button[class*="select"]:disabled,
+.select-trigger:disabled,
+[class*="SelectTrigger"]:disabled {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  color: #9ca3af !important; /* gray-400 */
+  cursor: not-allowed !important;
+}
+
+/* アニメーション */
+[role="listbox"],
+.select-content,
+[class*="SelectContent"] {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Z-indexの確保 */
+[role="listbox"],
+.select-content,
+[class*="SelectContent"] {
+  z-index: 9999 !important;
+}
+
+/* スクロールバーのスタイリング */
+[role="listbox"]::-webkit-scrollbar,
+.select-content::-webkit-scrollbar,
+[class*="SelectContent"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+[role="listbox"]::-webkit-scrollbar-track,
+.select-content::-webkit-scrollbar-track,
+[class*="SelectContent"]::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+[role="listbox"]::-webkit-scrollbar-thumb,
+.select-content::-webkit-scrollbar-thumb,
+[class*="SelectContent"]::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 3px;
+}
+
+[role="listbox"]::-webkit-scrollbar-thumb:hover,
+.select-content::-webkit-scrollbar-thumb:hover,
+[class*="SelectContent"]::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
