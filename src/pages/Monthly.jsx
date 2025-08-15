@@ -1,12 +1,13 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
-import BarByCategory from '../BarByCategory.jsx';
+import CategoryComparison from '../CategoryComparison.jsx';
 import { useStore } from '../state/StoreContextWithDB';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { MultiSelect, MultiSelectItem } from '@/components/ui/multi-select';
 import { TrendingUp, TrendingDown, Calendar, Filter, X, JapaneseYen, FileText, BarChart3 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatAmount } from '../utils/currency.js';
@@ -25,6 +26,7 @@ export default function Monthly({
   const categories = state.categories;
   const [selectedCategory, setSelectedCategory] = useState('');
   const [comparePeriod, setComparePeriod] = useState('3m');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   
   // フィルタリング処理
   const filteredTransactions = useMemo(() => {
@@ -297,9 +299,38 @@ export default function Monthly({
                 カテゴリ比較
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <BarByCategory
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="compare-categories">カテゴリ選択</Label>
+                <MultiSelect
+                  id="compare-categories"
+                  value={selectedCategories}
+                  onChange={(e) =>
+                    setSelectedCategories(
+                      Array.from(e.target.selectedOptions, (o) => o.value),
+                    )
+                  }
+                  size={5}
+                >
+                  {categories.map((c) => (
+                    <MultiSelectItem key={c} value={c}>
+                      {c}
+                    </MultiSelectItem>
+                  ))}
+                </MultiSelect>
+                {selectedCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCategories.map((c) => (
+                      <Badge key={c} variant="secondary">
+                        {c}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <CategoryComparison
                 transactions={filteredTransactions}
+                selectedCategories={selectedCategories}
                 period={comparePeriod}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
