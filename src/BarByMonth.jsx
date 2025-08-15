@@ -10,6 +10,7 @@ import {
   Legend,
   Cell,
   ReferenceLine,
+  Line,
 } from 'recharts';
 
 // デフォルトと強調表示のカラー
@@ -113,6 +114,15 @@ export default function BarByMonth({
       };
     });
   }, [data, currentMonth, target, average]);
+
+  const dataWithMovingAvg = useMemo(() => {
+    return dataWithColors.map((d, idx, arr) => {
+      const start = Math.max(0, idx - 2);
+      const subset = arr.slice(start, idx + 1);
+      const avg = subset.reduce((sum, item) => sum + item.total, 0) / subset.length;
+      return { ...d, movingAvg: avg };
+    });
+  }, [dataWithColors]);
 
   const maxTotal = useMemo(
     () => Math.max(...data.map(d => d.total), 0),
@@ -237,7 +247,7 @@ export default function BarByMonth({
         minWidth: isMobile ? minBarWidth : 'auto'
       }}>
         <ResponsiveContainer width='100%' height={height}>
-          <ReBarChart data={dataWithColors} margin={{ top: 8, right: isMobile ? 8 : 16, left: isMobile ? -10 : 0, bottom: 28 }}>
+          <ReBarChart data={dataWithMovingAvg} margin={{ top: 8, right: isMobile ? 8 : 16, left: isMobile ? -10 : 0, bottom: 28 }}>
           <XAxis
             dataKey="month"
             interval={0}
@@ -262,10 +272,11 @@ export default function BarByMonth({
             label={{ position: 'right', value: `平均: ${formatValue(average)}` }}
           />
           <Bar dataKey="total" name="合計">
-            {dataWithColors.map((entry, idx) => (
+            {dataWithMovingAvg.map((entry, idx) => (
               <Cell key={`cell-${idx}`} fill={entry.fill} />
             ))}
           </Bar>
+          <Line type="monotone" dataKey="movingAvg" name="3ヶ月移動平均" stroke="#0ea5e9" strokeWidth={2} dot={false} />
         </ReBarChart>
       </ResponsiveContainer>
       </div>
