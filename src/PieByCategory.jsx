@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
@@ -142,6 +142,10 @@ export default function PieByCategory({
     return items.map((d) => ({ ...d, fill: colorMap.current[d.name] }));
   }, [items, lockColors]);
 
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, [chartHeight, dataWithColors.length]);
+
   if (items.length === 0) {
     return <p>データがありません</p>;
   }
@@ -194,12 +198,15 @@ export default function PieByCategory({
   };
 
   return (
-    <div style={{ 
-      width: '100%',
-      maxWidth: isMobile ? '100%' : 'none',
-      margin: '0 auto'
-    }}>
-      <ResponsiveContainer width="100%" height={chartHeight}>
+    <div
+      className="w-full h-[250px]"
+      style={{
+        height: chartHeight,
+        maxWidth: isMobile ? '100%' : 'none',
+        margin: '0 auto'
+      }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
         <RePieChart margin={{
           top: isMobile ? 10 : 0,
           right: isMobile ? 10 : 30,

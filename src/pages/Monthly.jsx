@@ -170,7 +170,7 @@ export default function Monthly({
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-h-[250px]">
               <PieByCategory
                 transactions={monthTxs}
                 period="all"

@@ -118,7 +118,7 @@ export default function Yearly({
                     月次推移
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="category" className="mt-4">
+                <TabsContent value="category" className="mt-4 min-h-[250px]">
                   <PieByCategory
                     transactions={transactions}
                     period={period}

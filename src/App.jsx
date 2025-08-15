@@ -555,7 +555,7 @@ function Dashboard({
               {kind === 'expense' ? '支出' : '収入'}カテゴリ別内訳
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[250px]">
             <PieByCategory
               transactions={filteredTransactions}
               period={period}
