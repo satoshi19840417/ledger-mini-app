@@ -19,7 +19,7 @@ import {
 /** @typedef {import('../types').Rule} Rule */
 
 export default function Transactions() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, loadFromDatabase } = useStore();
   /** @type {Transaction[]} */
   const txs = state.transactions;
   const categories = state.categories;
@@ -103,6 +103,15 @@ useEffect(() => {
   keyword, minAmount, maxAmount, type,
   excludeCardPayments, showUnclassifiedOnly,
 ]);
+
+useEffect(() => {
+  if (loadFromDatabase) {
+    loadFromDatabase({
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    });
+  }
+}, [startDate, endDate, loadFromDatabase]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));

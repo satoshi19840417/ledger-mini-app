@@ -382,14 +382,14 @@ export function StoreProvider({ children }) {
     [session, state.transactions, state.rules]
   );
 
-  const loadFromDatabase = useCallback(async () => {
+  const loadFromDatabase = useCallback(async ({ startDate, endDate } = {}) => {
     if (!session?.user?.id) return;
-    
+
     dispatch({ type: 'setSyncStatus', payload: 'loading' });
-    
+
     try {
       const [txResult, rulesResult, profileResult] = await Promise.all([
-        dbService.loadTransactions(session.user.id),
+        dbService.loadTransactions(session.user.id, { startDate, endDate }),
         dbService.loadRules(session.user.id),
         dbService.loadProfile(session.user.id),
       ]);
