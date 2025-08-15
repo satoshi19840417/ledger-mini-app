@@ -20,7 +20,7 @@ const HEADER_ALIASES = {
   memo: ['memo', 'メモ', '摘要', '備考', 'コメント', '支払区分', 'お支払開始月'],
   category: ['category', 'カテゴリ', '費目', '科目', '分類', '項目', 'ラベル'],
   kind: ['kind', '収支', 'タイプ', '種別', '入出金', '取引種別', '種別（ショッピング、キャッシング、その他）'],
-  id: ['id', 'ID', 'トランザクションID', '取引ID'],
+  id: ['id', 'ID', 'ＩＤ', 'トランザクションID', '取引ID'],
 };
 
 // Normalize header names using aliases above
@@ -156,12 +156,19 @@ export async function parseCsvFiles(files) {
   const errors = [];
   for (const file of list) {
     const text = await readWithFallback(file);
+    // デバッグ: 最初の100文字を確認
+    console.log('File text (first 100 chars):', text.substring(0, 100));
+    console.log('File text char codes:', text.substring(0, 10).split('').map(c => c.charCodeAt(0)));
+    
     const parsed = Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
       beforeFirstChunk(chunk) {
-        // BOMを確実に削除
-        let cleanChunk = chunk.replace(/^\uFEFF/, '').replace(/^\u{FEFF}/u, '');
+        // BOMを確実に削除（複数のパターンに対応）
+        let cleanChunk = chunk
+          .replace(/^\uFEFF/, '')
+          .replace(/^\u{FEFF}/u, '')
+          .replace(/^﻿/, ''); // 直接BOM文字を削除
         
         const lines = cleanChunk.split(/\r?\n/);
         if (lines[0].includes('月別ご利用明細')) {
@@ -170,8 +177,13 @@ export async function parseCsvFiles(files) {
         return cleanChunk;
       },
       transformHeader(header) {
-        const canon = normalizeHeader(header);
-        if (!(canon in headerMap)) headerMap[canon] = header.trim();
+        // デバッグ: ヘッダー名を確認
+        console.log('Processing header:', header, 'char codes:', header.split('').map(c => c.charCodeAt(0)));
+        
+        // BOMが残っている場合は削除
+        const cleanHeader = header.replace(/^\uFEFF/, '').replace(/^﻿/, '').trim();
+        const canon = normalizeHeader(cleanHeader);
+        if (!(canon in headerMap)) headerMap[canon] = cleanHeader;
         return canon;
       },
     });

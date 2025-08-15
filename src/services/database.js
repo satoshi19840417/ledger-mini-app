@@ -106,8 +106,15 @@ export const dbService = {
 
         if (batchError) {
           console.error(`Error in batch ${Math.floor(i / BATCH_SIZE) + 1}:`, batchError);
+          console.error('Failed batch data:', batch);
+          console.error('Error details:', {
+            message: batchError.message,
+            details: batchError.details,
+            hint: batchError.hint,
+            code: batchError.code
+          });
           hasError = true;
-          toast.error('取引の同期に失敗しました');
+          toast.error(`取引の同期に失敗しました: ${batchError.message}`);
         } else if (batchData) {
           allData = allData.concat(batchData);
         }
