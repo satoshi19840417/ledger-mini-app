@@ -12,14 +12,9 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-const BAR_COLORS = [
-  '#60a5fa',
-  '#34d399',
-  '#fbbf24',
-  '#f87171',
-  '#a78bfa',
-  '#fb923c',
-];
+// デフォルトと強調表示のカラー
+const DEFAULT_BAR_COLOR = '#3b82f6';
+const HIGHLIGHT_BAR_COLOR = '#fb923c';
 
 function ScrollableLegend({ payload }) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -75,11 +70,13 @@ export default function BarByMonth({
   hideOthers,
   kind = 'expense',
   height = 500,
+  target,
 }) {
   const scrollRef = useRef(null);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  void lockColors;
   
   const monthMap = {};
   transactions
@@ -98,21 +95,28 @@ export default function BarByMonth({
 
   const width = data.length * 40;
 
-  const colorMap = useRef({});
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const average = useMemo(() => {
+    if (data.length === 0) return 0;
+    const sum = data.reduce((acc, d) => acc + d.total, 0);
+    return sum / data.length;
+  }, [data]);
+
   const dataWithColors = useMemo(() => {
-    if (!lockColors) colorMap.current = {};
-    data.forEach((d) => {
-      if (!colorMap.current[d.month]) {
-        const used = Object.keys(colorMap.current).length;
-        colorMap.current[d.month] = BAR_COLORS[used % BAR_COLORS.length];
-      }
+    const threshold = target ?? average;
+    return data.map((d) => {
+      const isCurrent = d.month === currentMonth;
+      const overTarget = d.total > threshold;
+      return {
+        ...d,
+        fill: isCurrent || overTarget ? HIGHLIGHT_BAR_COLOR : DEFAULT_BAR_COLOR,
+      };
     });
-    return data.map((d) => ({ ...d, fill: colorMap.current[d.month] }));
-  }, [data, lockColors]);
+  }, [data, currentMonth, target, average]);
 
   const maxTotal = useMemo(
-    () => Math.max(...dataWithColors.map(d => d.total), 0),
-    [dataWithColors]
+    () => Math.max(...data.map(d => d.total), 0),
+    [data]
   );
   
   // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
@@ -131,12 +135,6 @@ export default function BarByMonth({
     }
     return result.filter(v => v <= maxTotal * 1.1); // 最大値の110%までのticksのみ表示
   }, [maxTotal]);
-
-  const average = useMemo(() => {
-    if (dataWithColors.length === 0) return 0;
-    const sum = dataWithColors.reduce((acc, d) => acc + d.total, 0);
-    return sum / dataWithColors.length;
-  }, [dataWithColors]);
 
   const tickFormatter = (v) => formatAmount(v, yenUnit);
   const formatValue = (v) => formatAmount(v, yenUnit);
