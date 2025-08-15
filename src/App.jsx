@@ -239,11 +239,6 @@ export default function App() {
     };
   }, []);
 
-  const updateFilterMode = mode => {
-    localStorage.setItem('filterMode', JSON.stringify(mode));
-    setFilterMode(mode);
-  };
-
   // 集計対象外を除外したトランザクション
   const filteredTransactionsForAnalysis = useMemo(() => {
     let txs = state.transactions.filter(tx => !tx.excludeFromTotals);
@@ -910,13 +905,10 @@ function Dashboard({
                 </Card>
                 <Monthly
                   transactions={filteredTransactionsForAnalysis}
-                  period={period}
                   yenUnit={yenUnit}
                   lockColors={lockColors}
                   hideOthers={hideOthers}
                   kind={kind}
-                  filterMode={filterMode}
-                  onFilterModeChange={updateFilterMode}
                 />
               </Suspense>
             </TabsContent>
