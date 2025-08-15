@@ -111,6 +111,13 @@ useEffect(() => {
   }
 }, [startDate, endDate, loadFromDatabase]);
 
+// ルール変更時に自動で再適用
+useEffect(() => {
+  if (state.rules) {
+    dispatch({ type: 'applyRules' });
+  }
+}, [state.rules, dispatch]);
+
   // lastApplyResultの変更を監視してメッセージを更新
   useEffect(() => {
     if (state.lastApplyResult) {
@@ -164,13 +171,8 @@ useEffect(() => {
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
     dispatch({ type: 'setRules', payload: updatedRules });
-    // ルール保存後、自動的に未分類の取引にルールを適用
     setRuleAppliedMessage('ルールを保存し、全取引に適用しています...');
-    setTimeout(() => {
-      dispatch({ type: 'applyRules' });
-      setRuleAppliedMessage('ルールが適用されました');
-      setTimeout(() => setRuleAppliedMessage(''), 3000);
-    }, 100);
+    setApplyingRules(true);
     setShowRuleModal(false);
     setSelectedTx(null);
   };
