@@ -10,6 +10,7 @@ import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
 import PasswordReset from './components/PasswordReset.jsx';
 import AmountVisual from './components/ui/AmountVisual.jsx';
+import { toast } from 'react-hot-toast';
 
 // shadcn/ui components
 import { Button } from './components/ui/button.jsx';
@@ -152,6 +153,30 @@ export default function App() {
     console.log('IsLocalMode:', isLocalMode);
     console.log('IsAuthenticated:', isAuthenticated);
   }, [state.transactions, session, isLocalMode, isAuthenticated]);
+
+  // オンライン/オフライン時の処理
+  useEffect(() => {
+    const handleOffline = () => {
+      dispatch({ type: 'loadFromBackup' });
+      toast.error('オフラインになりました。バックアップから読み込みました。');
+    };
+    const handleOnline = () => {
+      toast.loading('オンラインに復帰。最新データを取得しています...', { id: 'sync' });
+      loadFromDatabase()
+        .then(() => {
+          toast.success('最新データを取得しバックアップを更新しました。', { id: 'sync' });
+        })
+        .catch(() => {
+          toast.error('最新データの取得に失敗しました。', { id: 'sync' });
+        });
+    };
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [dispatch, loadFromDatabase]);
 
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
