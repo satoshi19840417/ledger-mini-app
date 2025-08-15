@@ -123,8 +123,7 @@ function serializeHash({
 export default function App() {
   const { state, dispatch, loadFromDatabase } = useStore();
   const { session, loading } = useSession();
-  const isLocalMode =
-    localStorage.getItem('localMode') === 'true' || (!loading && !session);
+  const isLocalMode = localStorage.getItem('localMode') === 'true';
   const [syncing, setSyncing] = useState(false);
 
   const isAuthenticated = session || isLocalMode;
@@ -679,7 +678,10 @@ function Dashboard({
   }
   
   if (!isAuthenticated) {
-    return <Auth onSkipAuth={() => window.location.reload()} />;
+    return <Auth onSkipAuth={() => {
+      localStorage.setItem('localMode', 'true');
+      window.location.reload();
+    }} />;
   }
 
   return (
