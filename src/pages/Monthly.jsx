@@ -1,58 +1,30 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
 import CategoryComparison from '../CategoryComparison.jsx';
-import { useStore } from '../state/StoreContextWithDB';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MultiSelect, MultiSelectItem } from '@/components/ui/multi-select';
-import { TrendingUp, TrendingDown, Calendar, Filter, X, JapaneseYen, FileText, BarChart3 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, Calendar, X, JapaneseYen, FileText, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatAmount } from '../utils/currency.js';
 
 export default function Monthly({
   transactions,
-  period,
   yenUnit,
   lockColors,
   hideOthers,
   kind,
-  filterMode,
-  onFilterModeChange,
 }) {
-  const { state } = useStore();
-  const categories = state.categories;
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [comparePeriod, setComparePeriod] = useState('3m');
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  
-  // フィルタリング処理
-  const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
-
-    // その他フィルター
-    if (filterMode.others === 'exclude') {
-      filtered = filtered.filter(tx => tx.category !== 'その他');
-    } else if (filterMode.others === 'only') {
-      filtered = filtered.filter(tx => tx.category === 'その他');
-    }
-
-    return filtered;
-  }, [transactions, filterMode]);
-
   const months = useMemo(() => {
-    const txs = selectedCategory
-      ? filteredTransactions.filter((tx) => tx.category === selectedCategory)
-      : filteredTransactions;
     const set = new Set(
-      txs
+      transactions
         .filter((tx) => tx.kind === kind)
         .map((tx) => tx.date.slice(0, 7)),
     );
     return Array.from(set).sort();
-  }, [filteredTransactions, kind, selectedCategory]);
+  }, [transactions, kind]);
 
   const [selectedMonth, setSelectedMonth] = useState(
     months[months.length - 1] || '',
@@ -63,16 +35,11 @@ export default function Monthly({
   }, [months]);
 
   const monthTxs = useMemo(
-    () => {
-      let txs = filteredTransactions.filter(
+    () =>
+      transactions.filter(
         (tx) => tx.kind === kind && tx.date.slice(0, 7) === selectedMonth,
-      );
-      if (selectedCategory) {
-        txs = txs.filter((tx) => tx.category === selectedCategory);
-      }
-      return txs;
-    },
-    [filteredTransactions, selectedMonth, kind, selectedCategory],
+      ),
+    [transactions, selectedMonth, kind],
   );
 
   // 月の合計金額を計算
@@ -82,7 +49,6 @@ export default function Monthly({
 
   // 日別の集計データを作成
   const dailyData = useMemo(() => {
-    void selectedCategory; // 依存配列に含めるため
     if (!selectedMonth) return [];
 
     const dailyMap = {};
@@ -113,7 +79,7 @@ export default function Monthly({
     }
     
     return data;
-  }, [selectedMonth, selectedCategory, monthTxs]);
+  }, [selectedMonth, monthTxs]);
 
   // カテゴリ別の詳細データ
   const categoryDetails = useMemo(() => {
@@ -140,12 +106,12 @@ export default function Monthly({
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* フィルター設定カード */}
+        {/* 月選択カード */}
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              フィルター設定
+              <Calendar className="w-4 h-4" />
+              月選択
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -164,92 +130,6 @@ export default function Monthly({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="compare-period">比較期間</Label>
-              <Select value={comparePeriod} onValueChange={setComparePeriod}>
-                <SelectTrigger id="compare-period">
-                  <SelectValue placeholder="期間を選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3m">直近3ヶ月</SelectItem>
-                  <SelectItem value="6m">直近6ヶ月</SelectItem>
-                  <SelectItem value="1y">直近1年</SelectItem>
-                  <SelectItem value="all">全期間</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category-select">カテゴリ</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category-select">
-                  <SelectValue placeholder="全カテゴリー" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全カテゴリー</SelectItem>
-                  {categories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedCategory && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCategory('')}
-                  className="w-full justify-start"
-                >
-                  <X className="w-3 h-3 mr-2" />
-                  フィルターをクリア
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">フィルター設定</Label>
-
-              {/* その他フィルター */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">その他</Label>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    size="sm"
-                    variant={filterMode.others === 'include' ? 'default' : 'outline'}
-                    onClick={() => onFilterModeChange({ ...filterMode, others: 'include' })}
-                    className="text-xs"
-                  >
-                    含む
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.others === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => onFilterModeChange({ ...filterMode, others: 'exclude' })}
-                    className="text-xs"
-                  >
-                    除外
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.others === 'only' ? 'default' : 'outline'}
-                    onClick={() => onFilterModeChange({ ...filterMode, others: 'only' })}
-                    className="text-xs"
-                  >
-                    のみ
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {(filterMode.others !== 'include' || selectedCategory) && (
-              <div className="pt-3 border-t">
-                <p className="text-xs text-muted-foreground">
-                  フィルター適用中: {filteredTransactions.length}件
-                </p>
               </div>
             )}
           </CardContent>
@@ -298,39 +178,9 @@ export default function Monthly({
                 カテゴリ比較
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="compare-categories">カテゴリ選択</Label>
-                <MultiSelect
-                  id="compare-categories"
-                  value={selectedCategories}
-                  onChange={(e) =>
-                    setSelectedCategories(
-                      Array.from(e.target.selectedOptions, (o) => o.value),
-                    )
-                  }
-                  size={5}
-                >
-                  {categories.map((c) => (
-                    <MultiSelectItem key={c} value={c}>
-                      {c}
-                    </MultiSelectItem>
-                  ))}
-                </MultiSelect>
-                {selectedCategories.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCategories.map((c) => (
-                      <Badge key={c} variant="secondary">
-                        {c}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <CardContent>
               <CategoryComparison
-                transactions={filteredTransactions}
-                selectedCategories={selectedCategories}
-                period={comparePeriod}
+                transactions={transactions}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
                 hideOthers={hideOthers}
@@ -384,7 +234,7 @@ export default function Monthly({
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={dailyData} key={selectedCategory || 'all'}>
+                <BarChart data={dailyData} key={'all'}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="day" 
