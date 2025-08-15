@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import BarByMonth from '../BarByMonth.jsx';
 import PieByCategory from '../PieByCategory.jsx';
+import { CATEGORIES } from '../categories.js';
 
 export default function Monthly({
   transactions,
@@ -12,8 +13,9 @@ export default function Monthly({
 }) {
   const [excludeCardPayments, setExcludeCardPayments] = useState(true);
   const [excludeRent, setExcludeRent] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const chartContainerRef = useRef(null);
-  // カード支払いと家賃を除外するかどうかでフィルタリング
+  // カード支払い・家賃・カテゴリを除外するかどうかでフィルタリング
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
     if (excludeCardPayments) {
@@ -26,17 +28,23 @@ export default function Monthly({
         tx => tx.category !== '家賃'
       );
     }
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        tx => tx.category === selectedCategory
+      );
+    }
     return filtered;
-  }, [transactions, excludeCardPayments, excludeRent]);
+  }, [transactions, excludeCardPayments, excludeRent, selectedCategory]);
 
   const months = useMemo(() => {
+    void selectedCategory; // 依存配列に含めるため
     const set = new Set(
       filteredTransactions
         .filter((tx) => tx.kind === kind)
         .map((tx) => tx.date.slice(0, 7)),
     );
     return Array.from(set).sort();
-  }, [filteredTransactions, kind]);
+  }, [filteredTransactions, kind, selectedCategory]);
 
   const [selectedMonth, setSelectedMonth] = useState(
     months[months.length - 1] || '',
@@ -44,15 +52,17 @@ export default function Monthly({
 
   useEffect(() => {
     setSelectedMonth(months[months.length - 1] || '');
-  }, [months]);
+  }, [months, selectedCategory]);
 
   const monthTxs = useMemo(
-    () =>
-      filteredTransactions.filter(
+    () => {
+      void selectedCategory; // 依存配列に含めるため
+      return filteredTransactions.filter(
         (tx) =>
           tx.kind === kind && tx.date.slice(0, 7) === selectedMonth,
-      ),
-    [filteredTransactions, selectedMonth, kind],
+      );
+    },
+    [filteredTransactions, selectedMonth, kind, selectedCategory],
   );
 
   return (
@@ -107,6 +117,39 @@ export default function Monthly({
             />
             <span className='ml-2'>家賃を除外して分析</span>
           </label>
+{/* === カテゴリ／月セレクタ（統合・確定版） === */}
+<div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+  <div>
+    <label style={{ marginRight: 8 }}>カテゴリ:</label>
+    <select
+      value={selectedCategory ?? ''}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+      style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #ddd' }}
+    >
+      <option value=''>全カテゴリー</option>
+      {CATEGORIES.map((c) => (
+        <option key={c} value={c}>{c}</option>
+      ))}
+    </select>
+  </div>
+
+  {months.length > 0 && (
+    <div style={{ marginLeft: 'auto' }}>
+      <label style={{ marginRight: 8 }}>月選択:</label>
+      <select
+        value={selectedMonth ?? ''}
+        onChange={(e) => setSelectedMonth(e.target.value)}
+        style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #ddd' }}
+      >
+        {months.map((m) => (
+          <option key={m} value={m}>{m}</option>
+        ))}
+      </select>
+    </div>
+  )}
+</div>
+{/* === /カテゴリ／月セレクタ === */}
+
         </div>
 
         <div ref={chartContainerRef} style={{ position: 'relative' }}>
