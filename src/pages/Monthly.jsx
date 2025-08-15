@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Calendar, Filter, X, DollarSign, FileText, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, Filter, X, JapaneseYen, FileText, BarChart3 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatAmount } from '../utils/currency.js';
 
@@ -279,7 +279,7 @@ export default function Monthly({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
+                <JapaneseYen className="w-4 h-4" />
                 月次サマリー
               </CardTitle>
             </CardHeader>
