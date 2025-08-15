@@ -71,7 +71,7 @@ export const dbService = {
           tx.excludeFromTotals ?? tx.exclude_from_totals ?? false;
 
         return {
-          id: tx.id || tx.ID || crypto.randomUUID(), // CSVのIDフィールドも考慮
+          id: tx.id || crypto.randomUUID(), // 既存のIDを使用、なければ新規生成
           user_id: userId,
           date: dateValue, // DATE型
           occurred_on: dateValue, // DATE型

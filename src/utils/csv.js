@@ -39,7 +39,14 @@ function readAsText(file, encoding) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => {
+      let result = reader.result;
+      // BOM (Byte Order Mark) を削除
+      if (typeof result === 'string') {
+        result = result.replace(/^\uFEFF/, '').replace(/^\u{FEFF}/u, '');
+      }
+      resolve(result);
+    };
     reader.readAsText(file, encoding);
   });
 }
@@ -124,7 +131,9 @@ function rowToTransaction(row) {
     amount,
     kind,
   };
-  if (row.id) tx.id = row.id;  // IDフィールドを保持
+  // IDフィールドは新規生成（CSVのIDは無視）
+  // これによりデータベースとの重複を防ぐ
+  tx.id = crypto.randomUUID();
   if (row.description) tx.description = row.description;
   if (row.detail) tx.detail = row.detail;
   if (row.memo) tx.memo = row.memo;
@@ -151,11 +160,14 @@ export async function parseCsvFiles(files) {
       header: true,
       skipEmptyLines: true,
       beforeFirstChunk(chunk) {
-        const lines = chunk.split(/\r?\n/);
+        // BOMを確実に削除
+        let cleanChunk = chunk.replace(/^\uFEFF/, '').replace(/^\u{FEFF}/u, '');
+        
+        const lines = cleanChunk.split(/\r?\n/);
         if (lines[0].includes('月別ご利用明細')) {
           return lines.slice(1).join('\n');
         }
-        return chunk;
+        return cleanChunk;
       },
       transformHeader(header) {
         const canon = normalizeHeader(header);
