@@ -106,8 +106,13 @@ export default function BarByMonth({
     const sum = data.reduce((acc, d) => acc + d.total, 0);
     return sum / data.length;
   }, [data]);
-
- // （ここはそのまま）dataWithColors は直前の useMemo の実装を採用
+  const dataWithColors = useMemo(() => {
+    const highlight = target ?? currentMonth;
+    return data.map(d => ({
+      ...d,
+      fill: d.month === highlight ? HIGHLIGHT_BAR_COLOR : DEFAULT_BAR_COLOR,
+    }));
+  }, [data, target, currentMonth]);
 
 // 直近3点の移動平均を付与（凡例やラインで使う場合に備えて）
 const dataWithMovingAvg = useMemo(() => {
