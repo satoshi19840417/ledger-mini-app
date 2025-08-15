@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { DEFAULT_CATEGORIES } from '../defaultCategories.js';
 import { 
   Search, Filter, Download, FileSpreadsheet, Plus, Save, 
   RefreshCw, X, ChevronLeft, ChevronRight, Calendar,
@@ -41,6 +40,7 @@ export default function Transactions() {
   const [showUnclassifiedOnly, setShowUnclassifiedOnly] = useState(false);
   const [ruleAppliedMessage, setRuleAppliedMessage] = useState('');
   const [excludedFromTotals, setExcludedFromTotals] = useState({});
+  const [applyingRules, setApplyingRules] = useState(false);
   const [newRule, setNewRule] = useState({
     pattern: '',
     mode: 'contains',
@@ -113,6 +113,21 @@ useEffect(() => {
     });
   }
 }, [startDate, endDate, loadFromDatabase]);
+
+  // lastApplyResultの変更を監視してメッセージを更新
+  useEffect(() => {
+    if (state.lastApplyResult) {
+      const { totalTransactions, changedTransactions } = state.lastApplyResult;
+      setRuleAppliedMessage(
+        changedTransactions > 0
+          ? `✅ ${totalTransactions}件の取引中、${changedTransactions}件のカテゴリを更新しました`
+          : `ℹ️ ${totalTransactions}件の取引を確認しましたが、変更はありませんでした`
+      );
+      setApplyingRules(false);
+      const timer = setTimeout(() => setRuleAppliedMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.lastApplyResult]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -221,6 +236,20 @@ useEffect(() => {
     setPage(1);
   };
 
+  // ルール適用処理
+  const applyRulesToTransactions = () => {
+    if (state.rules && state.rules.length > 0) {
+      setApplyingRules(true);
+      setRuleAppliedMessage('ルールを適用中...');
+      setTimeout(() => {
+        dispatch({ type: 'applyRules' });
+      }, 100);
+    } else {
+      setRuleAppliedMessage('適用するルールがありません');
+      setTimeout(() => setRuleAppliedMessage(''), 3000);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="flex items-center justify-between mb-6">
@@ -265,6 +294,16 @@ useEffect(() => {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <Button 
+                  onClick={applyRulesToTransactions}
+                  variant="secondary"
+                  size="sm"
+                  disabled={applyingRules || state.rules?.length === 0}
+                  title={state.rules?.length === 0 ? "ルールが登録されていません" : "再分類ルールを全取引に適用"}
+                >
+                  <RefreshCw className={`w-3 h-3 mr-2 ${applyingRules ? 'animate-spin' : ''}`} />
+                  {applyingRules ? 'ルール適用中...' : `ルール適用 (${state.rules?.length || 0}件)`}
+                </Button>
                 {(Object.keys(editedCategories).length > 0 || Object.keys(excludedFromTotals).length > 0) && (
                   <Button 
                     onClick={applyEditedCategories}
@@ -511,7 +550,7 @@ useEffect(() => {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="">未分類</SelectItem>
-                                {DEFAULT_CATEGORIES.map(c => (
+                                {categories.map(c => (
                                   <SelectItem key={c} value={c}>{c}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -725,7 +764,7 @@ useEffect(() => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {DEFAULT_CATEGORIES.map(c => (
+                      {categories.map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
