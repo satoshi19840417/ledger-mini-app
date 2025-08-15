@@ -757,6 +757,37 @@ function Dashboard({
                   </div>
                 </div>
                 
+                {/* クラウド同期切り替えボタン */}
+                <div className="space-y-2 border-t pt-4 mt-4">
+                  <div className="px-2">
+                    {isLocalMode ? (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => {
+                          localStorage.removeItem('localMode');
+                          window.location.reload();
+                        }}
+                      >
+                        <Cloud className="h-4 w-4" />
+                        クラウド同期に切り替え
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => {
+                          localStorage.setItem('localMode', 'true');
+                          window.location.reload();
+                        }}
+                      >
+                        <Database className="h-4 w-4" />
+                        ローカルモードに切り替え
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
               </div>
         </SheetContent>
       </Sheet>
