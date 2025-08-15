@@ -10,6 +10,7 @@ import {
   Legend,
   Cell,
   ReferenceLine,
+  Line,
 } from 'recharts';
 
 const BAR_COLORS = [
@@ -92,9 +93,13 @@ export default function BarByMonth({
   const months = Object.keys(monthMap).sort();
   const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: months.length };
   const limit = limitMap[period] || months.length;
+  let runningTotal = 0;
   const data = months
     .slice(-limit)
-    .map((m) => ({ month: m, total: monthMap[m] }));
+    .map((m) => {
+      runningTotal += monthMap[m];
+      return { month: m, total: monthMap[m], cumulative: runningTotal };
+    });
 
   const width = data.length * 40;
 
@@ -107,11 +112,11 @@ export default function BarByMonth({
         colorMap.current[d.month] = BAR_COLORS[used % BAR_COLORS.length];
       }
     });
-    return data.map((d) => ({ ...d, fill: colorMap.current[d.month] }));
-  }, [data, lockColors]);
+      return data.map((d) => ({ ...d, fill: colorMap.current[d.month] }));
+    }, [data, lockColors]);
 
   const maxTotal = useMemo(
-    () => Math.max(...dataWithColors.map(d => d.total), 0),
+    () => Math.max(...dataWithColors.flatMap((d) => [d.total, d.cumulative]), 0),
     [dataWithColors]
   );
   
@@ -140,7 +145,6 @@ export default function BarByMonth({
 
   const tickFormatter = (v) => formatAmount(v, yenUnit);
   const formatValue = (v) => formatAmount(v, yenUnit);
-  const tooltipFormatter = (v) => [formatValue(v), '合計'];
   const legendPayload = dataWithColors.map((d) => ({
     id: d.month,
     value: d.month,
@@ -255,7 +259,7 @@ export default function BarByMonth({
             width={isMobile ? 60 : 80}
             tick={{ fontSize: isMobile ? 10 : 12 }}
           />
-          <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
+          <Tooltip formatter={(v) => formatValue(v)} labelFormatter={(label) => label} />
           <Legend content={<ScrollableLegend />} payload={legendPayload} />
           <ReferenceLine
             y={average}
@@ -268,6 +272,14 @@ export default function BarByMonth({
               <Cell key={`cell-${idx}`} fill={entry.fill} />
             ))}
           </Bar>
+          <Line
+            type="monotone"
+            dataKey="cumulative"
+            name="累積"
+            stroke="#6366f1"
+            strokeWidth={2}
+            dot={{ r: 3 }}
+          />
         </ReBarChart>
       </ResponsiveContainer>
       </div>
