@@ -1,4 +1,5 @@
 import BarByMonth from '../BarByMonth.jsx';
+import MonthAmountMatrix from '../MonthAmountMatrix.jsx';
 
 export default function MonthlyAnalysis({
   transactions,
@@ -22,6 +23,14 @@ export default function MonthlyAnalysis({
           hideOthers={hideOthers}
           kind="expense"
           height={350}
+        />
+      </div>
+      <div className='card'>
+        <h3 style={{ marginBottom: 16 }}>月別ヒートマップ</h3>
+        <MonthAmountMatrix
+          transactions={transactions}
+          yenUnit={yenUnit}
+          kind="expense"
         />
       </div>
     </section>

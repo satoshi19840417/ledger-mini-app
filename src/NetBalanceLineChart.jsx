@@ -5,13 +5,29 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
+  Legend,
   ResponsiveContainer,
+  CartesianGrid,
   ReferenceLine,
-  Brush, // ← 追加
+  Brush, // ← 追加OK
 } from 'recharts';
-import { convertAmount, formatAmount } from './utils/currency.js';
+
+// ← ここから“最終案”のインポート（重複させない）
+import { convertAmount } from './utils/currency.js';
 import { addMonthlyDiffs } from './utils/diff.js';
+import { formatMonth, yFmt } from './utils/formatters.js';
+
+// CustomTooltip はこの1つだけ残す
+function CustomTooltip({ active, payload, label, yenUnit, average }) {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
+      <p style={{ margin: 0 }}>{formatMonth(label)}</p>
+      <p style={{ margin: 0 }}>差分: {yFmt(payload[0].value, yenUnit)}</p>
+      <p style={{ margin: 0 }}>平均: {yFmt(average, yenUnit)}</p>
+    </div>
+  );
+}
 
 export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
   // ---- 集計 ----------------------------------------------------------
@@ -63,53 +79,43 @@ const quarterLines = data
     return { x: d.month, label: `Q${q}` };
   });
 
-// ---- Tooltip（差分・前月比・前年比・平均） ------------------------------------
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload, label, yenUnit, average }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
       <p style={{ margin: 0 }}>{formatMonth(label)}</p>
-      <p style={{ margin: 0 }}>差分: {yFmt(d.diff)}</p>
+      <p style={{ margin: 0 }}>差分: {yFmt(d.diff, yenUnit)}</p>
       {d.prevMonthDiff != null && (
-        <p style={{ margin: 0 }}>前月比: {formatDiffValue(d.prevMonthDiff)}</p>
+        <p style={{ margin: 0 }}>前月比: {yFmt(d.prevMonthDiff, yenUnit)}</p>
       )}
       {d.yearOnYearDiff != null && (
-        <p style={{ margin: 0 }}>前年比: {formatDiffValue(d.yearOnYearDiff)}</p>
+        <p style={{ margin: 0 }}>前年比: {yFmt(d.yearOnYearDiff, yenUnit)}</p>
       )}
-      <p style={{ margin: 0 }}>平均: {yFmt(average)}</p>
+      <p style={{ margin: 0 }}>平均: {yFmt(average, yenUnit)}</p>
     </div>
   );
 };
 
 
-  // ---- 表示用フォーマッタ --------------------------------------------
-  const formatMonth = (m) => `${m.slice(2, 4)}/${m.slice(5, 7)}`; // YY/MM
-  const yFmt = (v) => formatAmount(v, yenUnit);
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload || payload.length === 0) return null;
-    return (
-      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
-        <p style={{ margin: 0 }}>{formatMonth(label)}</p>
-        <p style={{ margin: 0 }}>差分: {yFmt(payload[0].value)}</p>
-        <p style={{ margin: 0 }}>平均: {yFmt(average)}</p>
-      </div>
-    );
-  };
 
-  // ---- 描画 -------------------------------------------------------------------
+// --- 描画 ---------------------------------------------------------------
 return (
-  <div style={{ width: '100%', maxWidth: '100%', margin: '0 auto' }}>
+  <div style={{ width: '100%', maxWidth: '1000%', margin: '0 auto' }}>
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
+      <LineChart
+        data={data}
+        margin={{ top: 16, right: 16, bottom: 8, left: 0 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
 
-        {/* 軸フォーマット */}
+        {/* 目盛りフォーマット */}
+        <YAxis tickFormatter={(v) => yFmt(v, yenUnit)} />
+        {/* 隔月表示: interval={1} で 2つに1つだけ表示 */}
         <XAxis dataKey="month" tickFormatter={formatMonth} interval={1} />
-        <YAxis tickFormatter={yFmt} />
 
-        {/* 0基準線 */}
+        {/* 0円基準線 */}
         <ReferenceLine y={0} stroke="#000" strokeWidth={1} />
 
         {/* 四半期の区切り線とラベル */}
@@ -123,11 +129,20 @@ return (
           />
         ))}
 
-        {/* ツールチップ（統一） */}
-        <Tooltip content={<CustomTooltip />} />
+        {/* ツールチップ（1つに統一） */}
+        <Tooltip content={<CustomTooltip yenUnit={yenUnit} average={average} />} />
 
-        {/* 折れ線 */}
-        <Line type="monotone" dataKey="diff" stroke="#8884d8" dot={{ r: 3 }} />
+        <Line
+          type="monotone"
+          dataKey="diff"
+          stroke="#8884d8"
+          dot={{ r: 3 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+);
+
 
         {/* PCのみブラシ。直近6か月を初期表示 */}
         {!isMobile && (

@@ -1,3 +1,6 @@
+@charset "UTF-8";
+@import "../../styles/variables.css";
+
 /* ToggleButton Component Styles */
 .toggle-button {
   display: inline-flex;

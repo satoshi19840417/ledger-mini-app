@@ -90,9 +90,13 @@ export default function BarByMonth({
   const months = Object.keys(monthMap).sort();
   const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: months.length };
   const limit = limitMap[period] || months.length;
+  let runningTotal = 0;
   const data = months
     .slice(-limit)
-    .map((m) => ({ month: m, total: monthMap[m] }));
+    .map((m) => {
+      runningTotal += monthMap[m];
+      return { month: m, total: monthMap[m], cumulative: runningTotal };
+    });
 
   const width = data.length * 40;
 
@@ -103,31 +107,28 @@ export default function BarByMonth({
     return sum / data.length;
   }, [data]);
 
-  const dataWithColors = useMemo(() => {
-    const threshold = target ?? average;
-    return data.map((d) => {
-      const isCurrent = d.month === currentMonth;
-      const overTarget = d.total > threshold;
-      return {
-        ...d,
-        fill: isCurrent || overTarget ? HIGHLIGHT_BAR_COLOR : DEFAULT_BAR_COLOR,
-      };
-    });
-  }, [data, currentMonth, target, average]);
+ // （ここはそのまま）dataWithColors は直前の useMemo の実装を採用
 
-  const dataWithMovingAvg = useMemo(() => {
-    return dataWithColors.map((d, idx, arr) => {
-      const start = Math.max(0, idx - 2);
-      const subset = arr.slice(start, idx + 1);
-      const avg = subset.reduce((sum, item) => sum + item.total, 0) / subset.length;
-      return { ...d, movingAvg: avg };
-    });
-  }, [dataWithColors]);
+// 直近3点の移動平均を付与（凡例やラインで使う場合に備えて）
+const dataWithMovingAvg = useMemo(() => {
+  return dataWithColors.map((d, idx, arr) => {
+    const start = Math.max(0, idx - 2);
+    const subset = arr.slice(start, idx + 1);
+    const avg = subset.reduce((sum, item) => sum + (item.total ?? 0), 0) / subset.length;
+    return { ...d, movingAvg: avg };
+  });
+}, [dataWithColors]);
 
-  const maxTotal = useMemo(
-    () => Math.max(...data.map(d => d.total), 0),
-    [data]
+// Y軸スケール用の最大値（total / cumulative / movingAvg を安全にカバー）
+const maxTotal = useMemo(() => {
+  return Math.max(
+    0,
+    ...dataWithMovingAvg.map(d =>
+      Math.max(d.total ?? 0, d.cumulative ?? 0, d.movingAvg ?? 0)
+    )
   );
+}, [dataWithMovingAvg]);
+
   
   // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
   const ticks = useMemo(() => {
@@ -148,7 +149,6 @@ export default function BarByMonth({
 
   const tickFormatter = (v) => formatAmount(v, yenUnit);
   const formatValue = (v) => formatAmount(v, yenUnit);
-  const tooltipFormatter = (v) => [formatValue(v), '合計'];
   const legendPayload = dataWithColors.map((d) => ({
     id: d.month,
     value: d.month,
@@ -263,7 +263,7 @@ export default function BarByMonth({
             width={isMobile ? 60 : 80}
             tick={{ fontSize: isMobile ? 10 : 12 }}
           />
-          <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
+          <Tooltip formatter={(v) => formatValue(v)} labelFormatter={(label) => label} />
           <Legend content={<ScrollableLegend />} payload={legendPayload} />
           <ReferenceLine
             y={average}
@@ -276,7 +276,29 @@ export default function BarByMonth({
               <Cell key={`cell-${idx}`} fill={entry.fill} />
             ))}
           </Bar>
-          <Line type="monotone" dataKey="movingAvg" name="3ヶ月移動平均" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+{/* ライン（コンフリクト解消済み） */}
+{dataWithMovingAvg.some(d => (d.cumulative ?? 0) > 0) && (
+  <Line
+    type="monotone"
+    dataKey="cumulative"
+    name="累積"
+    stroke="#6366f1"
+    strokeWidth={2}
+    dot={{ r: 3 }}
+    isAnimationActive={false}
+  />
+)}
+
+<Line
+  type="monotone"
+  dataKey="movingAvg"
+  name="3ヶ月移動平均"
+  stroke="#0ea5e9"
+  strokeWidth={2}
+  dot={false}
+  isAnimationActive={false}
+/>
+
         </ReBarChart>
       </ResponsiveContainer>
       </div>

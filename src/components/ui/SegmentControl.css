@@ -1,3 +1,6 @@
+@charset "UTF-8";
+@import "../../styles/variables.css";
+
 /* SegmentControl Component Styles */
 .segment-control {
   display: inline-flex;
