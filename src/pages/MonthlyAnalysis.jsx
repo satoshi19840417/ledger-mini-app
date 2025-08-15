@@ -6,7 +6,9 @@ export default function MonthlyAnalysis({
   yenUnit,
   lockColors,
   hideOthers,
+  filterMode,
 }) {
+  void filterMode;
   return (
     <section>
       {/* 月次推移グラフ */}

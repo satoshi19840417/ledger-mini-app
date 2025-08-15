@@ -13,6 +13,7 @@ export default function Yearly({
   lockColors,
   hideOthers,
   kind,
+  filterMode,
 }) {
   // 年別の集計
   const yearlyStats = useMemo(() => {
@@ -36,7 +37,7 @@ export default function Yearly({
         ...data,
         balance: data.income - data.expense
       }));
-  }, [transactions]);
+  }, [transactions, filterMode]);
 
   const currentYear = new Date().getFullYear().toString();
   const currentYearData = yearlyStats.find(s => s.year === currentYear);

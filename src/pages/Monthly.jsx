@@ -18,19 +18,11 @@ export default function Monthly({
   lockColors,
   hideOthers,
   kind,
+  filterMode,
+  onFilterModeChange,
 }) {
-  // localStorageからフィルター設定を読み込み
-  const [filterMode, setFilterMode] = useState(() => {
-    const stored = JSON.parse(localStorage.getItem('filterMode') || '{}');
-    return { others: stored.others || 'include' };
-  });
   const [selectedCategory, setSelectedCategory] = useState('');
   const [comparePeriod, setComparePeriod] = useState('3m');
-  
-  // filterModeが変更されたらlocalStorageに保存
-  useEffect(() => {
-    localStorage.setItem('filterMode', JSON.stringify(filterMode));
-  }, [filterMode]);
   
   // フィルタリング処理
   const filteredTransactions = useMemo(() => {
@@ -60,7 +52,7 @@ export default function Monthly({
         .map((tx) => tx.date.slice(0, 7)),
     );
     return Array.from(set).sort();
-  }, [filteredTransactions, kind, selectedCategory]);
+  }, [filteredTransactions, kind, selectedCategory, filterMode]);
 
   const [selectedMonth, setSelectedMonth] = useState(
     months[months.length - 1] || '',
@@ -78,13 +70,13 @@ export default function Monthly({
           tx.kind === kind && tx.date.slice(0, 7) === selectedMonth,
       );
     },
-    [filteredTransactions, selectedMonth, kind, selectedCategory],
+    [filteredTransactions, selectedMonth, kind, selectedCategory, filterMode],
   );
 
   // 月の合計金額を計算
   const monthTotal = useMemo(() => {
     return monthTxs.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-  }, [monthTxs]);
+  }, [monthTxs, filterMode]);
 
   // 日別の集計データを作成
   const dailyData = useMemo(() => {
@@ -118,7 +110,7 @@ export default function Monthly({
     }
     
     return data;
-  }, [selectedMonth, monthTxs]);
+  }, [selectedMonth, monthTxs, filterMode]);
 
   // カテゴリ別の詳細データ
   const categoryDetails = useMemo(() => {
@@ -136,7 +128,7 @@ export default function Monthly({
     return Object.entries(categoryMap)
       .map(([category, data]) => ({ category, ...data }))
       .sort((a, b) => b.amount - a.amount);
-  }, [monthTxs]);
+  }, [monthTxs, filterMode]);
 
   const [selectedDay, setSelectedDay] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -224,7 +216,7 @@ export default function Monthly({
                   <Button
                     size="sm"
                     variant={filterMode.others === 'include' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'include' }))}
+                    onClick={() => onFilterModeChange({ ...filterMode, others: 'include' })}
                     className="text-xs"
                   >
                     含む
@@ -232,7 +224,7 @@ export default function Monthly({
                   <Button
                     size="sm"
                     variant={filterMode.others === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'exclude' }))}
+                    onClick={() => onFilterModeChange({ ...filterMode, others: 'exclude' })}
                     className="text-xs"
                   >
                     除外
@@ -240,7 +232,7 @@ export default function Monthly({
                   <Button
                     size="sm"
                     variant={filterMode.others === 'only' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'only' }))}
+                    onClick={() => onFilterModeChange({ ...filterMode, others: 'only' })}
                     className="text-xs"
                   >
                     のみ
