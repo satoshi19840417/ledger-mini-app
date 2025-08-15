@@ -97,7 +97,7 @@ function reducer(state, action) {
     }
     
     case 'loadFromDatabase': {
-      const { transactions = [], rules = [], profile = null } = action.payload;
+      const { transactions = [], rules, profile = null } = action.payload;
       const normalizedTransactions = transactions.map(tx => ({
         ...tx,
         date: tx.date || tx.occurred_on,  // occurred_onフィールドからdateを復元
@@ -105,7 +105,9 @@ function reducer(state, action) {
         isCardPayment:
           tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
       }));
-      localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
+      if (rules !== undefined) {
+        localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
+      }
       localStorage.setItem(
         'lm_tx_v1',
         JSON.stringify({
@@ -116,7 +118,7 @@ function reducer(state, action) {
       return {
         ...state,
         transactions: normalizedTransactions,
-        rules,
+        rules: rules !== undefined ? rules : state.rules,
         profile,
         syncStatus: 'synced',
         lastSyncAt: new Date().toISOString(),
@@ -387,35 +389,62 @@ export function StoreProvider({ children }) {
     [session, state.transactions, state.rules]
   );
 
-  const loadFromDatabase = useCallback(async ({ startDate, endDate } = {}) => {
-    if (!session?.user?.id) return;
+  const loadFromDatabase = useCallback(
+    async ({ startDate, endDate, skipRules } = {}) => {
+      if (!session?.user?.id) return;
 
-    dispatch({ type: 'setSyncStatus', payload: 'loading' });
+      dispatch({ type: 'setSyncStatus', payload: 'loading' });
 
-    try {
-      const [txResult, rulesResult, profileResult] = await Promise.all([
-        dbService.loadTransactions(session.user.id, { startDate, endDate }),
-        dbService.loadRules(session.user.id),
-        dbService.loadProfile(session.user.id),
-      ]);
-      
-      if (txResult.success && rulesResult.success && profileResult.success) {
-        dispatch({
-          type: 'loadFromDatabase',
-          payload: {
-            transactions: txResult.data || [],
-            rules: rulesResult.data || [],
-            profile: profileResult.data || null,
-          },
+      try {
+        const txPromise = dbService.loadTransactions(session.user.id, {
+          startDate,
+          endDate,
         });
-      } else {
+        const profilePromise = dbService.loadProfile(session.user.id);
+
+        let txResult;
+        let rulesResult;
+        let profileResult;
+
+        if (skipRules) {
+          [txResult, profileResult] = await Promise.all([
+            txPromise,
+            profilePromise,
+          ]);
+        } else {
+          [txResult, rulesResult, profileResult] = await Promise.all([
+            txPromise,
+            dbService.loadRules(session.user.id),
+            profilePromise,
+          ]);
+        }
+
+        if (
+          txResult.success &&
+          profileResult.success &&
+          (skipRules || rulesResult.success)
+        ) {
+          const payload = {
+            transactions: txResult.data || [],
+            profile: profileResult.data || null,
+          };
+          if (!skipRules) {
+            payload.rules = rulesResult.data || [];
+          }
+          dispatch({
+            type: 'loadFromDatabase',
+            payload,
+          });
+        } else {
+          dispatch({ type: 'setSyncStatus', payload: 'error' });
+        }
+      } catch (error) {
+        console.error('Load error:', error);
         dispatch({ type: 'setSyncStatus', payload: 'error' });
       }
-    } catch (error) {
-      console.error('Load error:', error);
-      dispatch({ type: 'setSyncStatus', payload: 'error' });
-    }
-  }, [session]);
+    },
+    [session]
+  );
 
   useEffect(() => {
     dispatch({ type: 'loadFromStorage' });
