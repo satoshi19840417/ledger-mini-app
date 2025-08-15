@@ -10,7 +10,19 @@ import {
   ReferenceLine,
   Brush, // ← 追加
 } from 'recharts';
-import { convertAmount, formatAmount } from './utils/currency.js';
+import { convertAmount } from './utils/currency.js';
+import { formatMonth, yFmt } from './utils/formatters.js';
+
+function CustomTooltip({ active, payload, label, yenUnit, average }) {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
+      <p style={{ margin: 0 }}>{formatMonth(label)}</p>
+      <p style={{ margin: 0 }}>差分: {yFmt(payload[0].value, yenUnit)}</p>
+      <p style={{ margin: 0 }}>平均: {yFmt(average, yenUnit)}</p>
+    </div>
+  );
+}
 
 export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
   // ---- 集計 ----------------------------------------------------------
@@ -51,19 +63,6 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
     });
 
   // ---- 表示用フォーマッタ --------------------------------------------
-  const formatMonth = (m) => `${m.slice(2, 4)}/${m.slice(5, 7)}`; // YY/MM
-  const yFmt = (v) => formatAmount(v, yenUnit);
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload || payload.length === 0) return null;
-    return (
-      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
-        <p style={{ margin: 0 }}>{formatMonth(label)}</p>
-        <p style={{ margin: 0 }}>差分: {yFmt(payload[0].value)}</p>
-        <p style={{ margin: 0 }}>平均: {yFmt(average)}</p>
-      </div>
-    );
-  };
 
   // ---- 描画 -----------------------------------------------------------
   return (
@@ -74,7 +73,7 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
           margin={{ top: 16, right: 16, bottom: 8, left: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <YAxis tickFormatter={yFmt} />
+          <YAxis tickFormatter={(v) => yFmt(v, yenUnit)} />
           {/* 隔月表示: interval={1} で2つに1つだけ表示 */}
           <XAxis dataKey="month" tickFormatter={formatMonth} interval={1} />
 
@@ -93,7 +92,7 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
           ))}
 
           {/* ツールチップは1つに統一（重複排除） */}
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip yenUnit={yenUnit} average={average} />} />
 
           <Line
             type="monotone"
