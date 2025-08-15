@@ -59,17 +59,6 @@ const average =
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 const height = isMobile ? 250 : 300;
 
-// ---- 補助関数 ---------------------------------------------------------------
-const tickFormatter = (v) => v.toLocaleString();
-const formatDiffValue = (value) => {
-  if (value == null) return 'N/A';
-  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-  const arrow = value > 0 ? '↑' : value < 0 ? '↓' : '';
-  return `${sign}${formatAmount(Math.abs(value), yenUnit)}${arrow}`;
-};
-const formatMonth = (m) => `${m.slice(2, 4)}/${m.slice(5, 7)}`; // YY/MM
-const yFmt = (v) => formatAmount(v, yenUnit);
-
 // ---- 1・4・7・10月の区切り線（Q1〜Q4） ---------------------------------------
 const quarterLines = data
   .filter((d) => ['-01', '-04', '-07', '-10'].some((mm) => d.month.endsWith(mm)))
@@ -78,26 +67,6 @@ const quarterLines = data
     const q = Math.floor((m - 1) / 3) + 1;
     return { x: d.month, label: `Q${q}` };
   });
-
-const CustomTooltip = ({ active, payload, label, yenUnit, average }) => {
-  if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
-  return (
-    <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
-      <p style={{ margin: 0 }}>{formatMonth(label)}</p>
-      <p style={{ margin: 0 }}>差分: {yFmt(d.diff, yenUnit)}</p>
-      {d.prevMonthDiff != null && (
-        <p style={{ margin: 0 }}>前月比: {yFmt(d.prevMonthDiff, yenUnit)}</p>
-      )}
-      {d.yearOnYearDiff != null && (
-        <p style={{ margin: 0 }}>前年比: {yFmt(d.yearOnYearDiff, yenUnit)}</p>
-      )}
-      <p style={{ margin: 0 }}>平均: {yFmt(average, yenUnit)}</p>
-    </div>
-  );
-};
-
-
 
 
 // --- 描画 ---------------------------------------------------------------
