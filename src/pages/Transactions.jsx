@@ -15,6 +15,7 @@ export default function Transactions() {
   const [endDate, setEndDate] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [keyword, setKeyword] = useState('');
+  const [categoryQuery, setCategoryQuery] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
   const [type, setType] = useState('all');
@@ -33,34 +34,65 @@ export default function Transactions() {
     kind: 'both',
   });
 
-  const filtered = useMemo(() => {
-    return txs.filter(tx => {
-      if (showUnclassifiedOnly && tx.category) return false;
-      if (
-        excludeCardPayments &&
-        (tx.category === 'カード支払い' || tx.category === 'カード払い')
-      )
-        return false;
-      if (startDate && tx.date < startDate) return false;
-      if (endDate && tx.date > endDate) return false;
-      if (selectedCategories.length && !selectedCategories.includes(tx.category)) return false;
-      if (keyword) {
-        const k = keyword.toLowerCase();
-        const target = `${tx.description || ''} ${tx.detail || ''} ${tx.memo || ''}`.toLowerCase();
-        if (!target.includes(k)) return false;
-      }
-      const amt = Math.abs(tx.amount);
-      if (minAmount !== '' && amt < Number(minAmount)) return false;
-      if (maxAmount !== '' && amt > Number(maxAmount)) return false;
-      if (type === 'income' && tx.kind !== 'income') return false;
-      if (type === 'expense' && tx.kind !== 'expense') return false;
-      return true;
-    });
-  }, [txs, startDate, endDate, selectedCategories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+// --- 修正後 ---
+const filtered = useMemo(() => {
+  return txs.filter((tx) => {
+    // 既存フィルタ
+    if (showUnclassifiedOnly && tx.category) return false;
+    if (
+      excludeCardPayments &&
+      (tx.category === 'カード支払い' || tx.category === 'クード払い' || tx.category === 'クレカ払い')
+    ) return false;
 
-  useEffect(() => {
-    setPage(1);
-  }, [startDate, endDate, selectedCategories, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+    if (startDate && tx.date < startDate) return false;
+    if (endDate && tx.date > endDate) return false;
+
+    // 追加: カテゴリ管理（両方が指定されていればANDで絞り込み）
+    if (Array.isArray(selectedCategories) && selectedCategories.length > 0 &&
+        !selectedCategories.includes(tx.category)) return false;
+
+    if (Array.isArray(categories) && categories.length > 0 &&
+        !categories.includes(tx.category)) return false;
+
+    if (categoryQuery && categoryQuery.trim() !== '') {
+      const c = (tx.category || '').toLowerCase();
+      if (!c.includes(categoryQuery.toLowerCase().trim())) return false;
+    }
+
+    // 既存: キーワード検索
+    if (keyword && keyword.trim() !== '') {
+      const k = keyword.toLowerCase().trim();
+      const target = `${tx.description || ''} ${tx.detail || ''} ${tx.memo || ''}`.toLowerCase();
+      if (!target.includes(k)) return false;
+    }
+
+    // 金額・種別
+    const amt = Math.abs(Number(tx.amount));
+    if (minAmount !== '' && !Number.isNaN(Number(minAmount)) && amt < Number(minAmount)) return false;
+    if (maxAmount !== '' && !Number.isNaN(Number(maxAmount)) && amt > Number(maxAmount)) return false;
+
+    if (type === 'income' && tx.kind !== 'income') return false;
+    if (type === 'expense' && tx.kind !== 'expense') return false;
+
+    return true;
+  });
+}, [
+  txs,
+  startDate, endDate,
+  selectedCategories, categories, categoryQuery,
+  keyword, minAmount, maxAmount, type,
+  excludeCardPayments, showUnclassifiedOnly,
+]);
+
+// ページングリセット（依存も統合）
+useEffect(() => {
+  setPage(1);
+}, [
+  startDate, endDate,
+  selectedCategories, categories, categoryQuery,
+  keyword, minAmount, maxAmount, type,
+  excludeCardPayments, showUnclassifiedOnly,
+]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -146,6 +178,7 @@ export default function Transactions() {
     setStartDate('');
     setEndDate('');
     setCategories([]);
+    setCategoryQuery('');
     setKeyword('');
     setMinAmount('');
     setMaxAmount('');
@@ -230,6 +263,12 @@ export default function Transactions() {
               </option>
             ))}
           </select>
+          <input
+            type='text'
+            placeholder='カテゴリ検索'
+            value={categoryQuery}
+            onChange={e => setCategoryQuery(e.target.value)}
+          />
           <input
             type='text'
             placeholder='キーワード'
