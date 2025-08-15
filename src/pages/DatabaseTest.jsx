@@ -63,25 +63,40 @@ export default function DatabaseTest() {
       description: 'transactionsテーブルのスキーマを確認',
       icon: Database,
       action: async () => {
-        const { data, error } = await supabase
+        // まずテーブルにアクセスできるか確認
+        const { data: testData, error } = await supabase
           .from('transactions')
           .select('*')
-          .limit(0);
+          .limit(1);
         
         if (error) {
           throw new Error(`テーブルアクセスエラー: ${error.message}`);
         }
         
-        // テーブル情報を取得
-        const { data: columns, error: schemaError } = await supabase
-          .rpc('get_table_columns', { table_name: 'transactions' })
-          .catch(() => ({ data: null, error: null }));
+        // サンプルデータから推測されるカラム構造
+        const sampleRow = testData?.[0];
+        const columnInfo = sampleRow 
+          ? Object.keys(sampleRow).map(key => ({
+              column: key,
+              type: typeof sampleRow[key],
+              value: sampleRow[key]
+            }))
+          : '空のテーブル（データなし）';
+        
+        // 必須カラムの存在確認
+        const requiredColumns = ['id', 'user_id', 'date', 'amount', 'occurred_on', 'exclude_from_totals', 'hash'];
+        const existingColumns = sampleRow ? Object.keys(sampleRow) : [];
+        const missingColumns = requiredColumns.filter(col => !existingColumns.includes(col));
         
         return {
           success: true,
           message: 'transactionsテーブルアクセス成功',
           data: {
-            columns: columns || 'スキーマ情報取得不可（権限不足の可能性）'
+            tableExists: true,
+            rowCount: testData?.length || 0,
+            columns: columnInfo,
+            missingColumns: missingColumns.length > 0 ? missingColumns : 'なし',
+            requiredColumnsOK: missingColumns.length === 0
           }
         };
       }
