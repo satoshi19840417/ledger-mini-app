@@ -75,21 +75,22 @@ export const dbService = {
         const memoText = tx.memo || tx.メモ || '';
         const hashString = `${userId}_${dateValue}_${amount}_${descText}_${detailText}_${memoText}_${tx.id || Math.random()}`;
         const hash = tx.hash || hashString;
-        
+        const excludeFromTotals =
+          tx.excludeFromTotals ?? tx.exclude_from_totals ?? false;
+
         return {
-          id: tx.id || tx.ID || crypto.randomUUID(),  // CSVのIDフィールドも考慮
+          id: tx.id || tx.ID || crypto.randomUUID(), // CSVのIDフィールドも考慮
           user_id: userId,
-          date: dateValue,  // timestampz型
-          occurred_on: dateValue,  // date型（必須）
+          date: dateValue, // DATE型
+          occurred_on: dateValue, // DATE型
           amount: amount !== undefined && !isNaN(amount) ? amount : 0,
-          category: tx.category || tx.カテゴリ || '',  // text型
-          description: tx.description || tx.説明 || '',  // text型
-          detail: tx.detail || tx.詳細 || '',  // text型
-          memo: tx.memo || tx.メモ || '',  // text型
-          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'),  // text型
-          hash: hash,  // text型（テーブルに存在）
-          exclude_from_totals: tx.excludeFromTotals || false,  // boolean型（集計対象外フラグ）
-          created_at: tx.created_at || new Date().toISOString()  // timestampz型
+          category: tx.category || tx.カテゴリ || '', // text型
+          description: tx.description || tx.説明 || '', // text型
+          detail: tx.detail || tx.詳細 || '', // text型
+          memo: tx.memo || tx.メモ || '', // text型
+          kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'), // text型
+          hash,
+          exclude_from_totals: excludeFromTotals // boolean型（集計対象外フラグ）
         };
       });
 
