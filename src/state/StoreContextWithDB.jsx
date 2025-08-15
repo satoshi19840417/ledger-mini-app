@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useCallback, useState
 import { dbService } from '../services/database';
 import { useSession } from '../useSession';
 import { DEFAULT_CATEGORIES } from '../defaultCategories';
+import { toast } from 'react-hot-toast';
 
 const initialState = {
   transactions: [],
@@ -313,6 +314,17 @@ export function StoreProvider({ children }) {
       console.log('Starting sync with transactions:', txToSync.length);
       dispatch({ type: 'setSyncStatus', payload: 'syncing' });
 
+      const getErrorMessage = (error) => {
+        const message = error?.message || String(error);
+        if (/schema|column|relation/i.test(message)) {
+          return 'データベースのスキーマが一致しません。';
+        }
+        if (/network|Failed to fetch|fetch failed|Supabase not initialized/i.test(message)) {
+          return 'ネットワークエラーが発生しました。';
+        }
+        return message || '不明なエラーが発生しました。';
+      };
+
       try {
         const [txResult, rulesResult] = await Promise.all([
           dbService.syncTransactions(session.user.id, txToSync),
@@ -322,12 +334,47 @@ export function StoreProvider({ children }) {
         if (txResult.success && rulesResult.success) {
           dispatch({ type: 'syncComplete' });
           return true;
-        } else {
-          dispatch({ type: 'setSyncStatus', payload: 'error' });
-          return false;
         }
+
+        const error = txResult.error || rulesResult.error;
+        const reason = getErrorMessage(error);
+        toast.error((t) => (
+          <div>
+            <p className="font-medium">同期に失敗しました</p>
+            <p className="text-sm">{reason}</p>
+            <p className="text-xs mt-1">再試行するには下のボタンを押してください。</p>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                syncWithDatabase(txToSync);
+              }}
+              className="mt-2 text-xs text-blue-600 underline"
+            >
+              再試行
+            </button>
+          </div>
+        ));
+        dispatch({ type: 'setSyncStatus', payload: 'error' });
+        return false;
       } catch (error) {
         console.error('Sync error:', error);
+        const reason = getErrorMessage(error);
+        toast.error((t) => (
+          <div>
+            <p className="font-medium">同期に失敗しました</p>
+            <p className="text-sm">{reason}</p>
+            <p className="text-xs mt-1">再試行するには下のボタンを押してください。</p>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                syncWithDatabase(txToSync);
+              }}
+              className="mt-2 text-xs text-blue-600 underline"
+            >
+              再試行
+            </button>
+          </div>
+        ));
         dispatch({ type: 'setSyncStatus', payload: 'error' });
         return false;
       }
@@ -394,17 +441,28 @@ export function StoreProvider({ children }) {
   }, []);
 
   return (
-    <StoreContext.Provider 
-      value={{ 
-        state, 
-        dispatch, 
-        syncWithDatabase, 
+    <StoreContext.Provider
+      value={{
+        state,
+        dispatch,
+        syncWithDatabase,
         loadFromDatabase,
         autoSyncEnabled,
         toggleAutoSync
       }}
     >
       {children}
+      {state.syncStatus === 'error' && (
+        <div className="fixed bottom-4 right-4 z-50 bg-white border rounded shadow-lg p-4">
+          <p className="text-sm text-red-600 mb-2">同期に失敗しました。</p>
+          <button
+            onClick={() => syncWithDatabase()}
+            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          >
+            再同期
+          </button>
+        </div>
+      )}
     </StoreContext.Provider>
   );
 }
