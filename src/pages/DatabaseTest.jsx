@@ -12,10 +12,21 @@ export default function DatabaseTest() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        runAllTests(user.id);
+      if (!supabase) {
+        // Supabaseが初期化されていない場合（ローカルモード）
+        setUser({ id: 'local-user', email: 'local@example.com' });
+        return;
+      }
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user || { id: 'test-user', email: 'test@example.com' });
+        if (user) {
+          runAllTests(user.id);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setUser({ id: 'test-user', email: 'test@example.com' });
       }
     };
     checkUser();
@@ -25,7 +36,9 @@ export default function DatabaseTest() {
     { id: 'connection', name: 'Supabase接続テスト', fn: testConnection },
     { id: 'auth', name: '認証状態確認', fn: testAuth },
     { id: 'schema', name: 'テーブルスキーマ確認', fn: testSchema },
-    { id: 'columns', name: 'カラム詳細確認', fn: testColumns },
+    { id: 'columns', name: 'カラム詳細確認（transactions）', fn: testColumns },
+    { id: 'rulesSchema', name: 'ルールテーブル確認', fn: testRulesTable },
+    { id: 'rulesInsert', name: 'ルール挿入テスト', fn: testRulesInsert },
     { id: 'insert', name: 'データ挿入テスト', fn: testInsert },
     { id: 'select', name: 'データ取得テスト', fn: testSelect },
     { id: 'update', name: 'データ更新テスト', fn: testUpdate },
@@ -34,6 +47,10 @@ export default function DatabaseTest() {
 
   async function testConnection() {
     try {
+      if (!supabase) {
+        return { status: 'error', message: 'Supabaseが初期化されていません（ローカルモード）', details: { mode: 'local' } };
+      }
+      
       const { data, error } = await supabase
         .from('transactions')
         .select('count', { count: 'exact', head: true });
@@ -47,6 +64,14 @@ export default function DatabaseTest() {
 
   async function testAuth() {
     try {
+      if (!supabase) {
+        return { 
+          status: 'warning', 
+          message: 'ローカルモード（認証なし）',
+          details: { mode: 'local', userId: 'local-user' }
+        };
+      }
+      
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) throw error;
       if (!user) throw new Error('ユーザーが認証されていません');
@@ -62,6 +87,10 @@ export default function DatabaseTest() {
   }
 
   async function testSchema() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
+    
     try {
       // まずテーブルの存在を確認
       const { data, error } = await supabase
@@ -117,6 +146,10 @@ export default function DatabaseTest() {
   }
 
   async function testColumns() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
+    
     try {
       // 必要なカラムのリスト
       const requiredColumns = [
@@ -201,6 +234,9 @@ export default function DatabaseTest() {
   }
 
   async function testInsert() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
     if (!user) return { status: 'error', message: 'ユーザー未認証' };
 
     try {
@@ -242,6 +278,9 @@ export default function DatabaseTest() {
   }
 
   async function testSelect() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
     if (!user) return { status: 'error', message: 'ユーザー未認証' };
 
     try {
@@ -267,6 +306,9 @@ export default function DatabaseTest() {
   }
 
   async function testUpdate() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
     if (!user) return { status: 'error', message: 'ユーザー未認証' };
 
     try {
@@ -316,7 +358,119 @@ export default function DatabaseTest() {
     }
   }
 
+  async function testRulesTable() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
+    
+    try {
+      // rulesテーブルの存在を確認
+      const { data, error } = await supabase
+        .from('rules')
+        .select('*')
+        .limit(1);
+
+      if (error) {
+        // エラーの詳細情報を取得
+        const errorDetails = {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        };
+        
+        // テーブルが存在しない場合
+        if (error.code === '42P01') {
+          return { 
+            status: 'error', 
+            message: 'rulesテーブルが存在しません',
+            details: errorDetails
+          };
+        }
+        
+        // その他のエラー
+        return { 
+          status: 'error', 
+          message: 'rulesテーブル確認エラー',
+          details: errorDetails
+        };
+      }
+
+      return { 
+        status: 'success', 
+        message: 'rulesテーブル確認完了',
+        details: { 
+          tableExists: true,
+          sampleData: data?.length > 0 ? Object.keys(data[0]) : 'データなし'
+        }
+      };
+    } catch (error) {
+      return { 
+        status: 'error', 
+        message: 'rulesテーブル確認失敗', 
+        details: {
+          errorType: error.constructor.name,
+          message: error.message,
+          stack: error.stack
+        }
+      };
+    }
+  }
+
+  async function testRulesInsert() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
+    if (!user) return { status: 'error', message: 'ユーザー未認証' };
+
+    try {
+      const testRule = {
+        user_id: user.id,
+        pattern: 'テストパターン',
+        category: 'テストカテゴリ',
+        target: 'description',
+        mode: 'contains',
+        kind: 'expense'
+      };
+
+      const { data, error } = await supabase
+        .from('rules')
+        .insert([testRule])
+        .select()
+        .single();
+
+      if (error) {
+        return { 
+          status: 'error', 
+          message: 'ルール挿入失敗',
+          details: {
+            errorCode: error.code,
+            errorMessage: error.message,
+            hint: error.hint,
+            testData: testRule
+          }
+        };
+      }
+
+      // テストデータを削除
+      if (data?.id) {
+        await supabase.from('rules').delete().eq('id', data.id);
+      }
+
+      return { 
+        status: 'success', 
+        message: 'ルール挿入成功',
+        details: { insertedId: data?.id }
+      };
+    } catch (error) {
+      return { status: 'error', message: 'ルール挿入失敗', details: error };
+    }
+  }
+
   async function testRLS() {
+    if (!supabase) {
+      return { status: 'warning', message: 'ローカルモード（データベースなし）', details: { mode: 'local' } };
+    }
     if (!user) return { status: 'error', message: 'ユーザー未認証' };
 
     try {

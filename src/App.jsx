@@ -11,6 +11,7 @@ import Auth from './components/Auth.jsx';
 import PasswordReset from './components/PasswordReset.jsx';
 import AmountVisual from './components/ui/AmountVisual.jsx';
 import { toast } from 'react-hot-toast';
+import { supabase } from './lib/supabaseClient.js';
 
 // shadcn/ui components
 import { Button } from './components/ui/button.jsx';
@@ -41,7 +42,8 @@ import {
   Cloud,
   Home,
   EyeOff,
-  Database
+  Database,
+  AlertCircle
 } from 'lucide-react';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
@@ -487,6 +489,25 @@ function Dashboard({
   
   return (
     <div className="space-y-6">
+      
+      {/* データベーステストページへのリンク */}
+      <Card className="border-blue-200 bg-blue-50/30">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <p className="text-sm text-blue-700 mb-3">
+              {!supabase ? 'ローカルモードで動作中' : 'データベース接続の状態を確認'}
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => window.location.hash = 'dbtest'}
+              className="border-blue-300 hover:bg-blue-50"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              データベース診断ツールを開く
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* 収支切り替え */}
       <Card className={kind === 'expense' ? 'border-red-200 bg-red-50/30' : 'border-green-200 bg-green-50/30'}>
