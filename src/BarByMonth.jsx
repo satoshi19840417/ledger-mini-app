@@ -134,23 +134,25 @@ const maxTotal = useMemo(() => {
   );
 }, [dataWithMovingAvg]);
 
-  
+
+  const yAxisMax = useMemo(() => Math.ceil(maxTotal * 1.1), [maxTotal]);
+
   // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
   const ticks = useMemo(() => {
-    if (maxTotal === 0) return [0];
-    
+    if (yAxisMax === 0) return [0];
+
     // 最大値を適切な間隔で分割
-    const step = Math.pow(10, Math.floor(Math.log10(maxTotal)));
-    const normalizedMax = Math.ceil(maxTotal / step) * step;
+    const step = Math.pow(10, Math.floor(Math.log10(yAxisMax)));
+    const normalizedMax = Math.ceil(yAxisMax / step) * step;
     const tickCount = 5;
     const tickStep = normalizedMax / tickCount;
-    
+
     const result = [];
     for (let i = 0; i <= tickCount; i++) {
       result.push(Math.round(tickStep * i));
     }
-    return result.filter(v => v <= maxTotal * 1.1); // 最大値の110%までのticksのみ表示
-  }, [maxTotal]);
+    return result.filter(v => v <= yAxisMax);
+  }, [yAxisMax]);
 
   const tickFormatter = (v) => formatAmount(v, yenUnit);
   const formatValue = (v) => formatAmount(v, yenUnit);
@@ -262,7 +264,7 @@ const maxTotal = useMemo(() => {
             tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
           />
           <YAxis
-            domain={[0, 'dataMax + 10000']}
+            domain={[0, yAxisMax]}
             ticks={ticks}
             tickFormatter={tickFormatter}
             width={isMobile ? 60 : 80}
