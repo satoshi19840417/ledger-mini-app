@@ -214,26 +214,79 @@ export const dbService = {
     if (!supabase) {
       return { success: false, error: 'Supabase not initialized' };
     }
-    
+
     try {
       // 空の配列の場合は成功として返す
       if (!rules || rules.length === 0) {
         return { success: true, data: [] };
       }
+      // 既存のルールを事前に取得
+      const rulesWithId = rules.filter(r => r.id);
+      let existingMap = {};
+      if (rulesWithId.length > 0) {
+        const { data: existing, error: fetchError } = await supabase
+          .from('rules')
+          .select('*')
+          .eq('user_id', userId)
+          .in('id', rulesWithId.map(r => r.id));
 
-      const { data, error } = await supabase
-        .from('rules')
-        .upsert(
-          rules.map(rule => ({
+        if (fetchError) throw fetchError;
+        existingMap = Object.fromEntries(existing.map(r => [r.id, r]));
+      }
+
+      const insertRules = [];
+      const updateTargets = [];
+      for (const rule of rules) {
+        const existing = rule.id ? existingMap[rule.id] : undefined;
+        if (existing) {
+          // 差分を取得
+          const fields = ['pattern', 'regex', 'keyword', 'category', 'target', 'mode', 'kind', 'flags'];
+          const diff = {};
+          for (const f of fields) {
+            if (rule[f] !== undefined && rule[f] !== existing[f]) {
+              diff[f] = rule[f];
+            }
+          }
+          if (Object.keys(diff).length > 0) {
+            updateTargets.push({ id: rule.id, prevUpdatedAt: rule.updated_at || existing.updated_at, diff });
+          }
+        } else {
+          insertRules.push({
             ...rule,
             user_id: userId,
-            id: rule.id || crypto.randomUUID()
-            // created_atはデータベースで自動設定されるため削除
-          }))
-        );
-      
-      if (error) throw error;
-      return { success: true, data };
+            id: rule.id || crypto.randomUUID(),
+          });
+        }
+      }
+
+      let inserted = [];
+      if (insertRules.length > 0) {
+        const { data: insertData, error: insertError } = await supabase
+          .from('rules')
+          .insert(insertRules, { ignoreDuplicates: true })
+          .select();
+        if (insertError) throw insertError;
+        inserted = insertData || [];
+      }
+
+      let updated = [];
+      for (const target of updateTargets) {
+        const { id, prevUpdatedAt, diff } = target;
+        const { data: updData, error: updError } = await supabase
+          .from('rules')
+          .update(diff)
+          .eq('user_id', userId)
+          .eq('id', id)
+          .eq('updated_at', prevUpdatedAt)
+          .select();
+        if (updError) throw updError;
+        if (!updData || updData.length === 0) {
+          throw new Error('Conflict: rule was updated elsewhere');
+        }
+        updated = updated.concat(updData);
+      }
+
+      return { success: true, data: [...inserted, ...updated] };
     } catch (error) {
       console.error('Error syncing rules:', error);
       return { success: false, error };
