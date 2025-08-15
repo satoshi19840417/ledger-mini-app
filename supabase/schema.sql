@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS transactions (
   detail TEXT,
   memo TEXT,
   kind VARCHAR(20) CHECK (kind IN ('income', 'expense')),
+  occurred_on DATE,
+  hash TEXT,
+  exclude_from_totals BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (id, user_id)
