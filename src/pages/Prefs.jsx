@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Settings, 
   Download, 
-  Upload, 
-  Trash2, 
+  Upload,
+  Trash2,
   Filter,
-  DollarSign,
+  JapaneseYen,
   TrendingUp,
   TrendingDown,
   AlertTriangle
@@ -144,7 +144,7 @@ export default function Prefs() {
                   onClick={() => setYenUnit('yen')}
                   className={`flex-1 ${yenUnit === 'yen' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
                 >
-                  <DollarSign className="w-4 h-4 mr-2" />
+                  <JapaneseYen className="w-4 h-4 mr-2" />
                   円表示
                 </Button>
                 <Button
@@ -153,7 +153,7 @@ export default function Prefs() {
                   onClick={() => setYenUnit('man')}
                   className={`flex-1 ${yenUnit === 'man' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
                 >
-                  <DollarSign className="w-4 h-4 mr-2" />
+                  <JapaneseYen className="w-4 h-4 mr-2" />
                   万円表示
                 </Button>
               </div>

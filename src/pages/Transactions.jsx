@@ -13,7 +13,7 @@ import { DEFAULT_CATEGORIES } from '../defaultCategories.js';
 import { 
   Search, Filter, Download, FileSpreadsheet, Plus, Save, 
   RefreshCw, X, ChevronLeft, ChevronRight, Calendar,
-  DollarSign, Tag, FileText, Settings, Trash2
+  JapaneseYen, Tag, FileText, Settings, Trash2
 } from 'lucide-react';
 /** @typedef {import('../types').Transaction} Transaction */
 /** @typedef {import('../types').Rule} Rule */
@@ -365,7 +365,7 @@ useEffect(() => {
               {/* 金額範囲 */}
               <div className="space-y-2">
                 <Label htmlFor="min-amount" className="text-sm font-medium flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" />
+                  <JapaneseYen className="w-3 h-3" />
                   最小金額
                 </Label>
                 <Input
@@ -379,7 +379,7 @@ useEffect(() => {
               
               <div className="space-y-2">
                 <Label htmlFor="max-amount" className="text-sm font-medium flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" />
+                  <JapaneseYen className="w-3 h-3" />
                   最大金額
                 </Label>
                 <Input
@@ -462,7 +462,7 @@ useEffect(() => {
                       カテゴリ
                     </th>
                     <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">
-                      <DollarSign className="w-4 h-4 inline mr-1" />
+                      <JapaneseYen className="w-4 h-4 inline mr-1" />
                       金額
                     </th>
                     <th className="text-left p-3 font-semibold text-gray-700 min-w-[150px]">
