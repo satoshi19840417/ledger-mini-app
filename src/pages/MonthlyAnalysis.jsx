@@ -1,16 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import PieByCategory from '../PieByCategory.jsx';
-import BalanceChart from '../BalanceChart.jsx';
-import MonthlyComparisonTable from '../MonthlyComparisonTable.jsx';
+import { useMemo, useState } from 'react';
 import BarByMonth from '../BarByMonth.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { TrendingUp, TrendingDown, BarChart3, Calendar, Filter } from 'lucide-react';
-import { formatAmount } from '../utils/currency.js';
 
 export default function MonthlyAnalysis({
   transactions,
@@ -21,9 +10,6 @@ export default function MonthlyAnalysis({
 }) {
   const [excludeCardPayments, setExcludeCardPayments] = useState(false);
   const [excludeRent, setExcludeRent] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [comparisonMode, setComparisonMode] = useState('month'); // month | category
-
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
     if (excludeCardPayments) {
@@ -36,94 +22,6 @@ export default function MonthlyAnalysis({
     }
     return filtered;
   }, [transactions, excludeCardPayments, excludeRent]);
-
-  const months = useMemo(() => {
-    const monthSet = new Set();
-    filteredTransactions.forEach(tx => {
-      monthSet.add(tx.date.slice(0, 7));
-    });
-    return Array.from(monthSet).sort();
-  }, [filteredTransactions]);
-
-  // カテゴリー一覧を取得
-  const categories = useMemo(() => {
-    const categorySet = new Set();
-    filteredTransactions.forEach(tx => {
-      if (tx.category) categorySet.add(tx.category);
-    });
-    return Array.from(categorySet).sort();
-  }, [filteredTransactions]);
-
-  const rows = useMemo(
-    () =>
-      months.map(m => {
-        let incomeTotal = 0;
-        let expenseTotal = 0;
-        filteredTransactions.forEach(tx => {
-          if (tx.date.slice(0, 7) !== m) return;
-          if (tx.kind === 'income') incomeTotal += Math.abs(tx.amount);
-          if (tx.kind === 'expense') expenseTotal += Math.abs(tx.amount);
-        });
-        return { month: m, incomeTotal, expenseTotal, diff: incomeTotal - expenseTotal };
-      }),
-    [months, filteredTransactions],
-  );
-
-  const [selectedMonth, setSelectedMonth] = useState(months[months.length - 1] || '');
-
-  useEffect(() => {
-    setSelectedMonth(months[months.length - 1] || '');
-  }, [months]);
-
-  const monthTxs = useMemo(
-    () =>
-      filteredTransactions.filter(tx => tx.date.slice(0, 7) === selectedMonth),
-    [filteredTransactions, selectedMonth],
-  );
-
-  // カテゴリー別の月次推移データ
-  const categoryComparisonData = useMemo(() => {
-    if (selectedCategory === 'all') return null;
-    
-    const data = months.map(month => {
-      const monthData = { month };
-      const monthTxs = filteredTransactions.filter(
-        tx => tx.date.slice(0, 7) === month && tx.category === selectedCategory
-      );
-      
-      monthData.income = monthTxs
-        .filter(tx => tx.kind === 'income')
-        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-      
-      monthData.expense = monthTxs
-        .filter(tx => tx.kind === 'expense')
-        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-      
-      monthData.total = monthData.income - monthData.expense;
-      
-      return monthData;
-    });
-    
-    return data;
-  }, [selectedCategory, months, filteredTransactions]);
-
-  // カテゴリー別の集計データ
-  const categoryStats = useMemo(() => {
-    const stats = {};
-    categories.forEach(category => {
-      const categoryTxs = filteredTransactions.filter(tx => tx.category === category);
-      stats[category] = {
-        income: categoryTxs
-          .filter(tx => tx.kind === 'income')
-          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
-        expense: categoryTxs
-          .filter(tx => tx.kind === 'expense')
-          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
-        count: categoryTxs.length
-      };
-    });
-    return stats;
-  }, [categories, filteredTransactions]);
 
   return (
     <section>
@@ -157,62 +55,6 @@ export default function MonthlyAnalysis({
           kind="expense"
           height={350}
         />
-      </div>
-      
-      {/* 月ごとの詳細分析 */}
-      <div className='card'>
-        <h3 style={{ marginBottom: 16 }}>月ごとの詳細分析</h3>
-        {months.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
-              {months.map(m => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
-          <div style={{ flex: 1, minWidth: 300 }}>
-            <h3 style={{ textAlign: 'center', marginBottom: 8 }}>支出</h3>
-            <PieByCategory
-              transactions={monthTxs}
-              period='all'
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-              kind='expense'
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 300 }}>
-            <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収入</h3>
-            <PieByCategory
-              transactions={monthTxs}
-              period='all'
-              yenUnit={yenUnit}
-              lockColors={lockColors}
-              hideOthers={hideOthers}
-              kind='income'
-            />
-          </div>
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <h3 style={{ textAlign: 'center', marginBottom: 8 }}>収支推移</h3>
-          <BalanceChart
-            transactions={filteredTransactions}
-            period={period}
-            yenUnit={yenUnit}
-          />
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <MonthlyComparisonTable
-            rows={rows}
-            selectedMonth={selectedMonth}
-            onSelectMonth={setSelectedMonth}
-            yenUnit={yenUnit}
-          />
-        </div>
       </div>
     </section>
   );
