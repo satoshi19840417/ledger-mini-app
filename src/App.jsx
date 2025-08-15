@@ -188,6 +188,20 @@ export default function App() {
   const [lockColors, setLockColors] = useState(init.lockColors);
   const [hideOthers, setHideOthers] = useState(init.hideOthers);
   const [kind, setKind] = useState(init.kind);
+  const [filterMode, setFilterMode] = useState(() => {
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem('filterMode') || '{}',
+      );
+      return {
+        others: stored.others || 'include',
+        card: stored.card || 'exclude',
+        rent: stored.rent || 'include',
+      };
+    } catch {
+      return { others: 'include', card: 'exclude', rent: 'include' };
+    }
+  });
   const burgerRef = useRef(null);
   const panelRef = useRef(null);
   const [needRefresh, setNeedRefresh] = useState(false);
@@ -196,11 +210,63 @@ export default function App() {
       setNeedRefresh(true);
     },
   });
-  
+
+  // filterModeをlocalStorageの変更と同期
+  useEffect(() => {
+    const load = () => {
+      try {
+        const stored = JSON.parse(
+          localStorage.getItem('filterMode') || '{}',
+        );
+        setFilterMode({
+          others: stored.others || 'include',
+          card: stored.card || 'exclude',
+          rent: stored.rent || 'include',
+        });
+      } catch {
+        setFilterMode({ others: 'include', card: 'exclude', rent: 'include' });
+      }
+    };
+    const onStorage = e => {
+      if (e.key === 'filterMode') load();
+    };
+    window.addEventListener('storage', onStorage);
+    const interval = setInterval(load, 1000);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const updateFilterMode = mode => {
+    localStorage.setItem('filterMode', JSON.stringify(mode));
+    setFilterMode(mode);
+  };
+
   // 集計対象外を除外したトランザクション
   const filteredTransactionsForAnalysis = useMemo(() => {
-    return state.transactions.filter(tx => !tx.excludeFromTotals);
-  }, [state.transactions]);
+    let txs = state.transactions.filter(tx => !tx.excludeFromTotals);
+
+    if (filterMode.others === 'exclude') {
+      txs = txs.filter(tx => tx.category !== 'その他');
+    } else if (filterMode.others === 'only') {
+      txs = txs.filter(tx => tx.category === 'その他');
+    }
+
+    if (filterMode.card === 'exclude') {
+      txs = txs.filter(tx => tx.category !== 'カード支払い');
+    } else if (filterMode.card === 'only') {
+      txs = txs.filter(tx => tx.category === 'カード支払い');
+    }
+
+    if (filterMode.rent === 'exclude') {
+      txs = txs.filter(tx => tx.category !== '家賃');
+    } else if (filterMode.rent === 'only') {
+      txs = txs.filter(tx => tx.category === '家賃');
+    }
+
+    return txs;
+  }, [state.transactions, filterMode]);
 
   const loadDemo = async () => {
     try {
@@ -804,6 +870,7 @@ function Dashboard({
                   yenUnit={yenUnit}
                   lockColors={lockColors}
                   hideOthers={hideOthers}
+                  filterMode={filterMode}
                 />
               </Suspense>
             </TabsContent>
@@ -845,6 +912,8 @@ function Dashboard({
                   lockColors={lockColors}
                   hideOthers={hideOthers}
                   kind={kind}
+                  filterMode={filterMode}
+                  onFilterModeChange={updateFilterMode}
                 />
               </Suspense>
             </TabsContent>
@@ -886,6 +955,7 @@ function Dashboard({
                   lockColors={lockColors}
                   hideOthers={hideOthers}
                   kind={kind}
+                  filterMode={filterMode}
                 />
               </Suspense>
             </TabsContent>
