@@ -112,7 +112,7 @@ function serializeHash({
 }
 
 export default function App() {
-  const { state, dispatch, loadFromDatabase } = useStore();
+  const { state, dispatch, loadFromDatabase, syncWithDatabase, showSyncPrompt, hideSyncPrompt } = useStore();
   const { session, loading } = useSession();
   const isLocalMode = localStorage.getItem('localMode') === 'true';
   const [syncing, setSyncing] = useState(false);
@@ -631,6 +631,26 @@ function Dashboard({
 
   return (
     <div className='app-shell'>
+      {showSyncPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded shadow">
+            <p className="mb-4">同期を実行しますか？</p>
+            <div className="flex justify-end gap-2">
+              <Button
+                onClick={async () => {
+                  await syncWithDatabase();
+                  hideSyncPrompt();
+                }}
+              >
+                同期
+              </Button>
+              <Button variant="outline" onClick={hideSyncPrompt}>
+                キャンセル
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ヘッダー */}
       <header className='header'>
         <div className='header-controls'>

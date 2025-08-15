@@ -298,6 +298,10 @@ export function StoreProvider({ children }) {
     const stored = localStorage.getItem('autoSyncEnabled');
     return stored !== null ? stored === 'true' : true;
   });
+  const [showSyncPrompt, setShowSyncPrompt] = useState(false);
+
+  const showSyncPromptFn = useCallback(() => setShowSyncPrompt(true), []);
+  const hideSyncPrompt = useCallback(() => setShowSyncPrompt(false), []);
 
   const syncWithDatabase = useCallback(
     async (overrideTransactions) => {
@@ -432,6 +436,13 @@ export function StoreProvider({ children }) {
       return () => clearTimeout(timer);
     }
   }, [autoSyncEnabled, session, state.syncStatus, syncWithDatabase]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setShowSyncPrompt(true);
+    }, 15 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
   
   // 自動同期の設定を変更する関数
   const toggleAutoSync = useCallback((enabled) => {
@@ -448,7 +459,10 @@ export function StoreProvider({ children }) {
         syncWithDatabase,
         loadFromDatabase,
         autoSyncEnabled,
-        toggleAutoSync
+        toggleAutoSync,
+        showSyncPrompt,
+        showSyncPromptFn,
+        hideSyncPrompt
       }}
     >
       {children}
