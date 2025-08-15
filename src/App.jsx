@@ -10,10 +10,6 @@ import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
 import PasswordReset from './components/PasswordReset.jsx';
 import AmountVisual from './components/ui/AmountVisual.jsx';
-import ToggleButton from './components/ui/ToggleButton.jsx';
-import SegmentControl from './components/ui/SegmentControl.jsx';
-import { Switch } from './components/ui/switch.jsx';
-import { Label } from './components/ui/label.jsx';
 
 // shadcn/ui components
 import { Button } from './components/ui/button.jsx';
@@ -345,62 +341,11 @@ function Dashboard({
   lockColors,
   hideOthers,
   kind,
-  onToggleUnit,
-  onToggleColors,
-  onToggleOthers,
   onKindChange,
 }) {
-  // localStorageから設定を読み込み
-  const [filterMode, setFilterMode] = useState(
-    JSON.parse(localStorage.getItem('filterMode') || '{"others":"include","card":"exclude","rent":"include"}')
-  );
-  
-  // filterModeが変更されたらlocalStorageに保存
-  useEffect(() => {
-    localStorage.setItem('filterMode', JSON.stringify(filterMode));
-  }, [filterMode]);
-  
-  // フィルタリング処理
   const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
-    // 集計対象外を除外
-    filtered = filtered.filter(tx => !tx.excludeFromTotals);
-    
-    // その他フィルター
-    if (filterMode.others === 'exclude') {
-      filtered = filtered.filter(tx => tx.category !== 'その他');
-    } else if (filterMode.others === 'only') {
-      filtered = filtered.filter(tx => tx.category === 'その他');
-    }
-    
-    // カード支払いフィルター
-    const cardCategories = ['カード支払い', 'カード払い', 'クレカ払い'];
-    if (filterMode.card === 'exclude') {
-      filtered = filtered.filter(tx => !cardCategories.includes(tx.category));
-    } else if (filterMode.card === 'only') {
-      filtered = filtered.filter(tx => cardCategories.includes(tx.category));
-    }
-    
-    // 家賃フィルター
-    if (filterMode.rent === 'exclude') {
-      filtered = filtered.filter(tx => tx.category !== '家賃');
-    } else if (filterMode.rent === 'only') {
-      filtered = filtered.filter(tx => tx.category === '家賃');
-    }
-    
-    return filtered;
-  }, [transactions, filterMode]);
-  
-  // フィルタリング統計情報
-  const filterStats = useMemo(() => {
-    const baseTransactions = transactions.filter(tx => !tx.excludeFromTotals);
-    const excludedCount = baseTransactions.length - filteredTransactions.length;
-    return {
-      total: baseTransactions.length,
-      filtered: filteredTransactions.length,
-      excluded: excludedCount
-    };
-  }, [transactions, filteredTransactions]);
+    return transactions.filter(tx => !tx.excludeFromTotals);
+  }, [transactions]);
   
   // 収支計算
   const monthMap = {};
@@ -462,230 +407,6 @@ function Dashboard({
             >
               現在: {kind === 'expense' ? '支出モード' : '収入モード'}
             </Badge>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* 表示オプション */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <SettingsIcon className="w-4 h-4" />
-            表示オプション
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 単位切り替え */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-muted-foreground">金額単位</Label>
-            <div className="flex gap-2">
-              <Button
-                variant={yenUnit === 'yen' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onToggleUnit()}
-                className={`flex-1 ${yenUnit === 'yen' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
-              >
-                円表示
-              </Button>
-              <Button
-                variant={yenUnit === 'man' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onToggleUnit()}
-                className={`flex-1 ${yenUnit === 'man' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
-              >
-                万円表示
-              </Button>
-            </div>
-          </div>
-
-          {/* フィルター設定 */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-muted-foreground">データフィルター</Label>
-            <div className="space-y-3">
-              {/* その他フィルター */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">その他カテゴリ</Label>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    size="sm"
-                    variant={filterMode.others === 'include' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'include' }))}
-                    className={`text-xs ${
-                      filterMode.others === 'include' 
-                        ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    含む
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.others === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'exclude' }))}
-                    className={`text-xs ${
-                      filterMode.others === 'exclude' 
-                        ? 'bg-gray-500 hover:bg-gray-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    除外
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.others === 'only' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'only' }))}
-                    className={`text-xs ${
-                      filterMode.others === 'only' 
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    のみ
-                  </Button>
-                </div>
-              </div>
-              
-              {/* カード支払いフィルター */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">カード支払い</Label>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    size="sm"
-                    variant={filterMode.card === 'include' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'include' }))}
-                    className={`text-xs ${
-                      filterMode.card === 'include' 
-                        ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    含む
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.card === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'exclude' }))}
-                    className={`text-xs ${
-                      filterMode.card === 'exclude' 
-                        ? 'bg-gray-500 hover:bg-gray-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    除外
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.card === 'only' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'only' }))}
-                    className={`text-xs ${
-                      filterMode.card === 'only' 
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    のみ
-                  </Button>
-                </div>
-              </div>
-              
-              {/* 家賃フィルター */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">家賃</Label>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    size="sm"
-                    variant={filterMode.rent === 'include' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'include' }))}
-                    className={`text-xs ${
-                      filterMode.rent === 'include' 
-                        ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    含む
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.rent === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'exclude' }))}
-                    className={`text-xs ${
-                      filterMode.rent === 'exclude' 
-                        ? 'bg-gray-500 hover:bg-gray-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    除外
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.rent === 'only' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'only' }))}
-                    className={`text-xs ${
-                      filterMode.rent === 'only' 
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                        : ''
-                    }`}
-                  >
-                    のみ
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 現在の設定サマリー */}
-          <div className="pt-2 border-t">
-            <div className="flex flex-wrap gap-2">
-              {yenUnit === 'man' && (
-                <Badge variant="secondary" className="text-xs">
-                  万円単位
-                </Badge>
-              )}
-              {filterMode.others === 'exclude' && (
-                <Badge variant="destructive" className="text-xs bg-gray-500">
-                  その他除外
-                </Badge>
-              )}
-              {filterMode.others === 'only' && (
-                <Badge className="text-xs bg-blue-500 text-white">
-                  その他のみ
-                </Badge>
-              )}
-              {filterMode.card === 'exclude' && (
-                <Badge variant="destructive" className="text-xs bg-gray-500">
-                  カード除外
-                </Badge>
-              )}
-              {filterMode.card === 'only' && (
-                <Badge className="text-xs bg-blue-500 text-white">
-                  カードのみ
-                </Badge>
-              )}
-              {filterMode.card === 'include' && (
-                <Badge className="text-xs bg-green-100 text-green-700">
-                  カード含む
-                </Badge>
-              )}
-              {filterMode.rent === 'exclude' && (
-                <Badge variant="destructive" className="text-xs bg-gray-500">
-                  家賃除外
-                </Badge>
-              )}
-              {filterMode.rent === 'only' && (
-                <Badge className="text-xs bg-blue-500 text-white">
-                  家賃のみ
-                </Badge>
-              )}
-              {filterMode.others === 'include' && filterMode.card === 'include' && filterMode.rent === 'include' && yenUnit === 'yen' && (
-                <span className="text-xs text-muted-foreground">デフォルト設定</span>
-              )}
-            </div>
-            {filterStats.excluded > 0 && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                フィルタにより {filterStats.excluded} 件を除外中 
-                （{filterStats.filtered}/{filterStats.total} 件を表示）
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -1053,9 +774,6 @@ function Dashboard({
                 lockColors={lockColors}
                 hideOthers={hideOthers}
                 kind={kind}
-                onToggleUnit={() => setYenUnit(v => (v === 'yen' ? 'man' : 'yen'))}
-                onToggleColors={() => setLockColors(v => !v)}
-                onToggleOthers={() => setHideOthers(v => !v)}
                 onKindChange={setKind}
               />
             </TabsContent>
