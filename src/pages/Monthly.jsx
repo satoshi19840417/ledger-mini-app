@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import BarByMonth from '../BarByMonth.jsx';
 import PieByCategory from '../PieByCategory.jsx';
-import { CATEGORIES } from '../categories.js';
+import { DEFAULT_CATEGORIES as CATEGORIES } from '../defaultCategories.js';
 
 export default function Monthly({
   transactions,
