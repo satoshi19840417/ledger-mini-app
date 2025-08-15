@@ -41,6 +41,7 @@ export default function Yearly({
 
   const currentYear = new Date().getFullYear().toString();
   const currentYearData = yearlyStats.find(s => s.year === currentYear);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -112,6 +113,8 @@ export default function Yearly({
                     lockColors={lockColors}
                     hideOthers={hideOthers}
                     kind={kind}
+                    chartHeight={isMobile ? 300 : 250}
+                    radius={isMobile ? '65%' : '80%'}
                   />
                 </TabsContent>
                 <TabsContent value="monthly" className="mt-4">

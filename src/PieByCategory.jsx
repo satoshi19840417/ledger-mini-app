@@ -85,7 +85,12 @@ export default function PieByCategory({
   lockColors,
   hideOthers,
   kind = 'expense',
+  chartHeight,
+  radius,
 }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  chartHeight = chartHeight ?? 400;
+  radius = radius ?? (isMobile ? '75%' : '90%');
   const monthMap = {};
   const txs = transactions.filter((tx) => tx.kind === kind);
   txs.forEach((tx) => {
@@ -154,7 +159,6 @@ export default function PieByCategory({
   }));
 
   // カスタムラベル関数を追加
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const renderCustomLabel = ({
     cx, cy, midAngle, innerRadius, outerRadius, value, index, percent
   }) => {
@@ -195,20 +199,20 @@ export default function PieByCategory({
       maxWidth: isMobile ? '100%' : 'none',
       margin: '0 auto'
     }}>
-      <ResponsiveContainer width="100%" height={isMobile ? 300 : 250}>
-        <RePieChart margin={{ 
-          top: isMobile ? 10 : 0, 
-          right: isMobile ? 10 : 30, 
-          bottom: isMobile ? 80 : 20, 
-          left: isMobile ? 10 : 30 
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <RePieChart margin={{
+          top: isMobile ? 10 : 0,
+          right: isMobile ? 10 : 30,
+          bottom: isMobile ? 80 : 20,
+          left: isMobile ? 10 : 30
         }}>
-          <Pie 
-            data={dataWithColors} 
-            dataKey="value" 
-            nameKey="name" 
+          <Pie
+            data={dataWithColors}
+            dataKey="value"
+            nameKey="name"
             label={renderCustomLabel}
             labelLine={false}
-            outerRadius={isMobile ? "65%" : "80%"}
+            outerRadius={radius}
             cx={isMobile ? "50%" : "50%"}
             cy={isMobile ? "45%" : "50%"}
           >
