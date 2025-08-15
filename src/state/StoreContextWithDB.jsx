@@ -213,8 +213,9 @@ function reducer(state, action) {
     case 'deleteCategory': {
       const category = action.payload;
       const categories = state.categories.filter(c => c !== category);
+      // 削除されたカテゴリを使用している取引は「その他」に変更
       const transactions = state.transactions.map(tx =>
-        tx.category === category ? { ...tx, category: '' } : tx
+        tx.category === category ? { ...tx, category: 'その他' } : tx
       );
       const rules = state.rules.filter(rule => rule.category !== category);
       localStorage.setItem('lm_categories_v1', JSON.stringify(categories));

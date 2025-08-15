@@ -41,7 +41,29 @@ export default function Categories() {
   };
 
   const deleteCat = cat => {
-    if (!window.confirm(`${cat} を削除しますか？`)) return;
+    // このカテゴリを使用している取引とルールの数を計算
+    const affectedTransactions = state.transactions.filter(tx => tx.category === cat);
+    const affectedRules = state.rules.filter(rule => rule.category === cat);
+    
+    let warningMessage = `「${cat}」を削除しますか？\n\n`;
+    
+    if (affectedTransactions.length > 0) {
+      warningMessage += `⚠️ ${affectedTransactions.length}件の取引がこのカテゴリを使用しています。\n`;
+      warningMessage += `  → これらの取引は「その他」に変更されます。\n\n`;
+    }
+    
+    if (affectedRules.length > 0) {
+      warningMessage += `⚠️ ${affectedRules.length}件の自動分類ルールがこのカテゴリを使用しています。\n`;
+      warningMessage += `  → これらのルールは削除されます。\n\n`;
+    }
+    
+    if (affectedTransactions.length === 0 && affectedRules.length === 0) {
+      warningMessage += `このカテゴリを使用しているデータはありません。`;
+    } else {
+      warningMessage += `この操作は取り消せません。本当に削除しますか？`;
+    }
+    
+    if (!window.confirm(warningMessage)) return;
     dispatch({ type: 'deleteCategory', payload: cat });
   };
 
