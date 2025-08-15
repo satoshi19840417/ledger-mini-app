@@ -12,7 +12,12 @@ import {
 } from 'recharts';
 import { formatAmount } from './utils/currency.js';
 
-export default function BalanceChart({ transactions, period, yenUnit }) {
+export default function BalanceChart({
+  transactions,
+  period,
+  yenUnit,
+  isAnimationActive = false,
+}) {
   const data = useMemo(() => {
     const monthMap = {};
     transactions.forEach(tx => {
@@ -61,15 +66,22 @@ export default function BalanceChart({ transactions, period, yenUnit }) {
     >
       <div style={{ width: chartWidth, height: 200 }}>
         <ResponsiveContainer width='100%' height='100%'>
-          <ComposedChart data={data}>
+          <ComposedChart data={data} isAnimationActive={isAnimationActive}>
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey='month' />
             <YAxis domain={domain} tickFormatter={v => formatAmount(v, yenUnit)} />
             <ReferenceLine y={0} stroke='#000' strokeWidth={4} />
             <Tooltip formatter={tooltipFormatter} />
-            <Bar dataKey='income' fill='#34d399' name='収入' />
-            <Bar dataKey='expense' fill='#f87171' name='支出' />
-            <Line type='monotone' dataKey='diff' stroke='#3b82f6' dot={false} name='差分' />
+            <Bar dataKey='income' fill='#34d399' name='収入' isAnimationActive={isAnimationActive} />
+            <Bar dataKey='expense' fill='#f87171' name='支出' isAnimationActive={isAnimationActive} />
+            <Line
+              type='monotone'
+              dataKey='diff'
+              stroke='#3b82f6'
+              dot={false}
+              name='差分'
+              isAnimationActive={isAnimationActive}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
