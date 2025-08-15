@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
+import BarByCategory from '../BarByCategory.jsx';
 import { DEFAULT_CATEGORIES as CATEGORIES } from '../defaultCategories.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,6 +25,7 @@ export default function Monthly({
     JSON.parse(localStorage.getItem('filterMode') || '{"others":"include","card":"exclude","rent":"include"}')
   );
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [comparePeriod, setComparePeriod] = useState('3m');
   
   // filterModeが変更されたらlocalStorageに保存
   useEffect(() => {
@@ -182,6 +184,21 @@ export default function Monthly({
                 </Select>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="compare-period">比較期間</Label>
+              <Select value={comparePeriod} onValueChange={setComparePeriod}>
+                <SelectTrigger id="compare-period">
+                  <SelectValue placeholder="期間を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3m">直近3ヶ月</SelectItem>
+                  <SelectItem value="6m">直近6ヶ月</SelectItem>
+                  <SelectItem value="1y">直近1年</SelectItem>
+                  <SelectItem value="all">全期間</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="category-select">カテゴリ</Label>
@@ -343,6 +360,26 @@ export default function Monthly({
               <PieByCategory
                 transactions={monthTxs}
                 period="all"
+                yenUnit={yenUnit}
+                lockColors={lockColors}
+                hideOthers={hideOthers}
+                kind={kind}
+              />
+            </CardContent>
+          </Card>
+
+          {/* カテゴリ比較 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                カテゴリ比較
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BarByCategory
+                transactions={filteredTransactions}
+                period={comparePeriod}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
                 hideOthers={hideOthers}
