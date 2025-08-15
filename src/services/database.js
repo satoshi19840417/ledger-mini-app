@@ -357,20 +357,76 @@ export const dbService = {
     if (!supabase) {
       return { success: false, error: 'Supabase not initialized' };
     }
-    
+
     try {
-      const { data, error } = await supabase
+      // 既存の設定を取得
+      const { data: existing, error: selectError } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          preferences: preferences,
+        .select('preferences')
+        .eq('user_id', userId)
+        .single();
+
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.error('Error loading preferences:', selectError);
+        toast.error('設定の取得に失敗しました。再試行してください。');
+        return { success: false, error: selectError };
+      }
+
+      // 取得できない場合は新規挿入
+      if (!existing) {
+        const { data, error: insertError } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: userId,
+            preferences,
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error inserting preferences:', insertError);
+          toast.error(`設定の保存に失敗しました: ${insertError.message}。再試行してください。`);
+          return { success: false, error: insertError };
+        }
+
+        return { success: true, data };
+      }
+
+      // 既存設定と新しい設定をマージ
+      const mergedPreferences = {
+        ...existing.preferences,
+        ...preferences,
+      };
+
+      // 差分がなければ更新不要
+      if (
+        JSON.stringify(existing.preferences) ===
+        JSON.stringify(mergedPreferences)
+      ) {
+        return { success: true, data: existing };
+      }
+
+      const { data, error: updateError } = await supabase
+        .from('user_preferences')
+        .update({
+          preferences: mergedPreferences,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
-      
-      if (error) throw error;
+        })
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating preferences:', updateError);
+        toast.error(`設定の保存に失敗しました: ${updateError.message}。再試行してください。`);
+        return { success: false, error: updateError };
+      }
+
       return { success: true, data };
     } catch (error) {
       console.error('Error saving preferences:', error);
+      toast.error('設定の保存に失敗しました。再試行してください。');
       return { success: false, error };
     }
   },
