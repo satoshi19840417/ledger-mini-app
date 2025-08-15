@@ -1,4 +1,13 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts';
 import { convertAmount, formatAmount } from './utils/currency.js';
 
 export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
@@ -17,11 +26,27 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
     diff: convertAmount(monthMap[m], yenUnit),
   }));
 
+  const average =
+    data.length > 0
+      ? data.reduce((sum, d) => sum + d.diff, 0) / data.length
+      : 0;
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const height = isMobile ? 250 : 300;
 
   const tickFormatter = (v) => v.toLocaleString();
   const tooltipFormatter = (v) => formatAmount(v, yenUnit);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || payload.length === 0) return null;
+    return (
+      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
+        <p style={{ margin: 0 }}>{label}</p>
+        <p style={{ margin: 0 }}>差分: {tooltipFormatter(payload[0].value)}</p>
+        <p style={{ margin: 0 }}>平均: {tooltipFormatter(average)}</p>
+      </div>
+    );
+  };
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', margin: '0 auto' }}>
@@ -30,8 +55,8 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis tickFormatter={tickFormatter} />
-          <ReferenceLine y={0} stroke="#000" strokeWidth={4} />
-          <Tooltip formatter={tooltipFormatter} />
+          <ReferenceLine y={average} stroke="#ef4444" strokeDasharray="3 3" />
+          <Tooltip content={<CustomTooltip />} />
           <Line type="monotone" dataKey="diff" stroke="#8884d8" dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
