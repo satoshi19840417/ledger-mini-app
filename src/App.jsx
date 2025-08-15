@@ -115,7 +115,8 @@ function serializeHash({
 export default function App() {
   const { state, dispatch, loadFromDatabase } = useStore();
   const { session, loading } = useSession();
-  const isLocalMode = localStorage.getItem('localMode') === 'true';
+  const isLocalMode =
+    localStorage.getItem('localMode') === 'true' || (!loading && !session);
   const [syncing, setSyncing] = useState(false);
 
   const isAuthenticated = session || isLocalMode;

@@ -13,10 +13,18 @@ export function useSession() {
     }
     
     // Get initial session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+      })
+      .catch((error) => {
+        console.error('Error getting session:', error);
+        setSession(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
     
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
