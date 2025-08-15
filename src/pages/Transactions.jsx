@@ -653,14 +653,14 @@ useEffect(() => {
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={() => setShowRuleModal(false)}
         >
-          <Card className="w-full max-w-md mx-4 max-h-[80vh] overflow-auto">
+          <Card className="w-full max-w-md mx-4 max-h-[80vh] overflow-auto bg-white" onClick={e => e.stopPropagation()}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="w-5 h-5" />
                 分類ルール作成
               </CardTitle>
             </CardHeader>
-            <CardContent onClick={e => e.stopPropagation()}>
+            <CardContent>
               {selectedTx && (
                 <Card className="mb-4 bg-gray-50">
                   <CardContent className="p-3">
