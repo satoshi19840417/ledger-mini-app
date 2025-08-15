@@ -230,6 +230,7 @@ useEffect(() => {
       }
       if (excludedFromTotals[tx.id] !== undefined) {
         updated.excludeFromTotals = excludedFromTotals[tx.id];
+        updated.exclude_from_totals = excludedFromTotals[tx.id]; // データベース互換性のため
       }
       return updated;
     });
@@ -611,6 +612,7 @@ useEffect(() => {
                                         }
                                         if (excludedFromTotals[tx.id] !== undefined) {
                                           updated.excludeFromTotals = excludedFromTotals[tx.id];
+                                          updated.exclude_from_totals = excludedFromTotals[tx.id]; // データベース互換性のため
                                         }
                                         return updated;
                                       }
