@@ -767,7 +767,7 @@ function Dashboard({
       </Sheet>
 
       {/* コンテンツ */}
-      <main className='content'>
+      <main className='content text-center'>
         {state.transactions.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>

@@ -296,7 +296,7 @@ export default function Auth({ onSkipAuth }) {
           </p>
         )}
 
-        <form onSubmit={handleAuth} className="auth-form">
+        <form onSubmit={handleAuth} className="auth-form text-left">
           <div className="form-group">
             <label htmlFor="email">メールアドレス</label>
             <input

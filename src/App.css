@@ -461,6 +461,7 @@ body {
   z-index:1;
   gap:1rem;
   overflow-x:hidden;
+  text-align:center;
 }
 
 .card {

@@ -68,7 +68,7 @@ export default function PasswordResetCallback() {
       <h2>パスワード更新</h2>
       <div className='card'>
         {error && <p style={{ color: 'red' }}>{error}</p>}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className='text-left'>
           <label htmlFor='password'>新しいパスワード</label>
           <div className='password-field'>
             <input

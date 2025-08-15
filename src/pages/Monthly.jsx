@@ -476,7 +476,7 @@ export default function Monthly({
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-left">
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-2 text-sm font-medium">日付</th>

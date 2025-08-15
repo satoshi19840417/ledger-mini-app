@@ -120,7 +120,7 @@ export default function Categories() {
         <p style={{ marginBottom: 12, color: '#666', fontSize: '0.9em' }}>
           ドラッグ&ドロップまたは↑↓ボタンで並び順を変更できます
         </p>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table className='text-left' style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
             {categories.map((c, idx) => (
               <tr 
@@ -198,7 +198,7 @@ export default function Categories() {
             ))}
           </tbody>
         </table>
-        <form onSubmit={addCategory} style={{ marginTop: 12, display: 'flex', gap: 4 }}>
+        <form onSubmit={addCategory} className='text-left' style={{ marginTop: 12, display: 'flex', gap: 4 }}>
           <input
             type='text'
             value={newCat}

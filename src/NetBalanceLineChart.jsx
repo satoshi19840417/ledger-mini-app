@@ -132,31 +132,25 @@ return (
         {/* ツールチップ（1つに統一） */}
         <Tooltip content={<CustomTooltip yenUnit={yenUnit} average={average} />} />
 
-        <Line
-          type="monotone"
-          dataKey="diff"
-          stroke="#8884d8"
-          dot={{ r: 3 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-);
-
-
-        {/* PCのみブラシ。直近6か月を初期表示 */}
-        {!isMobile && (
-          <Brush
-            dataKey="month"
-            height={20}
-            travellerWidth={10}
-            startIndex={Math.max(data.length - 6, 0)}
+          <Line
+            type="monotone"
+            dataKey="diff"
+            stroke="#8884d8"
+            dot={{ r: 3 }}
           />
-        )}
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-);
+          {/* PCのみブラシ。直近6か月を初期表示 */}
+          {!isMobile && (
+            <Brush
+              dataKey="month"
+              height={20}
+              travellerWidth={10}
+              startIndex={Math.max(data.length - 6, 0)}
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 

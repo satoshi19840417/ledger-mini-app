@@ -102,9 +102,9 @@ export default function OthersTable({ rows, addRule, isMobile, kind, yenUnit }) 
   const categories = state.categories;
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <table className='text-left' style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
-        <tr style={{ textAlign: 'left' }}>
+        <tr>
           <th style={{ borderBottom: '1px solid #eee', padding: 6 }}>店舗/内容</th>
           <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 140 }}>{kind === 'income' ? '収入合計' : '支出合計'}</th>
           <th style={{ borderBottom: '1px solid #eee', padding: 6, width: 260 }}>カテゴリに登録</th>

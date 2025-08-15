@@ -115,9 +115,9 @@ export default function Rules() {
       )}
       <div className='card'>
         <div style={{ marginBottom: 8 }}>（{rules.length}件のルール）</div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table className='text-left' style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ textAlign: 'left', backgroundColor: '#f0f0f0' }}>
+            <tr className='text-left' style={{ backgroundColor: '#f0f0f0' }}>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>パターン</th>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>モード</th>
               <th style={{ borderBottom: '2px solid #ddd', padding: 8, fontWeight: 'bold' }}>対象</th>
@@ -234,6 +234,7 @@ export default function Rules() {
 
         <form
           onSubmit={addRule}
+          className='text-left'
           style={{
             display: 'flex',
             flexWrap: 'wrap',

@@ -43,7 +43,7 @@ export default function ForgotPassword() {
             {error}
           </p>
         )}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+        <form onSubmit={handleSubmit} className='text-left' style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
           <label htmlFor='email'>メールアドレス</label>
           <input
             id='email'
