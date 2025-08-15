@@ -10,6 +10,7 @@ import {
   ReferenceLine,
   Brush
 } from 'recharts';
+import { useMemo } from 'react';
 
 // ← ここから“最終案”のインポート（重複させない）
 import { convertAmount, formatAmount } from './utils/currency.js';
@@ -29,54 +30,57 @@ function CustomTooltip({ active, payload, label, formatDiffValue, average }) {
 }
 
 export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
-  // ---- 集計 ----------------------------------------------------------
-  const monthMap = {};
-  transactions.forEach((tx) => {
-    const month = tx.date.slice(0, 7); // YYYY-MM
-    if (!monthMap[month]) monthMap[month] = 0;
-    const diff = tx.kind === 'income' ? tx.amount : -Math.abs(tx.amount);
-    monthMap[month] += diff;
-  });
+  const { data, average, quarterLines } = useMemo(() => {
+    // ---- 集計 ----------------------------------------------------------
+    const monthMap = {};
+    transactions.forEach((tx) => {
+      const month = tx.date.slice(0, 7); // YYYY-MM
+      if (!monthMap[month]) monthMap[month] = 0;
+      const diff = tx.kind === 'income' ? tx.amount : -Math.abs(tx.amount);
+      monthMap[month] += diff;
+    });
 
- // ---- 月次データの整形 --------------------------------------------------------
-const months = Object.keys(monthMap).sort();
-const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: months.length };
-const limit = limitMap[period] ?? months.length;
+    // ---- 月次データの整形 --------------------------------------------------------
+    const months = Object.keys(monthMap).sort();
+    const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: months.length };
+    const limit = limitMap[period] ?? months.length;
 
-const baseData = months.slice(-limit).map((m) => ({
-  month: m,
-  diff: convertAmount(monthMap[m], yenUnit),
-}));
-const data = addMonthlyDiffs(baseData, 'diff');
+    const baseData = months.slice(-limit).map((m) => ({
+      month: m,
+      diff: convertAmount(monthMap[m], yenUnit),
+    }));
+    const data = addMonthlyDiffs(baseData, 'diff');
 
-const average =
-  data.length > 0
-    ? data.reduce((sum, d) => sum + d.diff, 0) / data.length
-    : 0;
+    const average =
+      data.length > 0
+        ? data.reduce((sum, d) => sum + d.diff, 0) / data.length
+        : 0;
+
+    // ---- 1・4・7・10月の区切り線（Q1〜Q4） ---------------------------------------
+    const quarterLines = data
+      .filter((d) => ['-01', '-04', '-07', '-10'].some((mm) => d.month.endsWith(mm)))
+      .map((d) => {
+        const m = parseInt(d.month.slice(5, 7), 10);
+        const q = Math.floor((m - 1) / 3) + 1;
+        return { x: d.month, label: `Q${q}` };
+      });
+
+    return { data, average, quarterLines };
+  }, [transactions, period, yenUnit]);
 
   const formatDiffValue = (value) => formatAmount(value, yenUnit);
 
-// ---- 画面サイズ（SSR安全） ---------------------------------------------------
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-const height = isMobile ? 250 : 300;
+  // ---- 画面サイズ（SSR安全） ---------------------------------------------------
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const height = isMobile ? 250 : 300;
 
-// ---- 1・4・7・10月の区切り線（Q1〜Q4） ---------------------------------------
-const quarterLines = data
-  .filter((d) => ['-01', '-04', '-07', '-10'].some((mm) => d.month.endsWith(mm)))
-  .map((d) => {
-    const m = parseInt(d.month.slice(5, 7), 10);
-    const q = Math.floor((m - 1) / 3) + 1;
-    return { x: d.month, label: `Q${q}` };
-  });
-
-
-// --- 描画 ---------------------------------------------------------------
-return (
-  <div style={{ width: '100%', maxWidth: '1000%', margin: '0 auto' }}>
-    <ResponsiveContainer width="100%" height={height}>
-      <LineChart
-        data={data}
-        margin={{ top: 16, right: 16, bottom: 8, left: 0 }}
+  // --- 描画 ---------------------------------------------------------------
+  return (
+    <div style={{ width: '100%', maxWidth: '1000%', margin: '0 auto' }}>
+      <ResponsiveContainer width="100%" height={height}>
+        <LineChart
+          data={data}
+          margin={{ top: 16, right: 16, bottom: 8, left: 0 }}
       >
         <CartesianGrid strokeDasharray="3 3" />
 
