@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useCallback, useState
 import { dbService } from '../services/database';
 import { useSession } from '../useSession';
 import { DEFAULT_CATEGORIES } from '../defaultCategories';
+import { saveBackup, loadBackup } from '../services/localBackup';
 import { toast } from 'react-hot-toast';
 
 const initialState = {
@@ -96,6 +97,11 @@ function reducer(state, action) {
       return { ...state, transactions, rules, categories, lastImportAt };
     }
     
+    case 'loadBackup': {
+      const { transactions = [], rules = [], categories = DEFAULT_CATEGORIES } = action.payload || {};
+      return { ...state, transactions, rules, categories };
+    }
+
     case 'loadFromDatabase': {
       const { transactions = [], rules, profile = null } = action.payload;
       const normalizedTransactions = transactions.map(tx => ({
@@ -435,6 +441,11 @@ export function StoreProvider({ children }) {
             type: 'loadFromDatabase',
             payload,
           });
+          await saveBackup({
+            transactions: payload.transactions,
+            rules: payload.rules ?? state.rules,
+            categories: state.categories,
+          });
         } else {
           dispatch({ type: 'setSyncStatus', payload: 'error' });
         }
@@ -443,16 +454,24 @@ export function StoreProvider({ children }) {
         dispatch({ type: 'setSyncStatus', payload: 'error' });
       }
     },
-    [session]
+    [session, state.rules, state.categories]
   );
 
   useEffect(() => {
-    dispatch({ type: 'loadFromStorage' });
+    (async () => {
+      const backup = await loadBackup();
+      if (backup.transactions.length || backup.rules.length || (backup.categories && backup.categories.length)) {
+        dispatch({ type: 'loadBackup', payload: backup });
+      } else {
+        dispatch({ type: 'loadFromStorage' });
+      }
+    })();
   }, []);
 
+
   useEffect(() => {
-    // Only load from database if we have a session (not in local mode)
-    if (session?.user?.id) {
+    // Only load from database if we have a session (not in local mode) and we are online
+    if (session?.user?.id && navigator.onLine) {
       loadFromDatabase();
     }
   }, [session, loadFromDatabase]);
