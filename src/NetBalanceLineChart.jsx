@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { convertAmount, formatAmount } from './utils/currency.js';
 
 export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
@@ -30,6 +30,7 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis tickFormatter={tickFormatter} />
+          <ReferenceLine y={0} stroke="#000" strokeWidth={4} />
           <Tooltip formatter={tooltipFormatter} />
           <Line type="monotone" dataKey="diff" stroke="#8884d8" dot={{ r: 3 }} />
         </LineChart>
