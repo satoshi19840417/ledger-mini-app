@@ -12,6 +12,8 @@ import PasswordReset from './components/PasswordReset.jsx';
 import AmountVisual from './components/ui/AmountVisual.jsx';
 import ToggleButton from './components/ui/ToggleButton.jsx';
 import SegmentControl from './components/ui/SegmentControl.jsx';
+import { Switch } from './components/ui/switch.jsx';
+import { Label } from './components/ui/label.jsx';
 
 // shadcn/ui components
 import { Button } from './components/ui/button.jsx';
@@ -19,11 +21,13 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card.j
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from './components/ui/badge.jsx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Lucide icons
 import { 
   BarChart3, 
   TrendingUp, 
+  TrendingDown,
   Search, 
   Calendar, 
   Upload, 
@@ -34,11 +38,12 @@ import {
   Tag, 
   Settings as SettingsIcon, 
   User, 
-  Palette, 
   Menu, 
   LogOut, 
   RefreshCw, 
-  Cloud 
+  Cloud,
+  Home,
+  EyeOff
 } from 'lucide-react';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
@@ -55,12 +60,6 @@ const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Categories = lazy(() => import('./pages/Categories.jsx'));
 
 const NAV = {
-  main: [
-    { key: 'dashboard', label: 'ダッシュボード', icon: BarChart3 },
-    { key: 'monthly', label: '月次比較', icon: TrendingUp },
-    { key: 'analysis', label: '月次分析', icon: Search },
-    { key: 'yearly', label: '年間サマリ', icon: Calendar },
-  ],
   data: [
     { key: 'import', label: 'CSV取込', icon: Upload },
     { key: 'export', label: 'CSVエクスポート', icon: Download },
@@ -77,7 +76,7 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k);
+  [...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
@@ -120,6 +119,14 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
 
   const isAuthenticated = session || isLocalMode;
+  
+  // デバッグ用：データの状態を確認
+  useEffect(() => {
+    console.log('Current state transactions:', state.transactions?.length || 0);
+    console.log('Session:', session);
+    console.log('IsLocalMode:', isLocalMode);
+    console.log('IsAuthenticated:', isAuthenticated);
+  }, [state.transactions, session, isLocalMode, isAuthenticated]);
 
   const getInitial = () => {
     const h = parseHash(window.location.hash || '');
@@ -180,11 +187,20 @@ export default function App() {
 
   const loadDemo = async () => {
     try {
+      console.log('Loading demo data...');
       const res = await fetch('/demo/sample.json');
+      if (!res.ok) {
+        console.error('Failed to load demo data:', res.status, res.statusText);
+        alert('デモデータの読み込みに失敗しました');
+        return;
+      }
       const data = await res.json();
+      console.log('Demo data loaded:', data.length, 'transactions');
       dispatch({ type: 'importTransactions', payload: data, append: false });
-    } catch {
-      // ignore
+      alert(`デモデータ（${data.length}件）を読み込みました`);
+    } catch (error) {
+      console.error('Error loading demo data:', error);
+      alert('デモデータの読み込み中にエラーが発生しました');
     }
   };
 
@@ -331,26 +347,53 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
-  const [excludeCardPayments, setExcludeCardPayments] = useState(true);
-  const [excludeRent, setExcludeRent] = useState(false);
+  const [filterMode, setFilterMode] = useState({
+    others: hideOthers ? 'exclude' : 'include',  // 'include' | 'exclude' | 'only'
+    card: 'exclude',    // 'include' | 'exclude' | 'only'
+    rent: 'include'     // 'include' | 'exclude' | 'only'
+  });
   
-  // カード支払いと家賃を除外するかどうかでフィルタリング
+  // フィルタリング処理
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
     // 集計対象外を除外
     filtered = filtered.filter(tx => !tx.excludeFromTotals);
-    if (excludeCardPayments) {
-      filtered = filtered.filter(
-        tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い'
-      );
+    
+    // その他フィルター
+    if (filterMode.others === 'exclude') {
+      filtered = filtered.filter(tx => tx.category !== 'その他');
+    } else if (filterMode.others === 'only') {
+      filtered = filtered.filter(tx => tx.category === 'その他');
     }
-    if (excludeRent) {
-      filtered = filtered.filter(
-        tx => tx.category !== '家賃'
-      );
+    
+    // カード支払いフィルター
+    const cardCategories = ['カード支払い', 'カード払い', 'クレカ払い'];
+    if (filterMode.card === 'exclude') {
+      filtered = filtered.filter(tx => !cardCategories.includes(tx.category));
+    } else if (filterMode.card === 'only') {
+      filtered = filtered.filter(tx => cardCategories.includes(tx.category));
     }
+    
+    // 家賃フィルター
+    if (filterMode.rent === 'exclude') {
+      filtered = filtered.filter(tx => tx.category !== '家賃');
+    } else if (filterMode.rent === 'only') {
+      filtered = filtered.filter(tx => tx.category === '家賃');
+    }
+    
     return filtered;
-  }, [transactions, excludeCardPayments, excludeRent]);
+  }, [transactions, filterMode]);
+  
+  // フィルタリング統計情報
+  const filterStats = useMemo(() => {
+    const baseTransactions = transactions.filter(tx => !tx.excludeFromTotals);
+    const excludedCount = baseTransactions.length - filteredTransactions.length;
+    return {
+      total: baseTransactions.length,
+      filtered: filteredTransactions.length,
+      excluded: excludedCount
+    };
+  }, [transactions, filteredTransactions]);
   
   // 収支計算
   const monthMap = {};
@@ -374,75 +417,275 @@ function Dashboard({
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">ダッシュボード</h1>
-        <Badge variant="outline" className="text-sm">
-          {period === '3m' ? '最近3ヶ月' : period === '6m' ? '半年' : period === '1y' ? '1年' : '全期間'}
-        </Badge>
-      </div>
       
-      {/* セグメントコントロールで収支切り替え */}
-      <Card>
-        <CardContent className="pt-6">
-          <SegmentControl
-            options={[
-              { value: 'expense', label: '支出', icon: '💰' },
-              { value: 'income', label: '収入', icon: '💵' }
-            ]}
-            value={kind}
-            onChange={onKindChange}
-            size="lg"
-          />
+      {/* 収支切り替え */}
+      <Card className={kind === 'expense' ? 'border-red-200 bg-red-50/30' : 'border-green-200 bg-green-50/30'}>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">表示モード</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={kind === 'expense' ? 'default' : 'outline'}
+              onClick={() => onKindChange('expense')}
+              className={kind === 'expense' 
+                ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' 
+                : 'border-gray-300 hover:bg-red-50 hover:border-red-300'}
+            >
+              <TrendingDown className="w-4 h-4 mr-2" />
+              支出
+            </Button>
+            <Button
+              variant={kind === 'income' ? 'default' : 'outline'}
+              onClick={() => onKindChange('income')}
+              className={kind === 'income' 
+                ? 'bg-green-500 hover:bg-green-600 text-white border-green-500' 
+                : 'border-gray-300 hover:bg-green-50 hover:border-green-300'}
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              収入
+            </Button>
+          </div>
+          <div className="mt-3 text-center">
+            <Badge 
+              variant={kind === 'expense' ? 'destructive' : 'default'}
+              className={kind === 'expense' 
+                ? 'bg-red-100 text-red-700 border-red-200' 
+                : 'bg-green-100 text-green-700 border-green-200'}
+            >
+              現在: {kind === 'expense' ? '支出モード' : '収入モード'}
+            </Badge>
+          </div>
         </CardContent>
       </Card>
       
-      {/* トグルボタン群 */}
+      {/* 表示オプション */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">表示オプション</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <SettingsIcon className="w-4 h-4" />
+            表示オプション
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <ToggleButton
-              icon={yenUnit === 'man' ? '万' : '円'}
-              tooltip={yenUnit === 'man' ? '万円表示' : '円表示'}
-              active={yenUnit === 'man'}
-              onClick={onToggleUnit}
-              variant="primary"
-            />
-            <ToggleButton
-              icon="🎨"
-              tooltip="カテゴリ色固定"
-              active={lockColors}
-              onClick={onToggleColors}
-            />
-            <ToggleButton
-              icon="🚫"
-              tooltip="その他を除外"
-              active={hideOthers}
-              onClick={onToggleOthers}
-            />
-            <ToggleButton
-              icon="💳"
-              tooltip="カード支払いを除外"
-              active={excludeCardPayments}
-              onClick={() => setExcludeCardPayments(!excludeCardPayments)}
-              variant="success"
-            />
-            <ToggleButton
-              icon="🏠"
-              tooltip="家賃を除外"
-              active={excludeRent}
-              onClick={() => setExcludeRent(!excludeRent)}
-              variant="danger"
-            />
+        <CardContent className="space-y-4">
+          {/* 単位切り替え */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-muted-foreground">金額単位</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={yenUnit === 'yen' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onToggleUnit()}
+                className="flex-1"
+              >
+                円表示
+              </Button>
+              <Button
+                variant={yenUnit === 'man' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onToggleUnit()}
+                className="flex-1"
+              >
+                万円表示
+              </Button>
+            </div>
+          </div>
+
+          {/* フィルター設定 */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-muted-foreground">データフィルター</Label>
+            <div className="space-y-3">
+              {/* その他フィルター */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">その他カテゴリ</Label>
+                <div className="grid grid-cols-3 gap-1">
+                  <Button
+                    size="sm"
+                    variant={filterMode.others === 'include' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'include' }))}
+                    className={`text-xs ${
+                      filterMode.others === 'include' 
+                        ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    含む
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterMode.others === 'exclude' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'exclude' }))}
+                    className={`text-xs ${
+                      filterMode.others === 'exclude' 
+                        ? 'bg-gray-500 hover:bg-gray-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    除外
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterMode.others === 'only' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, others: 'only' }))}
+                    className={`text-xs ${
+                      filterMode.others === 'only' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    のみ
+                  </Button>
+                </div>
+              </div>
+              
+              {/* カード支払いフィルター */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">カード支払い</Label>
+                <div className="grid grid-cols-3 gap-1">
+                  <Button
+                    size="sm"
+                    variant={filterMode.card === 'include' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'include' }))}
+                    className={`text-xs ${
+                      filterMode.card === 'include' 
+                        ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    含む
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterMode.card === 'exclude' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'exclude' }))}
+                    className={`text-xs ${
+                      filterMode.card === 'exclude' 
+                        ? 'bg-gray-500 hover:bg-gray-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    除外
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterMode.card === 'only' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'only' }))}
+                    className={`text-xs ${
+                      filterMode.card === 'only' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    のみ
+                  </Button>
+                </div>
+              </div>
+              
+              {/* 家賃フィルター */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">家賃</Label>
+                <div className="grid grid-cols-3 gap-1">
+                  <Button
+                    size="sm"
+                    variant={filterMode.rent === 'include' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'include' }))}
+                    className={`text-xs ${
+                      filterMode.rent === 'include' 
+                        ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    含む
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterMode.rent === 'exclude' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'exclude' }))}
+                    className={`text-xs ${
+                      filterMode.rent === 'exclude' 
+                        ? 'bg-gray-500 hover:bg-gray-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    除外
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={filterMode.rent === 'only' ? 'default' : 'outline'}
+                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'only' }))}
+                    className={`text-xs ${
+                      filterMode.rent === 'only' 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    のみ
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 現在の設定サマリー */}
+          <div className="pt-2 border-t">
+            <div className="flex flex-wrap gap-2">
+              {yenUnit === 'man' && (
+                <Badge variant="secondary" className="text-xs">
+                  万円単位
+                </Badge>
+              )}
+              {filterMode.others === 'exclude' && (
+                <Badge variant="destructive" className="text-xs bg-gray-500">
+                  その他除外
+                </Badge>
+              )}
+              {filterMode.others === 'only' && (
+                <Badge className="text-xs bg-blue-500 text-white">
+                  その他のみ
+                </Badge>
+              )}
+              {filterMode.card === 'exclude' && (
+                <Badge variant="destructive" className="text-xs bg-gray-500">
+                  カード除外
+                </Badge>
+              )}
+              {filterMode.card === 'only' && (
+                <Badge className="text-xs bg-blue-500 text-white">
+                  カードのみ
+                </Badge>
+              )}
+              {filterMode.card === 'include' && (
+                <Badge className="text-xs bg-green-100 text-green-700">
+                  カード含む
+                </Badge>
+              )}
+              {filterMode.rent === 'exclude' && (
+                <Badge variant="destructive" className="text-xs bg-gray-500">
+                  家賃除外
+                </Badge>
+              )}
+              {filterMode.rent === 'only' && (
+                <Badge className="text-xs bg-blue-500 text-white">
+                  家賃のみ
+                </Badge>
+              )}
+              {filterMode.others === 'include' && filterMode.card === 'include' && filterMode.rent === 'include' && yenUnit === 'yen' && (
+                <span className="text-xs text-muted-foreground">デフォルト設定</span>
+              )}
+            </div>
+            {filterStats.excluded > 0 && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                フィルタにより {filterStats.excluded} 件を除外中 
+                （{filterStats.filtered}/{filterStats.total} 件を表示）
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
       
       {/* 収支サマリー with AmountVisual */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-green-100 bg-green-50/20">
           <CardContent className="pt-6">
             <AmountVisual
               amount={incomeTotal}
@@ -453,7 +696,7 @@ function Dashboard({
             />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-red-100 bg-red-50/20">
           <CardContent className="pt-6">
             <AmountVisual
               amount={-expenseTotal}
@@ -464,7 +707,7 @@ function Dashboard({
             />
           </CardContent>
         </Card>
-        <Card>
+        <Card className={netBalance >= 0 ? 'border-blue-100 bg-blue-50/20' : 'border-orange-100 bg-orange-50/20'}>
           <CardContent className="pt-6">
             <AmountVisual
               amount={netBalance}
@@ -477,10 +720,14 @@ function Dashboard({
 
       {/* グラフカード群 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className={kind === 'expense' ? 'border-red-100' : 'border-green-100'}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+              {kind === 'expense' ? (
+                <TrendingDown className="h-5 w-5 text-red-500" />
+              ) : (
+                <TrendingUp className="h-5 w-5 text-green-500" />
+              )}
               収支推移
             </CardTitle>
           </CardHeader>
@@ -493,11 +740,11 @@ function Dashboard({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={kind === 'expense' ? 'border-red-100' : 'border-green-100'}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              カテゴリ別内訳
+              <BarChart3 className={kind === 'expense' ? 'h-5 w-5 text-red-500' : 'h-5 w-5 text-green-500'} />
+              {kind === 'expense' ? '支出' : '収入'}カテゴリ別内訳
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -513,11 +760,11 @@ function Dashboard({
         </Card>
       </div>
 
-      <Card>
+      <Card className={kind === 'expense' ? 'border-red-100' : 'border-green-100'}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            月別推移
+            <Calendar className={kind === 'expense' ? 'h-5 w-5 text-red-500' : 'h-5 w-5 text-green-500'} />
+            {kind === 'expense' ? '支出' : '収入'}の月別推移
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -616,15 +863,6 @@ function Dashboard({
               
               <div className="space-y-6 mt-6">
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-600 px-2">メイン</h4>
-                  <div className="space-y-1">
-                    {NAV.main.map(i => (
-                      <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)} icon={i.icon}>{i.label}</NavItem>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-600 px-2">データ</h4>
                   <div className="space-y-1">
                     {NAV.data.map(i => (
@@ -704,7 +942,7 @@ function Dashboard({
         </SheetContent>
       </Sheet>
 
-      {/* コンテンツ（ダッシュボードを最優先で表示） */}
+      {/* コンテンツ */}
       <main className='content'>
         {state.transactions.length === 0 && (
           <Card className="text-center py-12">
@@ -727,54 +965,127 @@ function Dashboard({
             </CardContent>
           </Card>
         )}
-        {page === 'dashboard' && (
-          <Dashboard
-            transactions={state.transactions}
-            period={period}
-            yenUnit={yenUnit}
-            lockColors={lockColors}
-            hideOthers={hideOthers}
-            kind={kind}
-            onToggleUnit={() => setYenUnit(v => (v === 'yen' ? 'man' : 'yen'))}
-            onToggleColors={() => setLockColors(v => !v)}
-            onToggleOthers={() => setHideOthers(v => !v)}
-            onKindChange={setKind}
-          />
-        )}
-        <Suspense fallback={<div>Loading...</div>}>
-            {page === 'monthly' && (
-              <MonthlyAnalysis
-                transactions={filteredTransactionsForAnalysis}
+        {/* メインナビゲーションタブ */}
+        {['dashboard', 'monthly', 'analysis', 'yearly'].includes(page) ? (
+          <Tabs value={page} onValueChange={setPage} className="w-full">
+            <div className="border-b mb-6 bg-white">
+              <TabsList className="h-auto p-0 bg-transparent rounded-none w-full justify-start">
+                <TabsTrigger 
+                  value="dashboard" 
+                  className="relative flex items-center gap-2 rounded-t-lg rounded-b-none border-b-3 border-transparent 
+                             data-[state=active]:border-blue-500 data-[state=active]:bg-gradient-to-t data-[state=active]:from-blue-50 data-[state=active]:to-white 
+                             data-[state=active]:text-blue-700 data-[state=active]:shadow-sm
+                             hover:bg-gray-50 px-4 py-3 transition-all duration-200"
+                >
+                  <Home className={`h-4 w-4 ${page === 'dashboard' ? 'text-blue-600' : ''}`} />
+                  <span className="hidden sm:inline font-medium">ダッシュボード</span>
+                  <span className="sm:hidden font-medium">ホーム</span>
+                  {page === 'dashboard' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="monthly" 
+                  className="relative flex items-center gap-2 rounded-t-lg rounded-b-none border-b-3 border-transparent 
+                             data-[state=active]:border-blue-500 data-[state=active]:bg-gradient-to-t data-[state=active]:from-blue-50 data-[state=active]:to-white 
+                             data-[state=active]:text-blue-700 data-[state=active]:shadow-sm
+                             hover:bg-gray-50 px-4 py-3 transition-all duration-200"
+                >
+                  <TrendingUp className={`h-4 w-4 ${page === 'monthly' ? 'text-blue-600' : ''}`} />
+                  <span className="hidden sm:inline font-medium">月次比較</span>
+                  <span className="sm:hidden font-medium">比較</span>
+                  {page === 'monthly' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="analysis" 
+                  className="relative flex items-center gap-2 rounded-t-lg rounded-b-none border-b-3 border-transparent 
+                             data-[state=active]:border-blue-500 data-[state=active]:bg-gradient-to-t data-[state=active]:from-blue-50 data-[state=active]:to-white 
+                             data-[state=active]:text-blue-700 data-[state=active]:shadow-sm
+                             hover:bg-gray-50 px-4 py-3 transition-all duration-200"
+                >
+                  <Search className={`h-4 w-4 ${page === 'analysis' ? 'text-blue-600' : ''}`} />
+                  <span className="hidden sm:inline font-medium">月次分析</span>
+                  <span className="sm:hidden font-medium">分析</span>
+                  {page === 'analysis' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="yearly" 
+                  className="relative flex items-center gap-2 rounded-t-lg rounded-b-none border-b-3 border-transparent 
+                             data-[state=active]:border-blue-500 data-[state=active]:bg-gradient-to-t data-[state=active]:from-blue-50 data-[state=active]:to-white 
+                             data-[state=active]:text-blue-700 data-[state=active]:shadow-sm
+                             hover:bg-gray-50 px-4 py-3 transition-all duration-200"
+                >
+                  <Calendar className={`h-4 w-4 ${page === 'yearly' ? 'text-blue-600' : ''}`} />
+                  <span className="hidden sm:inline font-medium">年間サマリ</span>
+                  <span className="sm:hidden font-medium">年間</span>
+                  {page === 'yearly' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="dashboard">
+              <Dashboard
+                transactions={state.transactions}
                 period={period}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
                 hideOthers={hideOthers}
+                kind={kind}
+                onToggleUnit={() => setYenUnit(v => (v === 'yen' ? 'man' : 'yen'))}
+                onToggleColors={() => setLockColors(v => !v)}
+                onToggleOthers={() => setHideOthers(v => !v)}
+                onKindChange={setKind}
               />
-            )}
-            {page === 'analysis' && (
-              <>
-                <div className='quick'>
-                  <label>
-                    <input
-                      type='radio'
-                      name='kind'
-                      value='expense'
-                      checked={kind === 'expense'}
-                      onChange={() => setKind('expense')}
-                    />
-                    支出
-                  </label>
-                  <label>
-                    <input
-                      type='radio'
-                      name='kind'
-                      value='income'
-                      checked={kind === 'income'}
-                      onChange={() => setKind('income')}
-                    />
-                    収入
-                  </label>
-                </div>
+            </TabsContent>
+            
+            <TabsContent value="monthly">
+              <Suspense fallback={<div>Loading...</div>}>
+                <MonthlyAnalysis
+                  transactions={filteredTransactionsForAnalysis}
+                  period={period}
+                  yenUnit={yenUnit}
+                  lockColors={lockColors}
+                  hideOthers={hideOthers}
+                />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="analysis">
+              <Suspense fallback={<div>Loading...</div>}>
+                <Card className={`mb-4 ${kind === 'expense' ? 'border-red-200 bg-red-50/30' : 'border-green-200 bg-green-50/30'}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={kind === 'expense' ? 'default' : 'outline'}
+                        onClick={() => setKind('expense')}
+                        className={kind === 'expense' 
+                          ? 'flex-1 bg-red-500 hover:bg-red-600 text-white' 
+                          : 'flex-1 hover:bg-red-50'}
+                      >
+                        <TrendingDown className="w-4 h-4 mr-2" />
+                        支出分析
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={kind === 'income' ? 'default' : 'outline'}
+                        onClick={() => setKind('income')}
+                        className={kind === 'income' 
+                          ? 'flex-1 bg-green-500 hover:bg-green-600 text-white' 
+                          : 'flex-1 hover:bg-green-50'}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        収入分析
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
                 <Monthly
                   transactions={filteredTransactionsForAnalysis}
                   period={period}
@@ -783,52 +1094,63 @@ function Dashboard({
                   hideOthers={hideOthers}
                   kind={kind}
                 />
-              </>
-            )}
-          {page === 'yearly' && (
-            <>
-              <div className='quick'>
-                <label>
-                  <input
-                    type='radio'
-                    name='kind'
-                    value='expense'
-                    checked={kind === 'expense'}
-                    onChange={() => setKind('expense')}
-                  />
-                  支出
-                </label>
-                <label>
-                  <input
-                    type='radio'
-                    name='kind'
-                    value='income'
-                    checked={kind === 'income'}
-                    onChange={() => setKind('income')}
-                  />
-                  収入
-                </label>
-              </div>
-              <Yearly
-                transactions={filteredTransactionsForAnalysis}
-                period={period}
-                yenUnit={yenUnit}
-                lockColors={lockColors}
-                hideOthers={hideOthers}
-                kind={kind}
-              />
-            </>
-          )}
-          {page === 'import' && <ImportCsv />}
-          {page === 'export' && <ExportCsv />}
-          {page === 'cleanup' && <DataCleanup />}
-          {page === 'rules' && <Rules />}
-          {page === 'others' && <Others yenUnit={yenUnit} />}
-          {page === 'tx' && <Transactions />}
-          {page === 'categories' && <Categories />}
-          {page === 'prefs' && <Prefs />}
-          {page === 'settings' && <Settings />}
-        </Suspense>
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="yearly">
+              <Suspense fallback={<div>Loading...</div>}>
+                <Card className={`mb-4 ${kind === 'expense' ? 'border-red-200 bg-red-50/30' : 'border-green-200 bg-green-50/30'}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={kind === 'expense' ? 'default' : 'outline'}
+                        onClick={() => setKind('expense')}
+                        className={kind === 'expense' 
+                          ? 'flex-1 bg-red-500 hover:bg-red-600 text-white' 
+                          : 'flex-1 hover:bg-green-50'}
+                      >
+                        <TrendingDown className="w-4 h-4 mr-2" />
+                        支出サマリ
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={kind === 'income' ? 'default' : 'outline'}
+                        onClick={() => setKind('income')}
+                        className={kind === 'income' 
+                          ? 'flex-1 bg-green-500 hover:bg-green-600 text-white' 
+                          : 'flex-1 hover:bg-green-50'}
+                      >
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        収入サマリ
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Yearly
+                  transactions={filteredTransactionsForAnalysis}
+                  period={period}
+                  yenUnit={yenUnit}
+                  lockColors={lockColors}
+                  hideOthers={hideOthers}
+                  kind={kind}
+                />
+              </Suspense>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <Suspense fallback={<div>Loading...</div>}>
+            {page === 'import' && <ImportCsv />}
+            {page === 'export' && <ExportCsv />}
+            {page === 'cleanup' && <DataCleanup />}
+            {page === 'rules' && <Rules />}
+            {page === 'others' && <Others yenUnit={yenUnit} />}
+            {page === 'tx' && <Transactions />}
+            {page === 'categories' && <Categories />}
+            {page === 'prefs' && <Prefs />}
+            {page === 'settings' && <Settings />}
+          </Suspense>
+        )}
       </main>
 
       {needRefresh && (

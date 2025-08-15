@@ -64,14 +64,6 @@ export default function Yearly({
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">年間サマリ</h1>
-        <Badge variant="outline" className="text-sm">
-          <Calendar className="w-3 h-3 mr-1" />
-          {yearlyStats.length} 年分のデータ
-        </Badge>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-12">
         {/* フィルター設定 */}
         <Card className="lg:col-span-3">

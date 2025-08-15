@@ -64,8 +64,6 @@ export default function MonthlyAnalysis({
 
   return (
     <section>
-      <h2 style={{ marginBottom: 16 }}>月次比較</h2>
-      
       {/* 月次推移グラフ */}
       <div className='card' style={{ marginBottom: 16 }}>
         <h3 style={{ marginBottom: 16 }}>月次推移</h3>
