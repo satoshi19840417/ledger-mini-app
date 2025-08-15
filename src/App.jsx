@@ -71,8 +71,7 @@ const NAV = {
   ],
   settings: [
     { key: 'prefs', label: '設定', icon: SettingsIcon },
-    { key: 'settings', label: 'アカウント設定', icon: User },
-    { key: 'dbtest', label: 'DB診断', icon: FileText }
+    { key: 'settings', label: 'アカウント設定', icon: User }
   ],
 };
 
