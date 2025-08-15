@@ -137,7 +137,7 @@ export default function DatabaseTest() {
         if (!session?.user?.id) throw new Error('ユーザーIDが必要です');
         
         const testTx = {
-          id: `test-${Date.now()}`,
+          id: crypto.randomUUID(),
           date: new Date().toISOString().split('T')[0],
           amount: -1000,
           description: 'データベーステスト用トランザクション',
@@ -145,17 +145,33 @@ export default function DatabaseTest() {
           kind: 'expense'
         };
         
+        console.log('Test transaction:', testTx);
+        
         // 書き込みテスト
         const writeResult = await dbService.syncTransactions(session.user.id, [testTx]);
-        if (!writeResult.success) throw new Error('書き込み失敗: ' + writeResult.error);
+        console.log('Write result:', writeResult);
+        
+        if (!writeResult.success) {
+          const errorDetails = {
+            error: writeResult.error,
+            testData: testTx,
+            userId: session.user.id
+          };
+          console.error('Write failed:', errorDetails);
+          throw new Error('書き込み失敗: ' + JSON.stringify(writeResult.error));
+        }
         
         // 削除テスト
         const deleteResult = await dbService.deleteTransaction(session.user.id, testTx.id);
-        if (!deleteResult.success) throw new Error('削除失敗: ' + deleteResult.error);
+        if (!deleteResult.success) throw new Error('削除失敗: ' + JSON.stringify(deleteResult.error));
         
         return {
           success: true,
-          message: 'トランザクションの作成と削除に成功'
+          message: 'トランザクションの作成と削除に成功',
+          data: {
+            createdId: testTx.id,
+            writeResult: writeResult.data
+          }
         };
       }
     },
@@ -168,7 +184,7 @@ export default function DatabaseTest() {
         if (!session?.user?.id) throw new Error('ユーザーIDが必要です');
         
         const testTransactions = Array.from({ length: 5 }, (_, i) => ({
-          id: `batch-test-${Date.now()}-${i}`,
+          id: crypto.randomUUID(),
           date: new Date().toISOString().split('T')[0],
           amount: -(1000 + i * 100),
           description: `バッチテスト ${i + 1}`,
@@ -176,18 +192,36 @@ export default function DatabaseTest() {
           kind: 'expense'
         }));
         
+        console.log('Batch test transactions:', testTransactions);
+        
         // バッチ書き込み
         const writeResult = await dbService.syncTransactions(session.user.id, testTransactions);
-        if (!writeResult.success) throw new Error('バッチ書き込み失敗');
+        console.log('Batch write result:', writeResult);
+        
+        if (!writeResult.success) {
+          const errorDetails = {
+            error: writeResult.error,
+            testData: testTransactions,
+            userId: session.user.id
+          };
+          console.error('Batch write failed:', errorDetails);
+          throw new Error('バッチ書き込み失敗: ' + JSON.stringify(writeResult.error));
+        }
         
         // クリーンアップ
+        let deletedCount = 0;
         for (const tx of testTransactions) {
-          await dbService.deleteTransaction(session.user.id, tx.id);
+          const deleteResult = await dbService.deleteTransaction(session.user.id, tx.id);
+          if (deleteResult.success) deletedCount++;
         }
         
         return {
           success: true,
-          message: `${testTransactions.length}件のバッチ書き込みと削除に成功`
+          message: `${testTransactions.length}件のバッチ書き込みと${deletedCount}件の削除に成功`,
+          data: {
+            written: testTransactions.length,
+            deleted: deletedCount
+          }
         };
       }
     },
