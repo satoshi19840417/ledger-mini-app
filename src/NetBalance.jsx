@@ -1,4 +1,5 @@
 import { formatAmount } from './utils/currency.js';
+import AmountVisual from './components/ui/AmountVisual.jsx';
 
 export default function NetBalance({ transactions, period, yenUnit }) {
   const monthMap = {};
@@ -22,30 +23,49 @@ export default function NetBalance({ transactions, period, yenUnit }) {
     .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
   const diff = incomeTotal - expenseTotal;
+  
+  // 万円単位への変換
+  const displayIncome = yenUnit === 'man' ? incomeTotal / 10000 : incomeTotal;
+  const displayExpense = yenUnit === 'man' ? expenseTotal / 10000 : expenseTotal;
+  const displayDiff = yenUnit === 'man' ? diff / 10000 : diff;
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   
   return (
     <div className='net-balance' style={{ 
-      fontSize: isMobile ? '14px' : '16px',
-      padding: isMobile ? '8px' : '0'
+      padding: isMobile ? '12px' : '16px'
     }}>
-      <div className='net-balance-row'>
-        <span>収入</span>
-        <span style={{ fontWeight: 'bold' }}>{formatAmount(incomeTotal, yenUnit)}</span>
+      <div style={{ marginBottom: '16px' }}>
+        <AmountVisual
+          amount={displayIncome}
+          label={`収入${yenUnit === 'man' ? '(万円)' : ''}`}
+          isIncome={true}
+          showBar={true}
+          maxAmount={yenUnit === 'man' ? 50 : 500000}
+          compact={isMobile}
+        />
       </div>
-      <div className='net-balance-row'>
-        <span>支出</span>
-        <span style={{ fontWeight: 'bold' }}>{formatAmount(expenseTotal, yenUnit)}</span>
+      <div style={{ marginBottom: '16px' }}>
+        <AmountVisual
+          amount={-displayExpense}
+          label={`支出${yenUnit === 'man' ? '(万円)' : ''}`}
+          isIncome={false}
+          showBar={true}
+          maxAmount={yenUnit === 'man' ? 50 : 500000}
+          compact={isMobile}
+        />
       </div>
-      <div className={`net-balance-row${diff < 0 ? ' negative' : ''}`} style={{
-        marginTop: '8px',
-        paddingTop: '8px',
-        borderTop: '2px solid #e5e7eb',
-        fontWeight: 'bold'
+      <div style={{
+        marginTop: '16px',
+        paddingTop: '16px',
+        borderTop: '2px solid #e5e7eb'
       }}>
-        <span>差分</span>
-        <span>{formatAmount(diff, yenUnit)}</span>
+        <AmountVisual
+          amount={displayDiff}
+          label={`差分${yenUnit === 'man' ? '(万円)' : ''}`}
+          showBar={false}
+          compact={isMobile}
+        />
       </div>
     </div>
   );

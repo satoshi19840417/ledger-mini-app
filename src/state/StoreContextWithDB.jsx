@@ -225,6 +225,12 @@ function reducer(state, action) {
       return { ...state, categories, transactions, rules, syncStatus: 'pending' };
     }
     
+    case 'reorderCategories': {
+      const categories = action.payload;
+      localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
+      return { ...state, categories };
+    }
+    
     case 'applyRules': {
       const originalTransactions = state.transactions;
       const transactions = applyRulesToTransactions(state.transactions, state.rules);

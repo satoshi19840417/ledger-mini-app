@@ -2,4 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS変数のインポート */
+@import './styles/variables.css';
+
 html, body, #root { height: 100%; }

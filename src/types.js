@@ -7,6 +7,8 @@
  * @property {number} amount - Amount of the transaction. Negative for expenses.
  * @property {'income'|'expense'} kind - Transaction kind.
  * @property {string} [category] - Category assigned to the transaction.
+ * @property {boolean} [excludeFromTotals] - Whether to exclude from totals calculations.
+ * @property {string} [id] - Unique identifier for the transaction.
  */
 
 /**

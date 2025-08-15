@@ -88,6 +88,7 @@ export const dbService = {
           memo: tx.memo || tx.メモ || '',  // text型
           kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'),  // text型
           hash: hash,  // text型（テーブルに存在）
+          exclude_from_totals: tx.excludeFromTotals || false,  // boolean型（集計対象外フラグ）
           created_at: tx.created_at || new Date().toISOString()  // timestampz型
         };
       });

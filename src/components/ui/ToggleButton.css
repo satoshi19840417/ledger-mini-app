@@ -1,0 +1,142 @@
+/* ToggleButton Component Styles */
+.toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-gray-300);
+  border-radius: 999px;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: var(--transition-default);
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sizes */
+.toggle-button.sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.toggle-button.md {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.toggle-button.lg {
+  padding: 0.625rem 1.25rem;
+  font-size: 1rem;
+}
+
+/* Icon */
+.toggle-icon {
+  font-size: 1.2em;
+  transition: var(--transition-spring);
+}
+
+.toggle-tooltip {
+  font-weight: 500;
+}
+
+/* Hover state */
+.toggle-button:not(:disabled):hover {
+  border-color: var(--color-primary);
+  background: var(--color-gray-50);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle-button:not(:disabled):hover .toggle-icon {
+  transform: scale(1.1);
+}
+
+/* Active state */
+.toggle-button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.toggle-button.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+}
+
+/* Variants */
+.toggle-button.primary.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.toggle-button.success.active {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.toggle-button.danger.active {
+  background: var(--color-error);
+  border-color: var(--color-error);
+}
+
+/* Disabled state */
+.toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Focus state */
+.toggle-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Animation */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.toggle-button::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  transform: scale(0);
+  transition: none;
+}
+
+.toggle-button:not(:disabled):active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toggle-button.md {
+    padding: 0.5rem 0.875rem;
+  }
+  
+  .toggle-tooltip {
+    display: none;
+  }
+  
+  .toggle-button {
+    gap: 0;
+  }
+}

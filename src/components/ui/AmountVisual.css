@@ -1,0 +1,121 @@
+/* AmountVisual Component Styles */
+.amount-visual {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-50);
+  transition: var(--transition-default);
+}
+
+.amount-visual:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.amount-label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.amount-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.amount-icon {
+  font-size: 1.25rem;
+  transition: var(--transition-default);
+}
+
+.amount-icon.income {
+  color: var(--color-income);
+}
+
+.amount-icon.expense {
+  color: var(--color-expense);
+}
+
+.amount-bar-container {
+  flex: 1;
+  position: relative;
+  height: 32px;
+  background: var(--color-gray-200);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.amount-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 16px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.amount-bar.income {
+  background: linear-gradient(90deg, var(--color-income), var(--color-income-hover));
+}
+
+.amount-bar.expense {
+  background: linear-gradient(90deg, var(--color-expense), var(--color-expense-hover));
+}
+
+.amount-value {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Compact variant */
+.amount-visual-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: var(--transition-default);
+}
+
+.amount-visual-compact.income {
+  color: var(--color-income);
+  background: var(--color-income-light);
+}
+
+.amount-visual-compact.expense {
+  color: var(--color-expense);
+  background: var(--color-expense-light);
+}
+
+.amount-visual-compact .amount-icon {
+  font-size: 1rem;
+}
+
+.amount-visual-compact .amount-value {
+  position: static;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .amount-visual {
+    padding: 0.75rem;
+  }
+  
+  .amount-bar-container {
+    height: 28px;
+  }
+  
+  .amount-value {
+    font-size: 0.85rem;
+  }
+}

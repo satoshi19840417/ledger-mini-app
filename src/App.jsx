@@ -9,6 +9,37 @@ import PieByCategory from './PieByCategory.jsx';
 import { useSession, logout } from './useSession';
 import Auth from './components/Auth.jsx';
 import PasswordReset from './components/PasswordReset.jsx';
+import AmountVisual from './components/ui/AmountVisual.jsx';
+import ToggleButton from './components/ui/ToggleButton.jsx';
+import SegmentControl from './components/ui/SegmentControl.jsx';
+
+// shadcn/ui components
+import { Button } from './components/ui/button.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card.jsx';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet.jsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from './components/ui/badge.jsx';
+
+// Lucide icons
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Search, 
+  Calendar, 
+  Upload, 
+  Download, 
+  Trash2, 
+  FileText, 
+  CreditCard, 
+  Tag, 
+  Settings as SettingsIcon, 
+  User, 
+  Palette, 
+  Menu, 
+  LogOut, 
+  RefreshCw, 
+  Cloud 
+} from 'lucide-react';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
 const MonthlyAnalysis = lazy(() => import('./pages/MonthlyAnalysis.jsx'));
@@ -22,26 +53,28 @@ const Others = lazy(() => import('./pages/Others.jsx'));
 const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Categories = lazy(() => import('./pages/Categories.jsx'));
+const UITest = lazy(() => import('./pages/UITest.jsx'));
 
 const NAV = {
   main: [
-    { key: 'dashboard', label: 'ダッシュボード' },
-    { key: 'monthly', label: '月次比較' },
-    { key: 'analysis', label: '月次分析' },
-    { key: 'yearly', label: '年間サマリ' },
+    { key: 'dashboard', label: 'ダッシュボード', icon: BarChart3 },
+    { key: 'monthly', label: '月次比較', icon: TrendingUp },
+    { key: 'analysis', label: '月次分析', icon: Search },
+    { key: 'yearly', label: '年間サマリ', icon: Calendar },
   ],
   data: [
-    { key: 'import', label: 'CSV取込' },
-    { key: 'export', label: 'CSVエクスポート' },
-    { key: 'cleanup', label: 'データクリーンアップ' },
-    { key: 'rules', label: '再分類ルール' },
-    { key: 'others', label: 'その他集計' },
-    { key: 'tx', label: '取引一覧' },
-    { key: 'categories', label: 'カテゴリ管理' },
+    { key: 'import', label: 'CSV取込', icon: Upload },
+    { key: 'export', label: 'CSVエクスポート', icon: Download },
+    { key: 'cleanup', label: 'データクリーンアップ', icon: Trash2 },
+    { key: 'rules', label: '再分類ルール', icon: FileText },
+    { key: 'others', label: 'その他集計', icon: FileText },
+    { key: 'tx', label: '取引一覧', icon: CreditCard },
+    { key: 'categories', label: 'カテゴリ管理', icon: Tag },
   ],
   settings: [
-    { key: 'prefs', label: '設定' },
-    { key: 'settings', label: 'アカウント設定' }
+    { key: 'prefs', label: '設定', icon: SettingsIcon },
+    { key: 'settings', label: 'アカウント設定', icon: User },
+    { key: 'uitest', label: 'UIテスト', icon: Palette }
   ],
 };
 
@@ -141,6 +174,11 @@ export default function App() {
       setNeedRefresh(true);
     },
   });
+  
+  // 集計対象外を除外したトランザクション
+  const filteredTransactionsForAnalysis = useMemo(() => {
+    return state.transactions.filter(tx => !tx.excludeFromTotals);
+  }, [state.transactions]);
 
   const loadDemo = async () => {
     try {
@@ -271,13 +309,16 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
-const NavItem = ({ active, onClick, children }) => (
-  <button
-    className={`nav-item ${active ? 'active' : ''}`}
+const NavItem = ({ active, onClick, icon: Icon, children }) => (
+  <Button
+    variant={active ? "secondary" : "ghost"}
+    className="w-full justify-start gap-2 h-auto py-3 px-4 text-gray-700 hover:text-gray-900"
+    style={{ color: active ? '#1f2937' : '#4b5563' }}
     onClick={onClick}
   >
+    <Icon className="h-4 w-4" />
     {children}
-  </button>
+  </Button>
 );
 
 function Dashboard({
@@ -298,6 +339,8 @@ function Dashboard({
   // カード支払いと家賃を除外するかどうかでフィルタリング
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
+    // 集計対象外を除外
+    filtered = filtered.filter(tx => !tx.excludeFromTotals);
     if (excludeCardPayments) {
       filtered = filtered.filter(
         tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い'
@@ -311,119 +354,189 @@ function Dashboard({
     return filtered;
   }, [transactions, excludeCardPayments, excludeRent]);
   
+  // 収支計算
+  const monthMap = {};
+  filteredTransactions.forEach((tx) => {
+    const month = tx.date.slice(0, 7);
+    monthMap[month] = true;
+  });
+  const months = Object.keys(monthMap).sort();
+  const limitMap = { '3m': 3, '6m': 6, '1y': 12, all: months.length };
+  const limit = limitMap[period] || months.length;
+  const recentMonths = new Set(months.slice(-limit));
+  const recent = filteredTransactions.filter((tx) => recentMonths.has(tx.date.slice(0, 7)));
+  
+  const incomeTotal = recent
+    .filter((tx) => tx.kind === 'income')
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  const expenseTotal = recent
+    .filter((tx) => tx.kind === 'expense')
+    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+  const netBalance = incomeTotal - expenseTotal;
+  
   return (
-    <section>
-      <h1 className="text-2xl font-bold mb-4">ダッシュボード</h1>
-      <div className="quick">
-        <label>
-          <input
-            type="radio"
-            name="kind"
-            value="expense"
-            checked={kind === 'expense'}
-            onChange={() => onKindChange('expense')}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">ダッシュボード</h1>
+        <Badge variant="outline" className="text-sm">
+          {period === '3m' ? '最近3ヶ月' : period === '6m' ? '半年' : period === '1y' ? '1年' : '全期間'}
+        </Badge>
+      </div>
+      
+      {/* セグメントコントロールで収支切り替え */}
+      <Card>
+        <CardContent className="pt-6">
+          <SegmentControl
+            options={[
+              { value: 'expense', label: '支出', icon: '💰' },
+              { value: 'income', label: '収入', icon: '💵' }
+            ]}
+            value={kind}
+            onChange={onKindChange}
+            size="lg"
           />
-          支出
-        </label>
-
-        <label>
-          <input
-            type="radio"
-            name="kind"
-            value="income"
-            checked={kind === 'income'}
-            onChange={() => onKindChange('income')}
-          />
-          収入
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={yenUnit === 'man'}
-            onChange={onToggleUnit}
-          />
-          円→万円
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={lockColors}
-            onChange={onToggleColors}
-          />
-          カテゴリ色固定
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={hideOthers}
-            onChange={onToggleOthers}
-          />
-          「その他」を除外
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={excludeCardPayments}
-            onChange={(e) => setExcludeCardPayments(e.target.checked)}
-          />
-          カード支払いを除外
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={excludeRent}
-            onChange={(e) => setExcludeRent(e.target.checked)}
-          />
-          家賃を除外
-        </label>
+        </CardContent>
+      </Card>
+      
+      {/* トグルボタン群 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">表示オプション</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <ToggleButton
+              icon={yenUnit === 'man' ? '万' : '円'}
+              tooltip={yenUnit === 'man' ? '万円表示' : '円表示'}
+              active={yenUnit === 'man'}
+              onClick={onToggleUnit}
+              variant="primary"
+            />
+            <ToggleButton
+              icon="🎨"
+              tooltip="カテゴリ色固定"
+              active={lockColors}
+              onClick={onToggleColors}
+            />
+            <ToggleButton
+              icon="🚫"
+              tooltip="その他を除外"
+              active={hideOthers}
+              onClick={onToggleOthers}
+            />
+            <ToggleButton
+              icon="💳"
+              tooltip="カード支払いを除外"
+              active={excludeCardPayments}
+              onClick={() => setExcludeCardPayments(!excludeCardPayments)}
+              variant="success"
+            />
+            <ToggleButton
+              icon="🏠"
+              tooltip="家賃を除外"
+              active={excludeRent}
+              onClick={() => setExcludeRent(!excludeRent)}
+              variant="danger"
+            />
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* 収支サマリー with AmountVisual */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <AmountVisual
+              amount={incomeTotal}
+              label="収入合計"
+              isIncome={true}
+              showBar={true}
+              maxAmount={1000000}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <AmountVisual
+              amount={-expenseTotal}
+              label="支出合計"
+              isIncome={false}
+              showBar={true}
+              maxAmount={1000000}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <AmountVisual
+              amount={netBalance}
+              label="収支バランス"
+              showBar={false}
+            />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="card">
-        <NetBalance
-          transactions={filteredTransactions}
-          period={period}
-          yenUnit={yenUnit}
-        />
+      {/* グラフカード群 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              収支推移
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NetBalanceLineChart
+              transactions={filteredTransactions}
+              period={period}
+              yenUnit={yenUnit}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              カテゴリ別内訳
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PieByCategory
+              transactions={filteredTransactions}
+              period={period}
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+              kind={kind}
+            />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="card">
-        <NetBalanceLineChart
-          transactions={filteredTransactions}
-          period={period}
-          yenUnit={yenUnit}
-        />
-      </div>
-
-      <div className="card">
-        <div style={{ overflowX: 'auto' }}>
-          <BarByMonth
-            transactions={filteredTransactions}
-            period={period}
-            yenUnit={yenUnit}
-            lockColors={lockColors}
-            hideOthers={hideOthers}
-            kind={kind}
-            height={350}
-          />
-        </div>
-      </div>
-
-      <div className="card">
-        <PieByCategory
-          transactions={filteredTransactions}
-          period={period}
-          yenUnit={yenUnit}
-          lockColors={lockColors}
-          hideOthers={hideOthers}
-          kind={kind}
-        />
-      </div>
-    </section>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            月別推移
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <BarByMonth
+              transactions={filteredTransactions}
+              period={period}
+              yenUnit={yenUnit}
+              lockColors={lockColors}
+              hideOthers={hideOthers}
+              kind={kind}
+              height={350}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -461,123 +574,160 @@ function Dashboard({
       {/* ヘッダー */}
       <header className='header'>
         <div className='header-controls'>
-          <select value={period} onChange={e => setPeriod(e.target.value)}>
-            <option value='3m'>最近3ヶ月</option>
-            <option value='6m'>半年</option>
-            <option value='1y'>1年</option>
-            <option value='all'>全期間</option>
-          </select>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3m">最近3ヶ月</SelectItem>
+              <SelectItem value="6m">半年</SelectItem>
+              <SelectItem value="1y">1年</SelectItem>
+              <SelectItem value="all">全期間</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className='title'>
           <span>家計簿カテゴリ管理</span>
         </div>
-        <button
+        <Button
           ref={burgerRef}
           className='burger'
-          aria-label='menu'
+          variant="ghost"
+          size="icon"
           onClick={() => setOpen(true)}
         >
-          ☰
-        </button>
+          <Menu className="h-5 w-5" />
+        </Button>
       </header>
 
       {/* ドロワー */}
-      <aside
-        role='dialog'
-        aria-label='メニュー'
-        className={`drawer ${open ? 'open' : ''}`}
-        onClick={() => setOpen(false)}
-      >
-        <nav
-          ref={panelRef}
-          className='drawer-panel'
-          onClick={e => e.stopPropagation()}
-        >
-          {state.profile?.display_name && (
-            <div className='user-display'>{state.profile.display_name}</div>
-          )}
-          <h4>メイン</h4>
-          {NAV.main.map(i => (
-            <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
-          ))}
-          <h4>データ</h4>
-          {NAV.data.map(i => (
-            <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
-          ))}
-          <h4>設定</h4>
-          {NAV.settings.map(i => (
-            <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)}>{i.label}</NavItem>
-          ))}
-          {isAuthenticated && (
-            <>
-              <h4>アカウント</h4>
-              {session ? (
-                <>
-                  <button 
-                    type="button"
-                    className='nav-item logout-btn' 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleLogout();
-                    }}
-                  >
-                    ログアウト
-                  </button>
-                  <button
-                    type="button"
-                    className='nav-item'
-                    style={{ 
-                      background: syncing ? '#e5e7eb' : 'transparent',
-                      color: '#10b981'
-                    }}
-                    disabled={syncing}
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setSyncing(true);
-                      try {
-                        await loadFromDatabase();
-                        alert('データを同期しました');
-                      } catch (error) {
-                        console.error('Sync error:', error);
-                        alert('同期に失敗しました');
-                      } finally {
-                        setSyncing(false);
-                        setOpen(false);
-                      }
-                    }}
-                  >
-                    {syncing ? '同期中...' : '🔄 データを同期'}
-                  </button>
-                </>
-              ) : (
-                <button 
-                  className='nav-item' 
-                  onClick={() => {
-                    localStorage.removeItem('localMode');
-                    window.location.reload();
-                  }}
-                  style={{ color: '#3b82f6' }}
-                >
-                  クラウド同期に切り替え
-                </button>
-              )}
-            </>
-          )}
-        </nav>
-      </aside>
+      <Sheet open={open} onOpenChange={setOpen}>
+
+        <SheetContent ref={panelRef} side="right" className="w-80 overflow-y-auto bg-white">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2 text-gray-900">
+                  <BarChart3 className="h-5 w-5" />
+                  メニュー
+                </SheetTitle>
+                {state.profile?.display_name && (
+                  <div className="text-sm text-gray-600">
+                    {state.profile.display_name}
+                  </div>
+                )}
+              </SheetHeader>
+              
+              <div className="space-y-6 mt-6">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-600 px-2">メイン</h4>
+                  <div className="space-y-1">
+                    {NAV.main.map(i => (
+                      <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)} icon={i.icon}>{i.label}</NavItem>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-600 px-2">データ</h4>
+                  <div className="space-y-1">
+                    {NAV.data.map(i => (
+                      <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)} icon={i.icon}>{i.label}</NavItem>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-600 px-2">設定</h4>
+                  <div className="space-y-1">
+                    {NAV.settings.map(i => (
+                      <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)} icon={i.icon}>{i.label}</NavItem>
+                    ))}
+                  </div>
+                </div>
+                
+                {isAuthenticated && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-600 px-2">アカウント</h4>
+                    <div className="space-y-1">
+                      {session ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-2 h-auto py-3 px-4 text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleLogout();
+                            }}
+                          >
+                            <LogOut className="h-4 w-4" />
+                            ログアウト
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-2 h-auto py-3 px-4 text-emerald-600 hover:text-emerald-600"
+                            disabled={syncing}
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSyncing(true);
+                              try {
+                                await loadFromDatabase();
+                                alert('データを同期しました');
+                              } catch (error) {
+                                console.error('Sync error:', error);
+                                alert('同期に失敗しました');
+                              } finally {
+                                setSyncing(false);
+                                setOpen(false);
+                              }
+                            }}
+                          >
+                            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                            {syncing ? '同期中...' : 'データを同期'}
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-2 h-auto py-3 px-4 text-blue-600 hover:text-blue-600"
+                          onClick={() => {
+                            localStorage.removeItem('localMode');
+                            window.location.reload();
+                          }}
+                        >
+                          <Cloud className="h-4 w-4" />
+                          クラウド同期に切り替え
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+        </SheetContent>
+      </Sheet>
 
       {/* コンテンツ（ダッシュボードを最優先で表示） */}
       <main className='content'>
         {state.transactions.length === 0 && (
-          <div className='card empty-banner'>
-            <p>取引がありません。</p>
-            <div className='actions'>
-              <a href='#import' className='btn'>CSV取込へ</a>
-              <button className='btn' onClick={loadDemo}>デモ読込</button>
-            </div>
-          </div>
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-lg text-muted-foreground">取引がありません。</p>
+                <div className="flex gap-4 justify-center">
+                  <Button asChild>
+                    <a href='#import'>
+                      <Upload className="h-4 w-4 mr-2" />
+                      CSV取込へ
+                    </a>
+                  </Button>
+                  <Button variant="outline" onClick={loadDemo}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    デモ読込
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
         {page === 'dashboard' && (
           <Dashboard
@@ -596,7 +746,7 @@ function Dashboard({
         <Suspense fallback={<div>Loading...</div>}>
             {page === 'monthly' && (
               <MonthlyAnalysis
-                transactions={state.transactions}
+                transactions={filteredTransactionsForAnalysis}
                 period={period}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
@@ -628,7 +778,7 @@ function Dashboard({
                   </label>
                 </div>
                 <Monthly
-                  transactions={state.transactions}
+                  transactions={filteredTransactionsForAnalysis}
                   period={period}
                   yenUnit={yenUnit}
                   lockColors={lockColors}
@@ -662,7 +812,7 @@ function Dashboard({
                 </label>
               </div>
               <Yearly
-                transactions={state.transactions}
+                transactions={filteredTransactionsForAnalysis}
                 period={period}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
@@ -680,16 +830,24 @@ function Dashboard({
           {page === 'categories' && <Categories />}
           {page === 'prefs' && <Prefs />}
           {page === 'settings' && <Settings />}
+          {page === 'uitest' && <UITest />}
         </Suspense>
       </main>
 
       {needRefresh && (
-        <div className='pwa-refresh'>
-          新しいバージョンがあります。
-          <button onClick={() => updateServiceWorker(true)}>更新</button>
-        </div>
+        <Card className="fixed bottom-4 right-4 z-50 max-w-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-sm">新しいバージョンがあります。</p>
+              <Button size="sm" onClick={() => updateServiceWorker(true)}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                更新
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
-      <footer className='footer'>
+      <footer className='border-t bg-muted/50 py-4 px-4 text-center text-sm text-muted-foreground'>
         MODE: {import.meta.env.MODE} / lastModified: {document.lastModified}
       </footer>
 

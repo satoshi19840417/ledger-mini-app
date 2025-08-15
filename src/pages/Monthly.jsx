@@ -2,6 +2,13 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import BarByMonth from '../BarByMonth.jsx';
 import PieByCategory from '../PieByCategory.jsx';
 import { DEFAULT_CATEGORIES as CATEGORIES } from '../defaultCategories.js';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Calendar, Filter, X } from 'lucide-react';
 
 export default function Monthly({
   transactions,
@@ -66,105 +73,165 @@ export default function Monthly({
   );
 
   return (
-    <section>
-      <h1 className="text-2xl font-bold mb-4">月次分析</h1>
-      <div className='card'>
-        {months.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ marginRight: 8 }}>月選択:</label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd' }}
-            >
-              {months.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">月次分析</h1>
+        <Badge variant="outline" className="text-sm">
+          <Calendar className="w-3 h-3 mr-1" />
+          {selectedMonth || '月選択なし'}
+        </Badge>
+      </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 12 }}>
-            {selectedMonth ? `${selectedMonth} カテゴリー別内訳` : 'カテゴリー別内訳'}
-          </h3>
-          <PieByCategory
-            transactions={monthTxs}
-            period="all"
-            yenUnit={yenUnit}
-            lockColors={lockColors}
-            hideOthers={hideOthers}
-            kind={kind}
-          />
-        </div>
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* フィルター設定カード */}
+        <Card className="lg:col-span-4">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              フィルター設定
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {months.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="month-select">月選択</Label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger id="month-select">
+                    <SelectValue placeholder="月を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-        <div style={{ marginBottom: 16, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <label style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type='checkbox'
-              checked={excludeCardPayments}
-              onChange={(e) => setExcludeCardPayments(e.target.checked)}
-            />
-            <span className='ml-2'>カード支払いを除外して分析</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type='checkbox'
-              checked={excludeRent}
-              onChange={(e) => setExcludeRent(e.target.checked)}
-            />
-            <span className='ml-2'>家賃を除外して分析</span>
-          </label>
-{/* === カテゴリ／月セレクタ（統合・確定版） === */}
-<div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-  <div>
-    <label style={{ marginRight: 8 }}>カテゴリ:</label>
-    <select
-      value={selectedCategory ?? ''}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-      style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #ddd' }}
-    >
-      <option value=''>全カテゴリー</option>
-      {CATEGORIES.map((c) => (
-        <option key={c} value={c}>{c}</option>
-      ))}
-    </select>
-  </div>
+            <div className="space-y-2">
+              <Label htmlFor="category-select">カテゴリ</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger id="category-select">
+                  <SelectValue placeholder="全カテゴリー" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">全カテゴリー</SelectItem>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCategory && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCategory('')}
+                  className="w-full justify-start"
+                >
+                  <X className="w-3 h-3 mr-2" />
+                  フィルターをクリア
+                </Button>
+              )}
+            </div>
 
-  {months.length > 0 && (
-    <div style={{ marginLeft: 'auto' }}>
-      <label style={{ marginRight: 8 }}>月選択:</label>
-      <select
-        value={selectedMonth ?? ''}
-        onChange={(e) => setSelectedMonth(e.target.value)}
-        style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #ddd' }}
-      >
-        {months.map((m) => (
-          <option key={m} value={m}>{m}</option>
-        ))}
-      </select>
-    </div>
-  )}
-</div>
-{/* === /カテゴリ／月セレクタ === */}
+            <div className="space-y-3">
+              <Label>除外設定</Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="exclude-card"
+                  checked={excludeCardPayments}
+                  onCheckedChange={setExcludeCardPayments}
+                />
+                <Label
+                  htmlFor="exclude-card"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  カード支払いを除外
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="exclude-rent"
+                  checked={excludeRent}
+                  onCheckedChange={setExcludeRent}
+                />
+                <Label
+                  htmlFor="exclude-rent"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  家賃を除外
+                </Label>
+              </div>
+            </div>
 
-        </div>
+            {(excludeCardPayments || excludeRent || selectedCategory) && (
+              <div className="pt-3 border-t">
+                <p className="text-xs text-muted-foreground">
+                  フィルター適用中: {filteredTransactions.length}件
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <div ref={chartContainerRef} style={{ position: 'relative' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: 12 }}>月次推移</h3>
-          <BarByMonth
-            transactions={filteredTransactions}
-            period={period}
-            yenUnit={yenUnit}
-            lockColors={lockColors}
-            hideOthers={hideOthers}
-            kind={kind}
-            height={350}
-          />
+        {/* グラフ表示エリア */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* カテゴリー別内訳 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>
+                  {selectedMonth ? `${selectedMonth} カテゴリー別内訳` : 'カテゴリー別内訳'}
+                </span>
+                {monthTxs.length > 0 && (
+                  <Badge variant={kind === 'expense' ? 'destructive' : 'default'}>
+                    {kind === 'expense' ? (
+                      <TrendingDown className="w-3 h-3 mr-1" />
+                    ) : (
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                    )}
+                    {monthTxs.length}件
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PieByCategory
+                transactions={monthTxs}
+                period="all"
+                yenUnit={yenUnit}
+                lockColors={lockColors}
+                hideOthers={hideOthers}
+                kind={kind}
+              />
+            </CardContent>
+          </Card>
+
+          {/* 月次推移グラフ */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">月次推移</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div ref={chartContainerRef}>
+                <BarByMonth
+                  transactions={filteredTransactions}
+                  period={period}
+                  yenUnit={yenUnit}
+                  lockColors={lockColors}
+                  hideOthers={hideOthers}
+                  kind={kind}
+                  height={350}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

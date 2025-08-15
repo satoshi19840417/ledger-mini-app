@@ -114,15 +114,23 @@ export default function BarByMonth({
     () => Math.max(...dataWithColors.map(d => d.total), 0),
     [dataWithColors]
   );
-  const ticks = useMemo(
-    () => [
-      maxTotal * 0.25,
-      maxTotal * 0.5,
-      maxTotal * 0.75,
-      maxTotal,
-    ],
-    [maxTotal]
-  );
+  
+  // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
+  const ticks = useMemo(() => {
+    if (maxTotal === 0) return [0];
+    
+    // 最大値を適切な間隔で分割
+    const step = Math.pow(10, Math.floor(Math.log10(maxTotal)));
+    const normalizedMax = Math.ceil(maxTotal / step) * step;
+    const tickCount = 5;
+    const tickStep = normalizedMax / tickCount;
+    
+    const result = [];
+    for (let i = 0; i <= tickCount; i++) {
+      result.push(Math.round(tickStep * i));
+    }
+    return result.filter(v => v <= maxTotal * 1.1); // 最大値の110%までのticksのみ表示
+  }, [maxTotal]);
 
   const average = useMemo(() => {
     if (dataWithColors.length === 0) return 0;
@@ -130,7 +138,7 @@ export default function BarByMonth({
     return sum / dataWithColors.length;
   }, [dataWithColors]);
 
-  const tickFormatter = (v) => `${Math.round((v / maxTotal) * 100)}%`;
+  const tickFormatter = (v) => formatAmount(v, yenUnit);
   const formatValue = (v) => formatAmount(v, yenUnit);
   const tooltipFormatter = (v) => [formatValue(v), '合計'];
   const legendPayload = dataWithColors.map((d) => ({
@@ -241,16 +249,10 @@ export default function BarByMonth({
             tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
           />
           <YAxis
-            domain={[0, maxTotal]}
+            domain={[0, 'dataMax + 10000']}
             ticks={ticks}
             tickFormatter={tickFormatter}
-            width={isMobile ? 45 : 60}
-            label={{
-              value: yenUnit === 'man' ? '万円' : '円',
-              angle: -90,
-              position: 'insideLeft',
-              style: { fontSize: isMobile ? 10 : 12 }
-            }}
+            width={isMobile ? 60 : 80}
             tick={{ fontSize: isMobile ? 10 : 12 }}
           />
           <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />

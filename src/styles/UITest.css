@@ -1,0 +1,459 @@
+/* UIテストページのスタイル */
+
+:root {
+  /* カラーパレット */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --income: #10b981;
+  --income-light: #d1fae5;
+  --expense: #ef4444;
+  --expense-light: #fee2e2;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  
+  /* シャドウ */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  
+  /* アニメーション */
+  --transition: all 0.2s ease;
+}
+
+.ui-test-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: var(--gray-50);
+  min-height: 100vh;
+}
+
+.test-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.test-header h1 {
+  font-size: 2rem;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.test-header p {
+  color: var(--gray-500);
+  font-size: 1.1rem;
+}
+
+.test-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.test-section h2 {
+  font-size: 1.3rem;
+  color: var(--gray-900);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--gray-100);
+}
+
+/* アイコンナビゲーション */
+.icon-navigation {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.nav-section {
+  flex: 1;
+  min-width: 200px;
+}
+
+.nav-section-title {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nav-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-item:hover {
+  background: var(--gray-50);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-item.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.nav-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* 視覚的な金額表示 */
+.amount-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.amount-visual {
+  padding: 1rem;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--gray-50);
+}
+
+.amount-label {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  margin-bottom: 0.5rem;
+}
+
+.amount-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.amount-icon {
+  font-size: 1.25rem;
+}
+
+.amount-icon.income {
+  color: var(--income);
+}
+
+.amount-icon.expense {
+  color: var(--expense);
+}
+
+.amount-bar-container {
+  flex: 1;
+  position: relative;
+  height: 32px;
+  background: var(--gray-200);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.amount-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 16px;
+  transition: width 0.5s ease;
+}
+
+.amount-bar.income {
+  background: linear-gradient(90deg, var(--income), #34d399);
+}
+
+.amount-bar.expense {
+  background: linear-gradient(90deg, var(--expense), #f87171);
+}
+
+.amount-value {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--gray-900);
+  font-size: 0.9rem;
+}
+
+/* トグルボタン */
+.toggle-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--gray-300);
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.toggle-button:hover {
+  border-color: var(--primary);
+  background: var(--gray-50);
+}
+
+.toggle-button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+}
+
+.toggle-tooltip {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* セグメントコントロール */
+.segment-control {
+  display: inline-flex;
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.segment-option {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.segment-option:hover {
+  background: var(--gray-200);
+}
+
+.segment-option.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* カテゴリカード */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.category-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: white;
+  transition: var(--transition);
+}
+
+.category-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.category-icon {
+  font-size: 2rem;
+}
+
+.category-info {
+  flex: 1;
+}
+
+.category-name {
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.25rem;
+}
+
+.category-amount {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.category-amount.income {
+  color: var(--income);
+}
+
+.category-amount.expense {
+  color: var(--expense);
+}
+
+.category-chart {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.category-chart svg {
+  transform: rotate(-90deg);
+}
+
+.category-chart .percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+/* ステータス表示 */
+.status-examples {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.status-indicator.syncing {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.status-indicator.synced {
+  background: var(--income-light);
+  color: var(--income);
+}
+
+.status-indicator.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-indicator.error {
+  background: var(--expense-light);
+  color: var(--expense);
+}
+
+.status-icon {
+  font-size: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+.status-indicator.synced .status-icon,
+.status-indicator.error .status-icon,
+.status-indicator.pending .status-icon {
+  animation: none;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* カラーパレット */
+.color-palette {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.color-item {
+  width: 120px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-md);
+}
+
+.color-item.primary {
+  background: var(--primary);
+}
+
+.color-item.income {
+  background: var(--income);
+}
+
+.color-item.expense {
+  background: var(--expense);
+}
+
+.color-item.gray {
+  background: var(--gray-500);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .ui-test-page {
+    padding: 1rem;
+  }
+  
+  .test-section {
+    padding: 1rem;
+  }
+  
+  .nav-items {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .amount-examples {
+    grid-template-columns: 1fr;
+  }
+  
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .segment-option {
+    padding: 0.5rem 1rem;
+  }
+}
