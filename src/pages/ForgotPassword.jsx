@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../supabaseClient.js';
+import { supabase } from '../lib/supabaseClient.js';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');

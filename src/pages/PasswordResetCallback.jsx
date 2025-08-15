@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabaseClient.js';
 
 export default function PasswordResetCallback() {
   const [password, setPassword] = useState('');
