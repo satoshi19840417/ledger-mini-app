@@ -84,7 +84,7 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub'].includes(k);
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'dbtest'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
