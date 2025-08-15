@@ -1,5 +1,6 @@
 @charset "UTF-8";
 @import "./styles/variables.css";
+@import "./styles/mobile-responsive.css";
 
  :root {
   --app-bar-height: 56px;

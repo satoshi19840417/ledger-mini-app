@@ -5,4 +5,27 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root { height: 100%; }
+html, body, #root { 
+  height: 100%; 
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* モバイルビューポート設定 */
+@media (max-width: 768px) {
+  html {
+    overflow-x: hidden;
+  }
+  
+  body {
+    overflow-x: hidden;
+    position: relative;
+    width: 100vw;
+  }
+  
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+}

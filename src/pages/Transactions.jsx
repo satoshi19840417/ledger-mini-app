@@ -15,6 +15,7 @@ import {
   RefreshCw, X, ChevronLeft, ChevronRight, Calendar,
   JapaneseYen, Tag, FileText, Settings, Trash2
 } from 'lucide-react';
+import { ResponsiveTable } from '@/components/ui/responsive-wrapper';
 /** @typedef {import('../types').Transaction} Transaction */
 /** @typedef {import('../types').Rule} Rule */
 
@@ -448,9 +449,9 @@ useEffect(() => {
           <CardHeader>
             <CardTitle className="text-lg">取引データ</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse min-w-[600px] text-left">
+          <CardContent className="px-0 md:px-6">
+            <ResponsiveTable>
+              <table className="w-full border-collapse min-w-[600px] text-left text-sm md:text-base">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
                     <th className="text-left p-3 font-semibold text-gray-700 whitespace-nowrap">
@@ -587,7 +588,7 @@ useEffect(() => {
                   )}
                 </tbody>
               </table>
-            </div>
+            </ResponsiveTable>
 
             {/* ページネーション */}
             <div className="flex items-center justify-center gap-2 mt-6 flex-wrap">
