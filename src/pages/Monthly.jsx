@@ -3,7 +3,6 @@ import PieByCategory from '../PieByCategory.jsx';
 import { DEFAULT_CATEGORIES as CATEGORIES } from '../defaultCategories.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,9 +19,10 @@ export default function Monthly({
   kind,
 }) {
   // localStorageからフィルター設定を読み込み
-  const [filterMode, setFilterMode] = useState(
-    JSON.parse(localStorage.getItem('filterMode') || '{"others":"include","card":"exclude","rent":"include"}')
-  );
+  const [filterMode, setFilterMode] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem('filterMode') || '{}');
+    return { others: stored.others || 'include' };
+  });
   const [selectedCategory, setSelectedCategory] = useState('');
   
   // filterModeが変更されたらlocalStorageに保存
@@ -41,20 +41,6 @@ export default function Monthly({
       filtered = filtered.filter(tx => tx.category === 'その他');
     }
     
-    // カード支払いフィルター
-    const cardCategories = ['カード支払い', 'カード払い', 'クレカ払い'];
-    if (filterMode.card === 'exclude') {
-      filtered = filtered.filter(tx => !cardCategories.includes(tx.category));
-    } else if (filterMode.card === 'only') {
-      filtered = filtered.filter(tx => cardCategories.includes(tx.category));
-    }
-    
-    // 家賃フィルター
-    if (filterMode.rent === 'exclude') {
-      filtered = filtered.filter(tx => tx.category !== '家賃');
-    } else if (filterMode.rent === 'only') {
-      filtered = filtered.filter(tx => tx.category === '家賃');
-    }
     
     // カテゴリフィルター
     if (selectedCategory) {
@@ -213,7 +199,7 @@ export default function Monthly({
 
             <div className="space-y-3">
               <Label className="text-sm font-medium">フィルター設定</Label>
-              
+
               {/* その他フィルター */}
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">その他</Label>
@@ -244,71 +230,9 @@ export default function Monthly({
                   </Button>
                 </div>
               </div>
-              
-              {/* カード支払いフィルター */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">カード支払い</Label>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    size="sm"
-                    variant={filterMode.card === 'include' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'include' }))}
-                    className="text-xs"
-                  >
-                    含む
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.card === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'exclude' }))}
-                    className="text-xs"
-                  >
-                    除外
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.card === 'only' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, card: 'only' }))}
-                    className="text-xs"
-                  >
-                    のみ
-                  </Button>
-                </div>
-              </div>
-              
-              {/* 家賃フィルター */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">家賃</Label>
-                <div className="grid grid-cols-3 gap-1">
-                  <Button
-                    size="sm"
-                    variant={filterMode.rent === 'include' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'include' }))}
-                    className="text-xs"
-                  >
-                    含む
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.rent === 'exclude' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'exclude' }))}
-                    className="text-xs"
-                  >
-                    除外
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={filterMode.rent === 'only' ? 'default' : 'outline'}
-                    onClick={() => setFilterMode(prev => ({ ...prev, rent: 'only' }))}
-                    className="text-xs"
-                  >
-                    のみ
-                  </Button>
-                </div>
-              </div>
             </div>
 
-            {(filterMode.others !== 'include' || filterMode.card !== 'include' || filterMode.rent !== 'include' || selectedCategory) && (
+            {(filterMode.others !== 'include' || selectedCategory) && (
               <div className="pt-3 border-t">
                 <p className="text-xs text-muted-foreground">
                   フィルター適用中: {filteredTransactions.length}件

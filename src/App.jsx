@@ -118,6 +118,24 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
 
   const isAuthenticated = session || isLocalMode;
+
+  // 旧形式のfilterModeからcard/rentを除去
+  useEffect(() => {
+    const fm = localStorage.getItem('filterMode');
+    if (fm) {
+      try {
+        const parsed = JSON.parse(fm);
+        if (parsed.card !== undefined || parsed.rent !== undefined) {
+          localStorage.setItem(
+            'filterMode',
+            JSON.stringify({ others: parsed.others || 'include' })
+          );
+        }
+      } catch {
+        localStorage.setItem('filterMode', JSON.stringify({ others: 'include' }));
+      }
+    }
+  }, []);
   
   // デバッグ用：データの状態を確認
   useEffect(() => {
