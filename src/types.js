@@ -8,6 +8,7 @@
  * @property {'income'|'expense'} kind - Transaction kind.
  * @property {string} [category] - Category assigned to the transaction.
  * @property {boolean} [excludeFromTotals] - Whether to exclude from totals calculations.
+ * @property {boolean} [isCardPayment] - True if the transaction is a card payment.
  * @property {string} [id] - Unique identifier for the transaction.
  */
 

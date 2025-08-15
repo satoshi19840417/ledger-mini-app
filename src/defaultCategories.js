@@ -14,7 +14,7 @@ export const DEFAULT_CATEGORIES = [
   '交際費',
   'ビジネス',
   'Amazon',
-  'カード払い',
+  'カード支払い',
   '税金・保険',
   'その他',
   '収入',

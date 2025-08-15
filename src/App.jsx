@@ -257,9 +257,9 @@ export default function App() {
     }
 
     if (filterMode.card === 'exclude') {
-      txs = txs.filter(tx => tx.category !== 'カード支払い');
+      txs = txs.filter(tx => !tx.isCardPayment);
     } else if (filterMode.card === 'only') {
-      txs = txs.filter(tx => tx.category === 'カード支払い');
+      txs = txs.filter(tx => tx.isCardPayment);
     }
 
     if (filterMode.rent === 'exclude') {

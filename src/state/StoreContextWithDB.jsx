@@ -62,6 +62,8 @@ function reducer(state, action) {
             ...tx,
             id: tx.id || crypto.randomUUID(),
             kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
+            isCardPayment:
+              tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
           }));
         } catch {
           // ignore
@@ -100,6 +102,8 @@ function reducer(state, action) {
         ...tx,
         date: tx.date || tx.occurred_on,  // occurred_onフィールドからdateを復元
         kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
+        isCardPayment:
+          tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
       }));
       localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
       localStorage.setItem(

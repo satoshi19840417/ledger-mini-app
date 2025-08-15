@@ -69,6 +69,8 @@ export const dbService = {
         const hash = tx.hash || hashString;
         const excludeFromTotals =
           tx.excludeFromTotals ?? tx.exclude_from_totals ?? false;
+        const isCardPayment =
+          tx.isCardPayment ?? tx.is_card_payment ?? tx.category === 'カード支払い';
 
         return {
           id: tx.id || crypto.randomUUID(), // 既存のIDを使用、なければ新規生成
@@ -82,7 +84,8 @@ export const dbService = {
           memo: tx.memo || tx.メモ || '', // text型
           kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'), // text型
           hash,
-          exclude_from_totals: excludeFromTotals // boolean型（集計対象外フラグ）
+          exclude_from_totals: excludeFromTotals, // boolean型（集計対象外フラグ）
+          is_card_payment: isCardPayment
         };
       });
 

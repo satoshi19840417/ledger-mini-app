@@ -54,10 +54,7 @@ const filtered = useMemo(() => {
   return txs.filter((tx) => {
     // 既存フィルタ
     if (showUnclassifiedOnly && tx.category) return false;
-    if (
-      excludeCardPayments &&
-      (tx.category === 'カード支払い' || tx.category === 'カード払い' || tx.category === 'クレカ払い')
-    ) return false;
+    if (excludeCardPayments && tx.isCardPayment) return false;
 
     if (startDate && tx.date < startDate) return false;
     if (endDate && tx.date > endDate) return false;
