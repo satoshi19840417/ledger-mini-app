@@ -54,7 +54,6 @@ const Others = lazy(() => import('./pages/Others.jsx'));
 const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Categories = lazy(() => import('./pages/Categories.jsx'));
-const DatabaseTest = lazy(() => import('./pages/DatabaseTest.jsx'));
 
 const NAV = {
   main: [
@@ -71,8 +70,7 @@ const NAV = {
   ],
   settings: [
     { key: 'prefs', label: '設定', icon: SettingsIcon },
-    { key: 'settings', label: 'アカウント設定', icon: User },
-    { key: 'dbtest', label: 'データベーステスト', icon: SettingsIcon }
+    { key: 'settings', label: 'アカウント設定', icon: User }
   ],
 };
 
@@ -968,7 +966,6 @@ function Dashboard({
             {page === 'categories' && <Categories />}
             {page === 'prefs' && <Prefs />}
             {page === 'settings' && <Settings />}
-            {page === 'dbtest' && <DatabaseTest />}
           </Suspense>
         )}
       </main>

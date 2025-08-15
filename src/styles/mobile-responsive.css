@@ -1,0 +1,245 @@
+/* モバイルレスポンシブ専用スタイル */
+
+/* 基本設定 - モバイルでのはみ出し防止 */
+@media (max-width: 768px) {
+  /* ビューポート全体の制御 */
+  * {
+    max-width: 100vw;
+  }
+  
+  /* ルート要素のオーバーフロー制御 */
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  .app-shell {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* テーブルのレスポンシブ対応 */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* テーブルコンテナ */
+  .table-container,
+  [class*="table"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: calc(100vw - 2rem);
+    margin: 0 auto;
+  }
+
+  /* Rechartsグラフの完全対応 */
+  .recharts-wrapper,
+  .recharts-responsive-container {
+    width: 100% !important;
+    height: auto !important;
+  }
+  
+  .recharts-surface {
+    width: 100% !important;
+    viewBox: 0 0 100% auto !important;
+  }
+
+  /* shadcn/uiカードコンポーネント */
+  [class*="card"] {
+    max-width: calc(100vw - 1rem);
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  /* グリッドレイアウトの調整 */
+  .grid,
+  [class*="grid-cols"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem;
+  }
+
+  /* フレックスレイアウトの調整 */
+  .flex {
+    flex-wrap: wrap;
+  }
+
+  /* ボタングループ */
+  .flex.gap-2,
+  .flex.gap-4 {
+    flex-wrap: wrap;
+  }
+
+  /* タブコンポーネント */
+  [role="tablist"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* インプット要素のサイズ調整 */
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+    font-size: 16px; /* iOS zoom防止 */
+  }
+
+  /* モーダル・ダイアログ */
+  [role="dialog"] {
+    max-width: calc(100vw - 2rem);
+    margin: 1rem;
+  }
+
+  /* ナビゲーションドロワー */
+  .sheet-content,
+  [data-state="open"][data-side="right"] {
+    width: min(90vw, 320px);
+  }
+
+  /* ヘッダーの調整 */
+  .header {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .header .title {
+    font-size: 0.9rem;
+    max-width: 50%;
+  }
+
+  /* セレクトボックスの幅制限 */
+  .header-controls,
+  .header select {
+    max-width: 120px;
+    font-size: 0.875rem;
+  }
+
+  /* パディングの統一 */
+  .content {
+    padding: 0.5rem;
+  }
+
+  .card-content,
+  [class*="card-content"] {
+    padding: 0.75rem;
+  }
+
+  .card-header,
+  [class*="card-header"] {
+    padding: 0.75rem;
+  }
+
+  /* スクロールバーのスタイル */
+  ::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 2px;
+  }
+
+  /* テキストの折り返し */
+  .text-nowrap {
+    white-space: normal !important;
+    word-break: break-word;
+  }
+
+  /* トランザクションテーブル用の特別な処理 */
+  .transactions-table {
+    font-size: 0.875rem;
+  }
+
+  .transactions-table td,
+  .transactions-table th {
+    padding: 0.5rem 0.25rem;
+    min-width: 60px;
+  }
+
+  /* 金額表示の最適化 */
+  .amount-display {
+    font-size: 0.875rem;
+  }
+
+  /* バッジとタグ */
+  .badge,
+  [class*="badge"] {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.375rem;
+  }
+
+  /* アラートメッセージ */
+  .alert,
+  [class*="alert"] {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* フッター */
+  footer {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* スティッキー要素の調整 */
+  .sticky,
+  [class*="sticky"] {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+
+  /* オーバーフロー防止の強制 */
+  .overflow-x-auto {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .overflow-hidden {
+    overflow: hidden !important;
+  }
+
+  /* 円グラフのサイズ調整 */
+  .pie-chart-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* データグリッドの調整 */
+  .data-grid {
+    display: block;
+    overflow-x: auto;
+  }
+
+  /* モバイル専用の表示/非表示 */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* タッチターゲットの最小サイズ確保 */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 小さいボタンの調整 */
+  .btn-sm,
+  button.small {
+    min-height: 36px;
+    min-width: 36px;
+    font-size: 0.875rem;
+  }
+}
