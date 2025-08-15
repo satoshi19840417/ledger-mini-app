@@ -1,3 +1,6 @@
+@charset "UTF-8";
+@import "../../styles/variables.css";
+
 /* AmountVisual Component Styles */
 .amount-visual {
   padding: 1rem;

@@ -62,8 +62,6 @@ export default function NetBalanceLineChart({ transactions, period, yenUnit }) {
       return { x: d.month, label: `Q${q}` };
     });
 
-  // ---- 表示用フォーマッタ --------------------------------------------
-
   // ---- 描画 -----------------------------------------------------------
   return (
     <div style={{ width: '100%', maxWidth: '100%', margin: '0 auto' }}>

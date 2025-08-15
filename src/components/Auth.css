@@ -1,3 +1,6 @@
+@charset "UTF-8";
+@import "../styles/variables.css";
+
 .auth-container {
   min-height: 100vh;
   display: flex;
