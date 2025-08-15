@@ -67,6 +67,7 @@ export const dbService = {
         const memoText = tx.memo || tx.メモ || '';
         const hashString = `${userId}_${dateValue}_${amount}_${descText}_${detailText}_${memoText}_${tx.id || Math.random()}`;
         const hash = tx.hash || hashString;
+        const updatedAt = tx.updated_at || tx.updatedAt || null;
         const excludeFromTotals =
           tx.excludeFromTotals ?? tx.exclude_from_totals ?? false;
         const isCardPayment =
@@ -84,6 +85,7 @@ export const dbService = {
           memo: tx.memo || tx.メモ || '', // text型
           kind: tx.kind || tx.種別 || (amount < 0 ? 'expense' : 'income'), // text型
           hash,
+          updated_at: updatedAt,
           exclude_from_totals: excludeFromTotals, // boolean型（集計対象外フラグ）
           is_card_payment: isCardPayment
         };
@@ -93,38 +95,83 @@ export const dbService = {
       console.log('Mapped transactions:', mappedTransactions);
       console.log('Sample transaction:', mappedTransactions[0]);
 
-      // バッチサイズを設定（一度に送信する件数）
+      const ids = mappedTransactions.map(tx => tx.id);
+      const { data: existing, error: fetchError } = await supabase
+        .from('transactions')
+        .select('id, hash, updated_at')
+        .eq('user_id', userId)
+        .in('id', ids);
+
+      if (fetchError) throw fetchError;
+
+      const existingMap = new Map((existing || []).map(tx => [tx.id, tx]));
+      const inserts = [];
+      const updates = [];
+
+      for (const tx of mappedTransactions) {
+        const exists = existingMap.get(tx.id);
+        if (!exists) {
+          inserts.push({ ...tx, updated_at: new Date().toISOString() });
+          continue;
+        }
+
+        if (exists.hash === tx.hash) {
+          continue; // no changes
+        }
+
+        if (
+          tx.updated_at &&
+          exists.updated_at &&
+          new Date(tx.updated_at) < new Date(exists.updated_at)
+        ) {
+          const overwrite = window.confirm(
+            '取引が他の端末で更新されています。上書きしますか？'
+          );
+          if (!overwrite) continue;
+        }
+
+        updates.push({ ...tx, updated_at: new Date().toISOString() });
+      }
+
       const BATCH_SIZE = 50;
       let allData = [];
       let hasError = false;
-      
-      // トランザクションを分割して送信（同一IDは更新・新規IDは挿入）
-      for (let i = 0; i < mappedTransactions.length; i += BATCH_SIZE) {
-        const batch = mappedTransactions.slice(i, i + BATCH_SIZE);
-        console.log(`Upserting batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(mappedTransactions.length / BATCH_SIZE)}`);
 
-        const { data: batchData, error: batchError } = await supabase
+      // 新規レコードを挿入
+      for (let i = 0; i < inserts.length; i += BATCH_SIZE) {
+        const batch = inserts.slice(i, i + BATCH_SIZE);
+        const { data, error } = await supabase
           .from('transactions')
-          .upsert(batch, { onConflict: 'id' });
-
-        if (batchError) {
-          console.error(`Error in batch ${Math.floor(i / BATCH_SIZE) + 1}:`, batchError);
-          console.error('Failed batch data:', batch);
-          console.error('Error details:', {
-            message: batchError.message,
-            details: batchError.details,
-            hint: batchError.hint,
-            code: batchError.code
-          });
+          .insert(batch)
+          .select();
+        if (error) {
+          console.error(`Error inserting batch ${Math.floor(i / BATCH_SIZE) + 1}:`, error);
           hasError = true;
-          toast.error(`取引の同期に失敗しました: ${batchError.message}`);
-        } else if (batchData) {
-          allData = allData.concat(batchData);
+          toast.error(`取引の同期に失敗しました: ${error.message}`);
+        } else if (data) {
+          allData = allData.concat(data);
+        }
+      }
+
+      // 既存レコードを更新
+      for (const tx of updates) {
+        const { data, error } = await supabase
+          .from('transactions')
+          .update(tx)
+          .eq('id', tx.id)
+          .eq('user_id', userId)
+          .select();
+        if (error) {
+          console.error(`Error updating transaction ${tx.id}:`, error);
+          hasError = true;
+          toast.error(`取引の同期に失敗しました: ${error.message}`);
+        } else if (data) {
+          allData = allData.concat(data);
         }
       }
 
       if (hasError) {
-        return { success: false, error: 'Some batches failed to upsert' };
+        return { success: false, error: 'Some transactions failed to sync' };
       }
 
       return { success: true, data: allData };
