@@ -1,12 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
 import BarByMonth from '../BarByMonth.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Calendar, PieChart, BarChart3, Filter } from 'lucide-react';
+import { TrendingUp, TrendingDown, PieChart, BarChart3 } from 'lucide-react';
 
 export default function Yearly({
   transactions,
@@ -16,29 +14,10 @@ export default function Yearly({
   hideOthers,
   kind,
 }) {
-  const [excludeCardPayments, setExcludeCardPayments] = useState(true);
-  const [excludeRent, setExcludeRent] = useState(false);
-
-  // カード支払いと家賃を除外するかどうかでフィルタリング
-  const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
-    if (excludeCardPayments) {
-      filtered = filtered.filter(
-        tx => tx.category !== 'カード支払い' && tx.category !== 'カード払い'
-      );
-    }
-    if (excludeRent) {
-      filtered = filtered.filter(
-        tx => tx.category !== '家賃'
-      );
-    }
-    return filtered;
-  }, [transactions, excludeCardPayments, excludeRent]);
-
   // 年別の集計
   const yearlyStats = useMemo(() => {
     const stats = {};
-    filteredTransactions.forEach(tx => {
+    transactions.forEach(tx => {
       const year = tx.date.slice(0, 4);
       if (!stats[year]) {
         stats[year] = { income: 0, expense: 0, count: 0 };
@@ -57,66 +36,20 @@ export default function Yearly({
         ...data,
         balance: data.income - data.expense
       }));
-  }, [filteredTransactions]);
+  }, [transactions]);
 
   const currentYear = new Date().getFullYear().toString();
   const currentYearData = yearlyStats.find(s => s.year === currentYear);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* フィルター設定 */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              フィルター設定
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="exclude-card-yearly"
-                checked={excludeCardPayments}
-                onCheckedChange={setExcludeCardPayments}
-              />
-              <Label
-                htmlFor="exclude-card-yearly"
-                className="text-sm font-normal cursor-pointer"
-              >
-                カード支払いを除外
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="exclude-rent-yearly"
-                checked={excludeRent}
-                onCheckedChange={setExcludeRent}
-              />
-              <Label
-                htmlFor="exclude-rent-yearly"
-                className="text-sm font-normal cursor-pointer"
-              >
-                家賃を除外
-              </Label>
-            </div>
-            {(excludeCardPayments || excludeRent) && (
-              <div className="pt-3 border-t">
-                <p className="text-xs text-muted-foreground">
-                  フィルター適用中: {filteredTransactions.length}件
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      <div className="space-y-6">
         {/* メインコンテンツ */}
-        <div className="lg:col-span-9 space-y-6">
-          {/* 今年のサマリー */}
-          {currentYearData && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
+        {/* 今年のサマリー */}
+        {currentYearData && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
                   <span>{currentYear}年のサマリー</span>
                   <Badge variant={currentYearData.balance >= 0 ? 'default' : 'destructive'}>
                     {currentYearData.balance >= 0 ? (
@@ -172,7 +105,7 @@ export default function Yearly({
                 </TabsList>
                 <TabsContent value="category" className="mt-4">
                   <PieByCategory
-                    transactions={filteredTransactions}
+                    transactions={transactions}
                     period={period}
                     yenUnit={yenUnit}
                     lockColors={lockColors}
@@ -182,7 +115,7 @@ export default function Yearly({
                 </TabsContent>
                 <TabsContent value="monthly" className="mt-4">
                   <BarByMonth
-                    transactions={filteredTransactions}
+                    transactions={transactions}
                     period={period}
                     yenUnit={yenUnit}
                     lockColors={lockColors}
@@ -232,9 +165,9 @@ export default function Yearly({
                 ))}
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </div>
         </div>
-      </div>
-    </div>
   );
 }
+
