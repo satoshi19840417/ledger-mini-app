@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
+import { toast } from 'react-hot-toast';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +20,7 @@ import { ResponsiveTable } from '@/components/ui/responsive-wrapper';
 /** @typedef {import('../types').Rule} Rule */
 
 export default function Transactions() {
-  const { state, dispatch, loadFromDatabase } = useStore();
+  const { state, dispatch, loadFromDatabase, syncWithDatabase } = useStore();
   /** @type {Transaction[]} */
   const txs = state.transactions;
   const categories = state.categories;
@@ -41,6 +42,7 @@ export default function Transactions() {
   const [ruleAppliedMessage, setRuleAppliedMessage] = useState('');
   const [excludedFromTotals, setExcludedFromTotals] = useState({});
   const [applyingRules, setApplyingRules] = useState(false);
+  const [savingRule, setSavingRule] = useState(false);
   const [newRule, setNewRule] = useState({
     pattern: '',
     mode: 'contains',
@@ -167,14 +169,29 @@ useEffect(() => {
     setShowRuleModal(true);
   };
 
-  const saveRule = () => {
+  const saveRule = async () => {
+    if (savingRule) return;
+    setSavingRule(true);
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
     dispatch({ type: 'setRules', payload: updatedRules });
+    const syncPromise = syncWithDatabase();
     setRuleAppliedMessage('ルールを保存し、全取引に適用しています...');
     setApplyingRules(true);
     setShowRuleModal(false);
     setSelectedTx(null);
+    try {
+      const success = await syncPromise;
+      if (success) {
+        toast.success('ルールを保存し同期しました');
+      } else {
+        toast.error('ルールの同期に失敗しました');
+      }
+    } catch (error) {
+      toast.error('ルールの同期に失敗しました');
+    } finally {
+      setSavingRule(false);
+    }
   };
 
   const applyRuleToTransaction = () => {
@@ -792,13 +809,14 @@ useEffect(() => {
                   >
                     この明細のみ変更
                   </Button>
-                  <Button 
+                  <Button
                     onClick={saveRule}
                     className="flex-1"
+                    disabled={savingRule}
                   >
-                    ルールを保存
+                    {savingRule ? '保存中...' : 'ルールを保存'}
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setShowRuleModal(false)}
                     variant="outline"
                   >
