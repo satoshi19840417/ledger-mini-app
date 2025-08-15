@@ -114,7 +114,9 @@ export default function PieByCategory({
       items.push({ name, value });
     }
   });
-  if (!hideOthers && othersValue > 0) {
+  if (items.length === 0 && othersValue > 0) {
+    items.push({ name: 'その他', value: othersValue });
+  } else if (!hideOthers && othersValue > 0) {
     items.push({ name: 'その他', value: othersValue });
   }
   items.sort((a, b) => {
@@ -134,6 +136,10 @@ export default function PieByCategory({
     });
     return items.map((d) => ({ ...d, fill: colorMap.current[d.name] }));
   }, [items, lockColors]);
+
+  if (items.length === 0) {
+    return <p>データがありません</p>;
+  }
 
   const formatValue = (v) => formatAmount(v, yenUnit);
   const tooltipFormatter = (v, name) => [formatValue(v), name];
