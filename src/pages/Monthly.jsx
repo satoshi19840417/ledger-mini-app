@@ -31,8 +31,11 @@ export default function Monthly({
   );
 
   useEffect(() => {
-    setSelectedMonth(months[months.length - 1] || '');
-  }, [months]);
+    // 初回のみ、またはselectedMonthが月リストに存在しない場合のみ更新
+    if (!selectedMonth || !months.includes(selectedMonth)) {
+      setSelectedMonth(months[months.length - 1] || '');
+    }
+  }, [months, selectedMonth]);
 
   const monthTxs = useMemo(
     () =>
