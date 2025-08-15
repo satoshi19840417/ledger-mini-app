@@ -411,16 +411,17 @@ export const dbService = {
       
       // プロフィールが存在しない場合は作成
       if (!data) {
+        const now = new Date().toISOString();
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .insert({ id: userId, display_name: null })
+          .insert({ id: userId, display_name: null, version: 1, updated_at: now })
           .select()
           .single();
-        
+
         if (insertError) throw insertError;
         return { success: true, data: newProfile };
       }
-      
+
       return { success: true, data };
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -428,39 +429,57 @@ export const dbService = {
     }
   },
 
-  async updateProfile(userId, updates) {
+  async updateProfile(userId, updates, current = {}) {
     if (!supabase) {
       return { success: false, error: 'Supabase not initialized' };
     }
-    
+
     try {
       // まずプロフィールが存在するか確認
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('*')
+        .select('version, updated_at')
         .eq('id', userId)
         .single();
-      
+
       let data;
       let error;
-      
+      const now = new Date().toISOString();
+
       if (!existingProfile) {
         // プロフィールが存在しない場合は作成
         ({ data, error } = await supabase
           .from('profiles')
-          .insert({ id: userId, ...updates })
+          .insert({ id: userId, ...updates, version: 1, updated_at: now })
           .select()
           .single());
       } else {
         // プロフィールが存在する場合は更新
+        const currentVersion =
+          current.version ?? existingProfile.version ?? 0;
+        const currentUpdatedAt =
+          current.updated_at ?? existingProfile.updated_at;
+
         ({ data, error } = await supabase
           .from('profiles')
-          .update(updates)
+          .update({ ...updates, version: currentVersion + 1, updated_at: now })
           .eq('id', userId)
+          .eq('version', currentVersion)
+          .eq('updated_at', currentUpdatedAt)
           .select()
           .single());
+
+        if (error && error.code === 'PGRST116') {
+          // バージョン不一致（楽観的ロック失敗）
+          const { data: latest } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          return { success: false, conflict: true, data: latest };
+        }
       }
-      
+
       if (error) throw error;
       return { success: true, data };
     } catch (error) {
