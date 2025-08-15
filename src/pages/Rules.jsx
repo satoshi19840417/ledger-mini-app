@@ -37,6 +37,7 @@ export default function Rules() {
 
   const saveRules = updated => {
     dispatch({ type: 'setRules', payload: updated });
+    dispatch({ type: 'applyRules' });
   };
 
   const addRule = e => {
