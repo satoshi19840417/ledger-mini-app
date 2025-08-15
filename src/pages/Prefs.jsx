@@ -142,7 +142,7 @@ export default function Prefs() {
                   variant={yenUnit === 'yen' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setYenUnit('yen')}
-                  className="flex-1"
+                  className={`flex-1 ${yenUnit === 'yen' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
                 >
                   <DollarSign className="w-4 h-4 mr-2" />
                   円表示
@@ -151,7 +151,7 @@ export default function Prefs() {
                   variant={yenUnit === 'man' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setYenUnit('man')}
-                  className="flex-1"
+                  className={`flex-1 ${yenUnit === 'man' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
                 >
                   <DollarSign className="w-4 h-4 mr-2" />
                   万円表示

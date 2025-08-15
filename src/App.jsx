@@ -483,7 +483,7 @@ function Dashboard({
                 variant={yenUnit === 'yen' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onToggleUnit()}
-                className="flex-1"
+                className={`flex-1 ${yenUnit === 'yen' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
               >
                 円表示
               </Button>
@@ -491,7 +491,7 @@ function Dashboard({
                 variant={yenUnit === 'man' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onToggleUnit()}
-                className="flex-1"
+                className={`flex-1 ${yenUnit === 'man' ? 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : ''}`}
               >
                 万円表示
               </Button>
