@@ -44,7 +44,8 @@ function applyRulesToTransactions(transactions, rules) {
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'loadFromStorage': {
+    case 'loadFromStorage':
+    case 'loadFromBackup': {
       let transactions = [];
       let lastImportAt = null;
       let categories = DEFAULT_CATEGORIES;
@@ -93,7 +94,11 @@ function reducer(state, action) {
       } else {
         localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
       }
-      return { ...state, transactions, rules, categories, lastImportAt };
+      const newState = { ...state, transactions, rules, categories, lastImportAt };
+      if (action.type === 'loadFromBackup') {
+        newState.syncStatus = 'offline';
+      }
+      return newState;
     }
     
     case 'loadFromDatabase': {
