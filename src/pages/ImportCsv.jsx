@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
-import { parseCsvFiles } from '../utils/csv.js';
+import { parseCsvFiles, normalizeDate } from '../utils/csv.js';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,8 @@ export default function ImportCsv() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -56,18 +58,30 @@ export default function ImportCsv() {
       setUploadProgress(60);
       
       // カード引き落としの自動判定
-      const processedTransactions = autoDetectCardPayments 
+      const processedTransactions = autoDetectCardPayments
         ? detectCardPayments(transactions)
         : transactions;
-      
+
+      // 日付範囲でフィルタ
+      const filteredTransactions = processedTransactions.filter((tx) => {
+        const txDate = normalizeDate(tx.date);
+        if (startDate && txDate < startDate) return false;
+        if (endDate && txDate > endDate) return false;
+        return true;
+      });
+
       setUploadProgress(80);
-      
-      setPreview(processedTransactions);
+
+      setPreview(filteredTransactions);
       setHeaderMap(map);
       setErrors(errs);
-      
-      if (processedTransactions.length > 0) {
-        dispatch({ type: 'importTransactions', payload: processedTransactions, append });
+
+      if (filteredTransactions.length > 0) {
+        dispatch({
+          type: 'importTransactions',
+          payload: filteredTransactions,
+          append,
+        });
         dispatch({ type: 'applyRules' });
       }
       
@@ -246,6 +260,28 @@ export default function ImportCsv() {
                 <Label htmlFor="autoDetect" className="text-sm">
                   カード引き落としを自動判定して「カード支払い」カテゴリに分類
                 </Label>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label htmlFor="startDate" className="text-sm">
+                  開始日
+                </Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-auto"
+                />
+                <Label htmlFor="endDate" className="text-sm">
+                  終了日
+                </Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-auto"
+                />
               </div>
             </div>
           </div>
