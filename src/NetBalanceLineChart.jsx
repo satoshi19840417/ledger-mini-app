@@ -12,18 +12,18 @@ import {
 } from 'recharts';
 
 // ← ここから“最終案”のインポート（重複させない）
-import { convertAmount } from './utils/currency.js';
+import { convertAmount, formatAmount } from './utils/currency.js';
 import { addMonthlyDiffs } from './utils/diff.js';
 import { formatMonth, yFmt } from './utils/formatters.js';
 
 // CustomTooltip はこの1つだけ残す
-function CustomTooltip({ active, payload, label, yenUnit, average }) {
+function CustomTooltip({ active, payload, label, formatDiffValue, average }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
     <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: 8 }}>
       <p style={{ margin: 0 }}>{formatMonth(label)}</p>
-      <p style={{ margin: 0 }}>差分: {yFmt(payload[0].value, yenUnit)}</p>
-      <p style={{ margin: 0 }}>平均: {yFmt(average, yenUnit)}</p>
+      <p style={{ margin: 0 }}>差分: {formatDiffValue(payload[0].value)}</p>
+      <p style={{ margin: 0 }}>平均: {formatDiffValue(average)}</p>
     </div>
   );
 }
@@ -53,6 +53,8 @@ const average =
   data.length > 0
     ? data.reduce((sum, d) => sum + d.diff, 0) / data.length
     : 0;
+
+  const formatDiffValue = (value) => formatAmount(value, yenUnit);
 
 // ---- 画面サイズ（SSR安全） ---------------------------------------------------
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -98,7 +100,9 @@ return (
         ))}
 
         {/* ツールチップ（1つに統一） */}
-        <Tooltip content={<CustomTooltip yenUnit={yenUnit} average={average} />} />
+        <Tooltip
+          content={<CustomTooltip formatDiffValue={formatDiffValue} average={average} />}
+        />
         <Line
           type="monotone"
           dataKey="diff"
