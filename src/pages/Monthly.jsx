@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DEFAULT_CATEGORIES } from '../defaultCategories.js';
 import { TrendingUp, TrendingDown, Calendar, Filter, X, JapaneseYen, FileText, BarChart3 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatAmount } from '../utils/currency.js';
@@ -25,6 +27,7 @@ export default function Monthly({
   const categories = state.categories;
   const [selectedCategory, setSelectedCategory] = useState('');
   const [comparePeriod, setComparePeriod] = useState('3m');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   
   // フィルタリング処理
   const filteredTransactions = useMemo(() => {
@@ -298,6 +301,24 @@ export default function Monthly({
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {DEFAULT_CATEGORIES.map((c, i) => (
+                  <div key={c} className="flex items-center space-x-1">
+                    <Checkbox
+                      id={`cmp-cat-${i}`}
+                      checked={selectedCategories.includes(c)}
+                      onCheckedChange={(checked) => {
+                        setSelectedCategories((prev) =>
+                          checked ? [...prev, c] : prev.filter((v) => v !== c),
+                        );
+                      }}
+                    />
+                    <Label htmlFor={`cmp-cat-${i}`} className="text-xs">
+                      {c}
+                    </Label>
+                  </div>
+                ))}
+              </div>
               <BarByCategory
                 transactions={filteredTransactions}
                 period={comparePeriod}
@@ -305,6 +326,7 @@ export default function Monthly({
                 lockColors={lockColors}
                 hideOthers={hideOthers}
                 kind={kind}
+                selectedCategories={selectedCategories}
               />
             </CardContent>
           </Card>

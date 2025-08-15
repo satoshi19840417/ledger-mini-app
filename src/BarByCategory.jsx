@@ -75,6 +75,7 @@ export default function BarByCategory({
   hideOthers,
   kind = 'expense',
   height = 400,
+  selectedCategories = [],
 }) {
   const monthMap = {};
   const txs = transactions.filter((tx) => tx.kind === kind);
@@ -88,10 +89,12 @@ export default function BarByCategory({
   const selectedMonths = months.slice(-limit);
   const filteredTx = selectedMonths.flatMap((m) => monthMap[m] || []);
 
+  const selectedSet = new Set(selectedCategories);
   const totals = {};
   filteredTx.forEach((tx) => {
     const cat = tx.category || 'その他';
     if (hideOthers && cat === 'その他') return;
+    if (selectedCategories.length > 0 && !selectedSet.has(cat)) return;
     totals[cat] = (totals[cat] || 0) + Math.abs(tx.amount);
   });
 
