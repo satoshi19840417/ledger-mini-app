@@ -70,6 +70,8 @@ function reducer(state, action) {
           transactions = transactions.map(tx => ({
             ...tx,
             kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
+            isCardPayment:
+              tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
           }));
         } catch {
           // ignore

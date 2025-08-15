@@ -159,7 +159,7 @@ export default function ImportCsv() {
       );
       
       if (isCardPayment && tx.amount < 0) {
-        return { ...tx, category: 'カード支払い' };
+        return { ...tx, category: 'カード支払い', isCardPayment: true };
       }
       return tx;
     });
