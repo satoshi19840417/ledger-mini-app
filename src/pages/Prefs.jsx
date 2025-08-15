@@ -23,8 +23,15 @@ export default function Prefs() {
     yenUnit: localStorage.getItem('yenUnit') || 'yen',
     kind: localStorage.getItem('kind') || 'expense',
     filterMode: (() => {
-      const stored = JSON.parse(localStorage.getItem('filterMode') || '{}');
-      return { others: stored.others || 'include' };
+      try {
+        const stored = JSON.parse(localStorage.getItem('filterMode') || '{}');
+        return {
+          others: stored.others || 'include',
+          card: stored.card || 'exclude',
+        };
+      } catch {
+        return { others: 'include', card: 'exclude' };
+      }
     })(),
   };
 
@@ -203,6 +210,51 @@ export default function Prefs() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* カード支払いフィルター */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">カード支払い</Label>
+              <div className="grid grid-cols-3 gap-1">
+                <Button
+                  size="sm"
+                  variant={filterMode.card === 'include' ? 'default' : 'outline'}
+                  onClick={() => setFilterMode(prev => ({ ...prev, card: 'include' }))}
+                  className={`text-xs ${
+                    filterMode.card === 'include'
+                      ? kind === 'expense'
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-green-500 hover:bg-green-600 text-white'
+                      : ''
+                  }`}
+                >
+                  含む
+                </Button>
+                <Button
+                  size="sm"
+                  variant={filterMode.card === 'exclude' ? 'default' : 'outline'}
+                  onClick={() => setFilterMode(prev => ({ ...prev, card: 'exclude' }))}
+                  className={`text-xs ${
+                    filterMode.card === 'exclude'
+                      ? 'bg-gray-500 hover:bg-gray-600 text-white'
+                      : ''
+                  }`}
+                >
+                  除外
+                </Button>
+                <Button
+                  size="sm"
+                  variant={filterMode.card === 'only' ? 'default' : 'outline'}
+                  onClick={() => setFilterMode(prev => ({ ...prev, card: 'only' }))}
+                  className={`text-xs ${
+                    filterMode.card === 'only'
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                      : ''
+                  }`}
+                >
+                  のみ
+                </Button>
+              </div>
+            </div>
+
             {/* その他フィルター */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">その他カテゴリ</Label>
@@ -212,8 +264,10 @@ export default function Prefs() {
                   variant={filterMode.others === 'include' ? 'default' : 'outline'}
                   onClick={() => setFilterMode(prev => ({ ...prev, others: 'include' }))}
                   className={`text-xs ${
-                    filterMode.others === 'include' 
-                      ? kind === 'expense' ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                    filterMode.others === 'include'
+                      ? kind === 'expense'
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-green-500 hover:bg-green-600 text-white'
                       : ''
                   }`}
                 >
@@ -224,7 +278,7 @@ export default function Prefs() {
                   variant={filterMode.others === 'exclude' ? 'default' : 'outline'}
                   onClick={() => setFilterMode(prev => ({ ...prev, others: 'exclude' }))}
                   className={`text-xs ${
-                    filterMode.others === 'exclude' 
+                    filterMode.others === 'exclude'
                       ? 'bg-gray-500 hover:bg-gray-600 text-white'
                       : ''
                   }`}
@@ -236,7 +290,7 @@ export default function Prefs() {
                   variant={filterMode.others === 'only' ? 'default' : 'outline'}
                   onClick={() => setFilterMode(prev => ({ ...prev, others: 'only' }))}
                   className={`text-xs ${
-                    filterMode.others === 'only' 
+                    filterMode.others === 'only'
                       ? 'bg-blue-500 hover:bg-blue-600 text-white'
                       : ''
                   }`}
@@ -245,7 +299,7 @@ export default function Prefs() {
                 </Button>
               </div>
             </div>
-            
+
             {/* 現在の設定サマリー */}
             <div className="pt-3 border-t">
               <div className="flex flex-wrap gap-2">
@@ -259,7 +313,17 @@ export default function Prefs() {
                     その他のみ
                   </Badge>
                 )}
-                {filterMode.others === 'include' && (
+                {filterMode.card === 'exclude' && (
+                  <Badge variant="destructive" className="text-xs bg-gray-500">
+                    カード支払い除外
+                  </Badge>
+                )}
+                {filterMode.card === 'only' && (
+                  <Badge className="text-xs bg-blue-500 text-white">
+                    カード支払いのみ
+                  </Badge>
+                )}
+                {filterMode.others === 'include' && filterMode.card === 'include' && (
                   <span className="text-xs text-muted-foreground">デフォルト設定</span>
                 )}
               </div>

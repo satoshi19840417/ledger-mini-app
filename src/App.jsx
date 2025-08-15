@@ -121,20 +121,26 @@ export default function App() {
   const isAuthenticated = session || isLocalMode;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  // 旧形式のfilterModeからcard/rentを除去
+  // 旧形式のfilterModeからrentを除去
   useEffect(() => {
     const fm = localStorage.getItem('filterMode');
     if (fm) {
       try {
         const parsed = JSON.parse(fm);
-        if (parsed.card !== undefined || parsed.rent !== undefined) {
+        if (parsed.rent !== undefined) {
           localStorage.setItem(
             'filterMode',
-            JSON.stringify({ others: parsed.others || 'include' })
+            JSON.stringify({
+              others: parsed.others || 'include',
+              card: parsed.card || 'exclude',
+            })
           );
         }
       } catch {
-        localStorage.setItem('filterMode', JSON.stringify({ others: 'include' }));
+        localStorage.setItem(
+          'filterMode',
+          JSON.stringify({ others: 'include', card: 'exclude' })
+        );
       }
     }
   }, []);
