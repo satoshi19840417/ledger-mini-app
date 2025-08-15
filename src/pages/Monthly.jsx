@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
-import BarByCategory from '../BarByCategory.jsx';
+import CategoryComparison from '../CategoryComparison.jsx';
 import { useStore } from '../state/StoreContextWithDB';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DEFAULT_CATEGORIES } from '../defaultCategories.js';
+
 import { TrendingUp, TrendingDown, Calendar, Filter, X, JapaneseYen, FileText, BarChart3 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatAmount } from '../utils/currency.js';
@@ -300,27 +300,125 @@ export default function Monthly({
                 カテゴリ比較
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {DEFAULT_CATEGORIES.map((c, i) => (
-                  <div key={c} className="flex items-center space-x-1">
-                    <Checkbox
-                      id={`cmp-cat-${i}`}
-                      checked={selectedCategories.includes(c)}
-                      onCheckedChange={(checked) => {
-                        setSelectedCategories((prev) =>
-                          checked ? [...prev, c] : prev.filter((v) => v !== c),
-                        );
-                      }}
-                    />
-                    <Label htmlFor={`cmp-cat-${i}`} className="text-xs">
-                      {c}
-                    </Label>
-                  </div>
-                ))}
+{/* --- カテゴリ選択 --- */}
+<CardContent className="space-y-4">
+  <div className="space-y-2">
+    <BarByCategory />
+
+    {(() => {
+      const MAX = 5;
+      const all = categories; // 既存の categories を利用
+      const isSmall = all.length <= 8;
+
+      const add = (c) =>
+        setSelectedCategories((prev) =>
+          prev.includes(c) ? prev : [...prev, c]
+        );
+      const remove = (c) =>
+        setSelectedCategories((prev) => prev.filter((v) => v !== c));
+      const toggle = (c, checked) => (checked ? add(c) : remove(c));
+
+      return (
+        <div className="space-y-3">
+          {/* 8件以下 → チェックボックス */}
+          {isSmall ? (
+            <fieldset className="space-y-2">
+              <legend className="text-sm text-muted-foreground">カテゴリ選択</legend>
+              <div className="flex flex-wrap gap-3">
+                {all.map((c, i) => {
+                  const checked = selectedCategories.includes(c);
+                  const lock = !checked && selectedCategories.length >= MAX;
+                  return (
+                    <div key={c} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`cmp-cat-${i}`}
+                        checked={checked}
+                        disabled={lock}
+                        onCheckedChange={(v) => toggle(c, !!v)}
+                      />
+                      <Label
+                        htmlFor={`cmp-cat-${i}`}
+                        className={lock ? "opacity-50" : ""}
+                      >
+                        {c}
+                      </Label>
+                    </div>
+                  );
+                })}
               </div>
-              <BarByCategory
+            </fieldset>
+          ) : (
+            /* 9件以上 → ネイティブ複数選択 */
+            <div className="space-y-2">
+              <Label htmlFor="compare-categories">カテゴリ選択</Label>
+              <select
+                id="compare-categories"
+                className="w-full h-32 rounded-md border p-2"
+                multiple
+                size={Math.min(8, all.length)}
+                value={selectedCategories}
+                onChange={(e) =>
+                  setSelectedCategories(
+                    Array.from(e.currentTarget.selectedOptions).map((o) => o.value)
+                  )
+                }
+              >
+                {all.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 選択中バッジ + クリア */}
+          {selectedCategories.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedCategories.map((c) => (
+                <Badge key={c} variant="secondary" className="flex items-center gap-2">
+                  {c}
+                  <button
+                    type="button"
+                    aria-label={`${c} を外す`}
+                    onClick={() => remove(c)}
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+              <button
+                type="button"
+                className="text-xs underline"
+                onClick={() => setSelectedCategories([])}
+              >
+                すべて解除
+              </button>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            {selectedCategories.length}/5 選択中（最大5件）
+          </p>
+        </div>
+      );
+    })()}
+  </div>
+
+  {/* --- 比較グラフ --- */}
+  <CategoryComparison
+    transactions={filteredTransactions}
+    selectedCategories={selectedCategories}
+    period={comparePeriod}
+    yenUnit={yenUnit}
+    lockColors={lockColors}
+    hideOthers={hideOthers}
+    kind={kind}
+  />
+</CardContent>
+
                 transactions={filteredTransactions}
+                selectedCategories={selectedCategories}
                 period={comparePeriod}
                 yenUnit={yenUnit}
                 lockColors={lockColors}
