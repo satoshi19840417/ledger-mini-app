@@ -21,6 +21,7 @@ const Transactions = lazy(() => import('./pages/Transactions.jsx'));
 const Others = lazy(() => import('./pages/Others.jsx'));
 const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
+const Categories = lazy(() => import('./pages/Categories.jsx'));
 
 const NAV = {
   main: [
@@ -36,6 +37,7 @@ const NAV = {
     { key: 'rules', label: '再分類ルール' },
     { key: 'others', label: 'その他集計' },
     { key: 'tx', label: '取引一覧' },
+    { key: 'categories', label: 'カテゴリ管理' },
   ],
   settings: [
     { key: 'prefs', label: '設定' },
@@ -675,6 +677,7 @@ function Dashboard({
           {page === 'rules' && <Rules />}
           {page === 'others' && <Others yenUnit={yenUnit} />}
           {page === 'tx' && <Transactions />}
+          {page === 'categories' && <Categories />}
           {page === 'prefs' && <Prefs />}
           {page === 'settings' && <Settings />}
         </Suspense>

@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
-import { CATEGORIES } from '../categories';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 /** @typedef {import('../types').Transaction} Transaction */
@@ -10,10 +9,11 @@ export default function Transactions() {
   const { state, dispatch } = useStore();
   /** @type {Transaction[]} */
   const txs = state.transactions;
+  const categories = state.categories;
   const unclassifiedCount = txs.filter(tx => !tx.category).length;
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [keyword, setKeyword] = useState('');
   const [categoryQuery, setCategoryQuery] = useState('');
   const [minAmount, setMinAmount] = useState('');
@@ -30,42 +30,69 @@ export default function Transactions() {
     pattern: '',
     mode: 'contains',
     target: 'description',
-    category: CATEGORIES[0],
+    category: categories[0],
     kind: 'both',
   });
 
-  const filtered = useMemo(() => {
-    return txs.filter(tx => {
-      if (showUnclassifiedOnly && tx.category) return false;
-      if (
-        excludeCardPayments &&
-        (tx.category === 'カード支払い' || tx.category === 'カード払い')
-      )
-        return false;
-      if (startDate && tx.date < startDate) return false;
-      if (endDate && tx.date > endDate) return false;
-      if (categories.length && !categories.includes(tx.category)) return false;
-      if (categoryQuery) {
-        const c = (tx.category || '').toLowerCase();
-        if (!c.includes(categoryQuery.toLowerCase())) return false;
-      }
-      if (keyword) {
-        const k = keyword.toLowerCase();
-        const target = `${tx.description || ''} ${tx.detail || ''} ${tx.memo || ''}`.toLowerCase();
-        if (!target.includes(k)) return false;
-      }
-      const amt = Math.abs(tx.amount);
-      if (minAmount !== '' && amt < Number(minAmount)) return false;
-      if (maxAmount !== '' && amt > Number(maxAmount)) return false;
-      if (type === 'income' && tx.kind !== 'income') return false;
-      if (type === 'expense' && tx.kind !== 'expense') return false;
-      return true;
-    });
-  }, [txs, startDate, endDate, categories, categoryQuery, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+// --- 修正後 ---
+const filtered = useMemo(() => {
+  return txs.filter((tx) => {
+    // 既存フィルタ
+    if (showUnclassifiedOnly && tx.category) return false;
+    if (
+      excludeCardPayments &&
+      (tx.category === 'カード支払い' || tx.category === 'クード払い' || tx.category === 'クレカ払い')
+    ) return false;
 
-  useEffect(() => {
-    setPage(1);
-  }, [startDate, endDate, categories, categoryQuery, keyword, minAmount, maxAmount, type, excludeCardPayments, showUnclassifiedOnly]);
+    if (startDate && tx.date < startDate) return false;
+    if (endDate && tx.date > endDate) return false;
+
+    // 追加: カテゴリ管理（両方が指定されていればANDで絞り込み）
+    if (Array.isArray(selectedCategories) && selectedCategories.length > 0 &&
+        !selectedCategories.includes(tx.category)) return false;
+
+    if (Array.isArray(categories) && categories.length > 0 &&
+        !categories.includes(tx.category)) return false;
+
+    if (categoryQuery && categoryQuery.trim() !== '') {
+      const c = (tx.category || '').toLowerCase();
+      if (!c.includes(categoryQuery.toLowerCase().trim())) return false;
+    }
+
+    // 既存: キーワード検索
+    if (keyword && keyword.trim() !== '') {
+      const k = keyword.toLowerCase().trim();
+      const target = `${tx.description || ''} ${tx.detail || ''} ${tx.memo || ''}`.toLowerCase();
+      if (!target.includes(k)) return false;
+    }
+
+    // 金額・種別
+    const amt = Math.abs(Number(tx.amount));
+    if (minAmount !== '' && !Number.isNaN(Number(minAmount)) && amt < Number(minAmount)) return false;
+    if (maxAmount !== '' && !Number.isNaN(Number(maxAmount)) && amt > Number(maxAmount)) return false;
+
+    if (type === 'income' && tx.kind !== 'income') return false;
+    if (type === 'expense' && tx.kind !== 'expense') return false;
+
+    return true;
+  });
+}, [
+  txs,
+  startDate, endDate,
+  selectedCategories, categories, categoryQuery,
+  keyword, minAmount, maxAmount, type,
+  excludeCardPayments, showUnclassifiedOnly,
+]);
+
+// ページングリセット（依存も統合）
+useEffect(() => {
+  setPage(1);
+}, [
+  startDate, endDate,
+  selectedCategories, categories, categoryQuery,
+  keyword, minAmount, maxAmount, type,
+  excludeCardPayments, showUnclassifiedOnly,
+]);
 
   const pageSize = 50;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -95,7 +122,7 @@ export default function Transactions() {
       pattern: tx.description || tx.detail || '',
       mode: 'contains',
       target: 'description',
-      category: tx.category || CATEGORIES[0],
+      category: tx.category || categories[0],
       kind: tx.kind || 'both',
     });
     setShowRuleModal(true);
@@ -223,10 +250,14 @@ export default function Transactions() {
           <input type='date' value={endDate} onChange={e => setEndDate(e.target.value)} />
           <select
             multiple
-            value={categories}
-            onChange={e => setCategories(Array.from(e.target.selectedOptions).map(o => o.value))}
+            value={selectedCategories}
+            onChange={e =>
+              setSelectedCategories(
+                Array.from(e.target.selectedOptions).map(o => o.value)
+              )
+            }
           >
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -343,7 +374,7 @@ export default function Transactions() {
                       }}
                     >
                       <option value="">未分類</option>
-                      {CATEGORIES.map(c => (
+                      {categories.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
@@ -504,7 +535,7 @@ export default function Transactions() {
                   onChange={e => setNewRule(r => ({ ...r, category: e.target.value }))}
                   style={{ width: '100%', padding: 6 }}
                 >
-                  {CATEGORIES.map(c => (
+                  {categories.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>

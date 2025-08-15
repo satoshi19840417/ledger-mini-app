@@ -25,6 +25,7 @@
  * @typedef {Object} StoreState
  * @property {Transaction[]} transactions - Imported transactions after applying rules.
  * @property {Rule[]} rules - Reclassification rules defined by the user.
+ * @property {string[]} categories - Available categories.
  * @property {string|null} lastImportAt - ISO string for last import timestamp.
  */
 
@@ -53,12 +54,27 @@
  */
 
 /**
+ * @typedef {{ type: 'addCategory'; payload: string }} AddCategoryAction
+ */
+
+/**
+ * @typedef {{ type: 'updateCategory'; payload: { oldCategory: string; newCategory: string } }} UpdateCategoryAction
+ */
+
+/**
+ * @typedef {{ type: 'deleteCategory'; payload: string }} DeleteCategoryAction
+ */
+
+/**
  * @typedef {(
  *   | LoadFromStorageAction
  *   | ImportTransactionsAction
  *   | SetRulesAction
  *   | ApplyRulesAction
  *   | ClearAllAction
+ *   | AddCategoryAction
+ *   | UpdateCategoryAction
+ *   | DeleteCategoryAction
  * )} StoreAction
  */
 
