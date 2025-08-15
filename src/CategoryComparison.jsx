@@ -73,6 +73,7 @@ export default function CategoryComparison({
   hideOthers,
   lockColors,
   height = 400,
+  selectedCategories,
 }) {
   const filtered = useMemo(() => {
     return transactions.filter((tx) => {
@@ -96,7 +97,10 @@ export default function CategoryComparison({
   const limit = limitMap[period] || months.length;
   const selectedMonths = months.slice(-limit);
 
-  const topCategories = useMemo(() => {
+  const categories = useMemo(() => {
+    if (selectedCategories && selectedCategories.length > 0) {
+      return selectedCategories;
+    }
     const totals = {};
     filtered.forEach((tx) => {
       const cat = tx.category || 'その他';
@@ -106,11 +110,11 @@ export default function CategoryComparison({
       .sort((a, b) => b[1] - a[1])
       .slice(0, BAR_COLORS.length)
       .map(([cat]) => cat);
-  }, [filtered]);
+  }, [filtered, selectedCategories]);
 
   const data = selectedMonths.map((m) => {
     const row = { month: m };
-    topCategories.forEach((cat) => {
+    categories.forEach((cat) => {
       row[cat] = monthMap[m]?.[cat] || 0;
     });
     return row;
@@ -119,29 +123,29 @@ export default function CategoryComparison({
   const colorMap = useRef({});
   useMemo(() => {
     if (!lockColors) colorMap.current = {};
-    topCategories.forEach((cat) => {
+    categories.forEach((cat) => {
       if (!colorMap.current[cat]) {
         const used = Object.keys(colorMap.current).length;
         colorMap.current[cat] = BAR_COLORS[used % BAR_COLORS.length];
       }
     });
-  }, [topCategories, lockColors]);
+  }, [categories, lockColors]);
 
-  const hasData = data.some((d) => topCategories.some((cat) => d[cat] > 0));
+  const hasData = data.some((d) => categories.some((cat) => d[cat] > 0));
   if (!hasData) {
     return <p>データがありません</p>;
   }
 
   const totals = {};
   data.forEach((row) => {
-    topCategories.forEach((cat) => {
+    categories.forEach((cat) => {
       totals[cat] = (totals[cat] || 0) + (row[cat] || 0);
     });
   });
 
   const formatValue = (v) => formatAmount(v, yenUnit);
   const tooltipFormatter = (v, name) => [formatValue(v), name];
-  const legendPayload = topCategories.map((cat) => ({
+  const legendPayload = categories.map((cat) => ({
     id: cat,
     type: 'square',
     color: colorMap.current[cat],
@@ -150,7 +154,7 @@ export default function CategoryComparison({
   }));
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const minWidth = Math.max(selectedMonths.length * topCategories.length * 40, 500);
+  const minWidth = Math.max(selectedMonths.length * categories.length * 40, 500);
   const chartWidth = isMobile ? Math.max(minWidth, selectedMonths.length * 80) : '100%';
 
   return (
@@ -168,7 +172,7 @@ export default function CategoryComparison({
             <YAxis tickFormatter={formatValue} width={isMobile ? 60 : 80} tick={{ fontSize: isMobile ? 10 : 12 }} />
             <Tooltip formatter={tooltipFormatter} labelFormatter={(label) => label} />
             <Legend content={<ScrollableLegend />} payload={legendPayload} />
-            {topCategories.map((cat) => (
+            {categories.map((cat) => (
               <Bar key={cat} dataKey={cat} name={cat} fill={colorMap.current[cat]} />
             ))}
           </ReBarChart>
