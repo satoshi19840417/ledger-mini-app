@@ -69,6 +69,17 @@ function parseJapaneseDate(str) {
   return s;
 }
 
+// Normalize a date string to "YYYY-MM-DD" for consistent comparison
+function normalizeDate(str) {
+  if (!str) return '';
+  const parsed = parseJapaneseDate(str);
+  try {
+    return new Date(parsed).toISOString().slice(0, 10);
+  } catch {
+    return '';
+  }
+}
+
 // Convert row object to Transaction with validation error reporting
 function rowToTransaction(row) {
   const dateStr = row.date ? parseJapaneseDate(row.date) : '';
@@ -177,4 +188,4 @@ export async function parseCsvFiles(files) {
   return { transactions, headerMap, errors };
 }
 
-export { normalizeHeader, rowToTransaction };
+export { normalizeHeader, rowToTransaction, normalizeDate };
