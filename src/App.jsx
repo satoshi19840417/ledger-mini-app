@@ -118,6 +118,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
 
   const isAuthenticated = session || isLocalMode;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   // 旧形式のfilterModeからcard/rentを除去
   useEffect(() => {
@@ -567,6 +568,8 @@ function Dashboard({
               lockColors={lockColors}
               hideOthers={hideOthers}
               kind={kind}
+              chartHeight={isMobile ? 300 : 250}
+              radius={isMobile ? '65%' : '80%'}
             />
           </CardContent>
         </Card>

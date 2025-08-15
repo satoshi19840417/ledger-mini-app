@@ -132,6 +132,7 @@ export default function Monthly({
 
   const [selectedDay, setSelectedDay] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -280,6 +281,8 @@ export default function Monthly({
                 lockColors={lockColors}
                 hideOthers={hideOthers}
                 kind={kind}
+                chartHeight={isMobile ? 300 : 250}
+                radius={isMobile ? '65%' : '80%'}
               />
             </CardContent>
           </Card>
