@@ -47,12 +47,13 @@ export default function Settings() {
       setUser(user);
       
       // プロフィール情報を取得
-      if (user) {
-        const profileResult = await dbService.loadProfile(user.id);
-        if (profileResult.success && profileResult.data) {
-          setDisplayName(profileResult.data.display_name || '');
+        if (user) {
+          const profileResult = await dbService.loadProfile(user.id);
+          if (profileResult.success && profileResult.data) {
+            setDisplayName(profileResult.data.display_name || '');
+            dispatch({ type: 'setProfile', payload: profileResult.data });
+          }
         }
-      }
     } catch (error) {
       console.error('Error fetching user:', error);
     } finally {
@@ -177,33 +178,41 @@ export default function Settings() {
                         placeholder="表示名を入力"
                         autoFocus
                       />
-                      <button
-                        onClick={async () => {
-                          try {
-                            const result = await dbService.updateProfile(user.id, {
-                              display_name: tempDisplayName || null
-                            });
-                            if (result.success) {
-                              setDisplayName(tempDisplayName);
-                              setEditingName(false);
-                              // StoreContextのprofileを更新
-                              dispatch({
-                                type: 'updateProfile',
-                                payload: { display_name: tempDisplayName || null }
-                              });
-                              toast.success('表示名を更新しました');
-                            } else {
-                              throw result.error;
+                        <button
+                          onClick={async () => {
+                            try {
+                              const current = {
+                                version: state.profile?.version,
+                                updated_at: state.profile?.updated_at,
+                              };
+                              const result = await dbService.updateProfile(
+                                user.id,
+                                { display_name: tempDisplayName || null },
+                                current
+                              );
+                              if (result.success) {
+                                setDisplayName(result.data.display_name || '');
+                                setEditingName(false);
+                                dispatch({ type: 'setProfile', payload: result.data });
+                                toast.success('表示名を更新しました');
+                              } else if (result.conflict) {
+                                dispatch({ type: 'setProfile', payload: result.data });
+                                setDisplayName(result.data.display_name || '');
+                                setTempDisplayName(result.data.display_name || '');
+                                setEditingName(true);
+                                toast.error('他の端末で更新されました。内容を確認して再度保存してください');
+                              } else {
+                                throw result.error;
+                              }
+                            } catch (error) {
+                              console.error('Error updating display name:', error);
+                              toast.error('表示名の更新に失敗しました');
                             }
-                          } catch (error) {
-                            console.error('Error updating display name:', error);
-                            toast.error('表示名の更新に失敗しました');
-                          }
-                        }}
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                      >
-                        保存
-                      </button>
+                          }}
+                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                        >
+                          保存
+                        </button>
                       <button
                         onClick={() => {
                           setEditingName(false);
