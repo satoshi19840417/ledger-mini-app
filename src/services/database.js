@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabaseClient.js';
 import { clampFutureDate } from './dateUtils.js';
+import { toast } from 'react-hot-toast';
 
 export const dbService = {
   // テスト用: テーブル構造を確認
@@ -39,17 +40,8 @@ export const dbService = {
     }
     
     try {
-      // 空の配列の場合は、既存データを削除
+      // 空の配列の場合は何もせずに終了
       if (!transactions || transactions.length === 0) {
-        const { error: deleteError } = await supabase
-          .from('transactions')
-          .delete()
-          .eq('user_id', userId);
-        
-        if (deleteError) {
-          console.error('Error deleting transactions:', deleteError);
-          return { success: false, error: deleteError };
-        }
         return { success: true, data: [] };
       }
 
@@ -98,74 +90,37 @@ export const dbService = {
       console.log('Mapped transactions:', mappedTransactions);
       console.log('Sample transaction:', mappedTransactions[0]);
 
-      // まず既存のユーザーのトランザクションを削除
-      const { error: deleteError } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('user_id', userId);
-      
-      if (deleteError) {
-        console.error('Error deleting existing transactions:', deleteError);
-      }
-
       // バッチサイズを設定（一度に送信する件数）
       const BATCH_SIZE = 50;
       let allData = [];
       let hasError = false;
       
-      // トランザクションを分割して送信
+      // トランザクションを分割して送信（同一IDは更新・新規IDは挿入）
       for (let i = 0; i < mappedTransactions.length; i += BATCH_SIZE) {
         const batch = mappedTransactions.slice(i, i + BATCH_SIZE);
-        console.log(`Inserting batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(mappedTransactions.length / BATCH_SIZE)}`);
-        
+        console.log(`Upserting batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(mappedTransactions.length / BATCH_SIZE)}`);
+
         const { data: batchData, error: batchError } = await supabase
           .from('transactions')
-          .insert(batch);
-        
+          .upsert(batch, { onConflict: 'id' });
+
         if (batchError) {
           console.error(`Error in batch ${Math.floor(i / BATCH_SIZE) + 1}:`, batchError);
           hasError = true;
-          // エラーがあっても続行
+          toast.error('取引の同期に失敗しました');
         } else if (batchData) {
           allData = allData.concat(batchData);
         }
       }
-      
+
       if (hasError) {
-        return { success: false, error: 'Some batches failed to insert' };
+        return { success: false, error: 'Some batches failed to upsert' };
       }
-      
-      const data = allData;
-      const error = null;
-      
-      if (error) {
-        console.error('Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          statusCode: error.statusCode
-        });
-        
-        // 詳細なエラー情報を出力
-        if (error.message?.includes('duplicate key')) {
-          console.error('Duplicate key error - existing IDs might be conflicting');
-          console.error('First transaction ID:', mappedTransactions[0]?.id);
-        }
-        
-        if (error.message?.includes('null value')) {
-          console.error('Null value error - required field might be missing');
-          const nullFields = Object.entries(mappedTransactions[0] || {})
-            .filter(([_, value]) => value === null || value === undefined)
-            .map(([key]) => key);
-          console.error('Null or undefined fields:', nullFields);
-        }
-        
-        throw error;
-      }
-      return { success: true, data };
+
+      return { success: true, data: allData };
     } catch (error) {
       console.error('Error syncing transactions:', error);
+      toast.error('取引の同期に失敗しました');
       return { success: false, error };
     }
   },
