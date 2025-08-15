@@ -40,7 +40,8 @@ import {
   RefreshCw, 
   Cloud,
   Home,
-  EyeOff
+  EyeOff,
+  Database
 } from 'lucide-react';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
@@ -56,10 +57,14 @@ const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Categories = lazy(() => import('./pages/Categories.jsx'));
 const DatabaseTest = lazy(() => import('./pages/DatabaseTest.jsx'));
+const Data = lazy(() => import('./pages/Data.jsx'));
+const SettingsHub = lazy(() => import('./pages/SettingsHub.jsx'));
 
 const NAV = {
   main: [
-    { key: 'dashboard', label: 'ダッシュボード', icon: Home },
+    { key: 'dashboard', label: 'TOP', icon: Home },
+    { key: 'data', label: 'データ', icon: Database },
+    { key: 'settings-hub', label: '設定', icon: SettingsIcon },
   ],
   data: [
     { key: 'import', label: 'CSV取込', icon: Upload },
@@ -77,7 +82,7 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly'].includes(k);
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
@@ -657,7 +662,7 @@ function Dashboard({
   }
 
   return (
-    <div className='app-shell'>
+    <div className='app-shell' style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* ヘッダー */}
       <header className='header'>
         <div className='header-controls'>
@@ -731,70 +736,12 @@ function Dashboard({
                   </div>
                 </div>
                 
-                {isAuthenticated && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-600 px-2">アカウント</h4>
-                    <div className="space-y-1">
-                      {session ? (
-                        <>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-2 h-auto py-3 px-4 text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleLogout();
-                            }}
-                          >
-                            <LogOut className="h-4 w-4" />
-                            ログアウト
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-2 h-auto py-3 px-4 text-emerald-600 hover:text-emerald-600"
-                            disabled={syncing}
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setSyncing(true);
-                              try {
-                                await loadFromDatabase();
-                                alert('データを同期しました');
-                              } catch (error) {
-                                console.error('Sync error:', error);
-                                alert('同期に失敗しました');
-                              } finally {
-                                setSyncing(false);
-                                setOpen(false);
-                              }
-                            }}
-                          >
-                            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                            {syncing ? '同期中...' : 'データを同期'}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start gap-2 h-auto py-3 px-4 text-blue-600 hover:text-blue-600"
-                          onClick={() => {
-                            localStorage.removeItem('localMode');
-                            window.location.reload();
-                          }}
-                        >
-                          <Cloud className="h-4 w-4" />
-                          クラウド同期に切り替え
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
         </SheetContent>
       </Sheet>
 
       {/* コンテンツ */}
-      <main className='content text-center'>
+      <main className='content text-center' style={{ flex: 1, paddingBottom: '120px' }}>
         {state.transactions.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>
@@ -829,8 +776,7 @@ function Dashboard({
                              hover:bg-gray-50 px-4 py-3 transition-all duration-200"
                 >
                   <Home className={`h-4 w-4 ${page === 'dashboard' ? 'text-blue-600' : ''}`} />
-                  <span className="hidden sm:inline font-medium">ダッシュボード</span>
-                  <span className="sm:hidden font-medium">ホーム</span>
+                  <span className="font-medium">TOP</span>
                   {page === 'dashboard' && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
                   )}
@@ -989,6 +935,8 @@ function Dashboard({
           </Tabs>
         ) : (
           <Suspense fallback={<div>Loading...</div>}>
+            {page === 'data' && <Data />}
+            {page === 'settings-hub' && <SettingsHub />}
             {page === 'import' && <ImportCsv />}
             {page === 'export' && <ExportCsv />}
             {page === 'cleanup' && <DataCleanup />}
@@ -1016,8 +964,45 @@ function Dashboard({
           </CardContent>
         </Card>
       )}
-      <footer className='border-t bg-muted/50 py-4 px-4 text-center text-sm text-muted-foreground'>
-        MODE: {import.meta.env.MODE} / lastModified: {document.lastModified}
+      <footer className='border-t bg-white shadow-lg' style={{ 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 40 
+      }}>
+        <div className="flex justify-center gap-2 py-3 px-4 border-b">
+          <Button
+            variant={page === 'dashboard' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPage('dashboard')}
+            className="gap-2"
+          >
+            <Home className="h-4 w-4" />
+            TOP
+          </Button>
+          <Button
+            variant={page === 'data' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPage('data')}
+            className="gap-2"
+          >
+            <Database className="h-4 w-4" />
+            データ
+          </Button>
+          <Button
+            variant={page === 'settings-hub' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPage('settings-hub')}
+            className="gap-2"
+          >
+            <SettingsIcon className="h-4 w-4" />
+            設定
+          </Button>
+        </div>
+        <div className='py-2 px-4 text-center text-xs text-muted-foreground bg-muted/50'>
+          MODE: {import.meta.env.MODE} / lastModified: {document.lastModified}
+        </div>
       </footer>
 
     </div>
