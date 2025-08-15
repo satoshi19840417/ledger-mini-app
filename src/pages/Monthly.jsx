@@ -29,32 +29,28 @@ export default function Monthly({
   // フィルタリング処理
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
-    
+
     // その他フィルター
     if (filterMode.others === 'exclude') {
       filtered = filtered.filter(tx => tx.category !== 'その他');
     } else if (filterMode.others === 'only') {
       filtered = filtered.filter(tx => tx.category === 'その他');
     }
-    
-    
-    // カテゴリフィルター
-    if (selectedCategory) {
-      filtered = filtered.filter(tx => tx.category === selectedCategory);
-    }
-    
+
     return filtered;
-  }, [transactions, filterMode, selectedCategory]);
+  }, [transactions, filterMode]);
 
   const months = useMemo(() => {
-    void selectedCategory; // 依存配列に含めるため
+    const txs = selectedCategory
+      ? filteredTransactions.filter((tx) => tx.category === selectedCategory)
+      : filteredTransactions;
     const set = new Set(
-      filteredTransactions
+      txs
         .filter((tx) => tx.kind === kind)
         .map((tx) => tx.date.slice(0, 7)),
     );
     return Array.from(set).sort();
-  }, [filteredTransactions, kind, selectedCategory, filterMode]);
+  }, [filteredTransactions, kind, selectedCategory]);
 
   const [selectedMonth, setSelectedMonth] = useState(
     months[months.length - 1] || '',
@@ -62,28 +58,31 @@ export default function Monthly({
 
   useEffect(() => {
     setSelectedMonth(months[months.length - 1] || '');
-  }, [months, selectedCategory]);
+  }, [months]);
 
   const monthTxs = useMemo(
     () => {
-      void selectedCategory; // 依存配列に含めるため
-      return filteredTransactions.filter(
-        (tx) =>
-          tx.kind === kind && tx.date.slice(0, 7) === selectedMonth,
+      let txs = filteredTransactions.filter(
+        (tx) => tx.kind === kind && tx.date.slice(0, 7) === selectedMonth,
       );
+      if (selectedCategory) {
+        txs = txs.filter((tx) => tx.category === selectedCategory);
+      }
+      return txs;
     },
-    [filteredTransactions, selectedMonth, kind, selectedCategory, filterMode],
+    [filteredTransactions, selectedMonth, kind, selectedCategory],
   );
 
   // 月の合計金額を計算
   const monthTotal = useMemo(() => {
     return monthTxs.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-  }, [monthTxs, filterMode]);
+  }, [monthTxs]);
 
   // 日別の集計データを作成
   const dailyData = useMemo(() => {
+    void selectedCategory; // 依存配列に含めるため
     if (!selectedMonth) return [];
-    
+
     const dailyMap = {};
     monthTxs.forEach((tx) => {
       const day = tx.date.slice(8, 10);
@@ -112,7 +111,7 @@ export default function Monthly({
     }
     
     return data;
-  }, [selectedMonth, monthTxs, filterMode]);
+  }, [selectedMonth, selectedCategory, monthTxs]);
 
   // カテゴリ別の詳細データ
   const categoryDetails = useMemo(() => {
@@ -126,11 +125,11 @@ export default function Monthly({
       categoryMap[cat].count += 1;
       categoryMap[cat].transactions.push(tx);
     });
-    
+
     return Object.entries(categoryMap)
       .map(([category, data]) => ({ category, ...data }))
       .sort((a, b) => b.amount - a.amount);
-  }, [monthTxs, filterMode]);
+  }, [monthTxs]);
 
   const [selectedDay, setSelectedDay] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -354,7 +353,7 @@ export default function Monthly({
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={dailyData}>
+                <BarChart data={dailyData} key={selectedCategory || 'all'}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="day" 
