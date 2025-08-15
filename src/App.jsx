@@ -636,7 +636,7 @@ function Dashboard({
             <SelectContent>
               <SelectItem value="3m">最近3ヶ月</SelectItem>
               <SelectItem value="6m">半年</SelectItem>
-              <SelectItem value="1y">1年</SelectItem>
+              <SelectItem value="1y">1年間</SelectItem>
               <SelectItem value="all">全期間</SelectItem>
             </SelectContent>
           </Select>

@@ -207,8 +207,8 @@ export default function Rules() {
                             setEditingRule(r => ({ ...r, mode: e.target.value }))
                           }
                         >
-                          <option value='contains'>contains</option>
-                          <option value='regex'>regex</option>
+                          <option value='contains'>部分一致</option>
+                          <option value='regex'>正規表現</option>
                         </select>
                       </td>
                       <td style={{ padding: 4 }}>
@@ -218,9 +218,9 @@ export default function Rules() {
                             setEditingRule(r => ({ ...r, target: e.target.value }))
                           }
                         >
-                          <option value='description'>description</option>
-                          <option value='detail'>detail</option>
-                          <option value='memo'>memo</option>
+                          <option value='description'>説明</option>
+                          <option value='detail'>詳細</option>
+                          <option value='memo'>メモ</option>
                         </select>
                       </td>
                       <td style={{ padding: 4 }}>
@@ -244,9 +244,9 @@ export default function Rules() {
                             setEditingRule(r => ({ ...r, kind: e.target.value }))
                           }
                         >
-                          <option value='both'>both</option>
-                          <option value='expense'>expense</option>
-                          <option value='income'>income</option>
+                          <option value='both'>すべて</option>
+                          <option value='expense'>支出のみ</option>
+                          <option value='income'>収入のみ</option>
                         </select>
                       </td>
                       <td style={{ padding: 4, display: 'flex', gap: 4 }}>
@@ -300,7 +300,7 @@ export default function Rules() {
         >
           <input
             type='text'
-            placeholder='pattern'
+            placeholder='パターン'
             value={newRule.pattern}
             onChange={e => setNewRule(r => ({ ...r, pattern: e.target.value }))}
           />
@@ -308,16 +308,16 @@ export default function Rules() {
             value={newRule.mode}
             onChange={e => setNewRule(r => ({ ...r, mode: e.target.value }))}
           >
-            <option value='contains'>contains</option>
-            <option value='regex'>regex</option>
+            <option value='contains'>部分一致</option>
+            <option value='regex'>正規表現</option>
           </select>
           <select
             value={newRule.target}
             onChange={e => setNewRule(r => ({ ...r, target: e.target.value }))}
           >
-            <option value='description'>description</option>
-            <option value='detail'>detail</option>
-            <option value='memo'>memo</option>
+            <option value='description'>説明</option>
+            <option value='detail'>詳細</option>
+            <option value='memo'>メモ</option>
           </select>
                         <select
                           value={newRule.category}
@@ -333,9 +333,9 @@ export default function Rules() {
             value={newRule.kind}
             onChange={e => setNewRule(r => ({ ...r, kind: e.target.value }))}
           >
-            <option value='both'>both</option>
-            <option value='expense'>expense</option>
-            <option value='income'>income</option>
+            <option value='both'>すべて</option>
+            <option value='expense'>支出のみ</option>
+            <option value='income'>収入のみ</option>
           </select>
           <button type='submit'>追加</button>
         </form>

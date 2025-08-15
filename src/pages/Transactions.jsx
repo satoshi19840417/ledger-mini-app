@@ -361,10 +361,10 @@ useEffect(() => {
                 </Label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger id="category-select">
-                    <SelectValue placeholder="全カテゴリ" />
+                    <SelectValue placeholder="すべてのカテゴリ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">全カテゴリ</SelectItem>
+                    <SelectItem value="">すべてのカテゴリ</SelectItem>
                     {categories.map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
@@ -778,7 +778,7 @@ useEffect(() => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="both">両方</SelectItem>
+                      <SelectItem value="both">すべて</SelectItem>
                       <SelectItem value="expense">支出のみ</SelectItem>
                       <SelectItem value="income">収入のみ</SelectItem>
                     </SelectContent>
