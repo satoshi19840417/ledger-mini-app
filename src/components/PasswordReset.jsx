@@ -113,7 +113,7 @@ export default function PasswordReset() {
           <div className="auth-message error">{error}</div>
         )}
 
-        <form onSubmit={handlePasswordUpdate} className="auth-form">
+        <form onSubmit={handlePasswordUpdate} className="auth-form text-left">
           <div className="form-group">
             <label htmlFor="password">新しいパスワード</label>
             <input

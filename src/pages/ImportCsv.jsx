@@ -309,7 +309,7 @@ export default function ImportCsv() {
                 </div>
                 
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm border-collapse">
+                  <table className="min-w-full text-sm border-collapse text-left">
                     <thead>
                       <tr className="border-b">
                         {KNOWN_FIELDS.filter((f) => headerMap[f]).map((f) => (
