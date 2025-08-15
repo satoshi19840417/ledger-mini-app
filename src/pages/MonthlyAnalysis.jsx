@@ -3,6 +3,14 @@ import PieByCategory from '../PieByCategory.jsx';
 import BalanceChart from '../BalanceChart.jsx';
 import MonthlyComparisonTable from '../MonthlyComparisonTable.jsx';
 import BarByMonth from '../BarByMonth.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { TrendingUp, TrendingDown, BarChart3, Calendar, Filter } from 'lucide-react';
+import { formatAmount } from '../utils/currency.js';
 
 export default function MonthlyAnalysis({
   transactions,
@@ -13,6 +21,8 @@ export default function MonthlyAnalysis({
 }) {
   const [excludeCardPayments, setExcludeCardPayments] = useState(false);
   const [excludeRent, setExcludeRent] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [comparisonMode, setComparisonMode] = useState('month'); // month | category
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -33,6 +43,15 @@ export default function MonthlyAnalysis({
       monthSet.add(tx.date.slice(0, 7));
     });
     return Array.from(monthSet).sort();
+  }, [filteredTransactions]);
+
+  // カテゴリー一覧を取得
+  const categories = useMemo(() => {
+    const categorySet = new Set();
+    filteredTransactions.forEach(tx => {
+      if (tx.category) categorySet.add(tx.category);
+    });
+    return Array.from(categorySet).sort();
   }, [filteredTransactions]);
 
   const rows = useMemo(
@@ -61,6 +80,50 @@ export default function MonthlyAnalysis({
       filteredTransactions.filter(tx => tx.date.slice(0, 7) === selectedMonth),
     [filteredTransactions, selectedMonth],
   );
+
+  // カテゴリー別の月次推移データ
+  const categoryComparisonData = useMemo(() => {
+    if (selectedCategory === 'all') return null;
+    
+    const data = months.map(month => {
+      const monthData = { month };
+      const monthTxs = filteredTransactions.filter(
+        tx => tx.date.slice(0, 7) === month && tx.category === selectedCategory
+      );
+      
+      monthData.income = monthTxs
+        .filter(tx => tx.kind === 'income')
+        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      
+      monthData.expense = monthTxs
+        .filter(tx => tx.kind === 'expense')
+        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      
+      monthData.total = monthData.income - monthData.expense;
+      
+      return monthData;
+    });
+    
+    return data;
+  }, [selectedCategory, months, filteredTransactions]);
+
+  // カテゴリー別の集計データ
+  const categoryStats = useMemo(() => {
+    const stats = {};
+    categories.forEach(category => {
+      const categoryTxs = filteredTransactions.filter(tx => tx.category === category);
+      stats[category] = {
+        income: categoryTxs
+          .filter(tx => tx.kind === 'income')
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
+        expense: categoryTxs
+          .filter(tx => tx.kind === 'expense')
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
+        count: categoryTxs.length
+      };
+    });
+    return stats;
+  }, [categories, filteredTransactions]);
 
   return (
     <section>

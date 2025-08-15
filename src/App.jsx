@@ -60,6 +60,9 @@ const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Categories = lazy(() => import('./pages/Categories.jsx'));
 
 const NAV = {
+  main: [
+    { key: 'dashboard', label: 'ダッシュボード', icon: Home },
+  ],
   data: [
     { key: 'import', label: 'CSV取込', icon: Upload },
     { key: 'export', label: 'CSVエクスポート', icon: Download },
@@ -76,7 +79,7 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly'].includes(k);
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
@@ -347,11 +350,15 @@ function Dashboard({
   onToggleOthers,
   onKindChange,
 }) {
-  const [filterMode, setFilterMode] = useState({
-    others: hideOthers ? 'exclude' : 'include',  // 'include' | 'exclude' | 'only'
-    card: 'exclude',    // 'include' | 'exclude' | 'only'
-    rent: 'include'     // 'include' | 'exclude' | 'only'
-  });
+  // localStorageから設定を読み込み
+  const [filterMode, setFilterMode] = useState(
+    JSON.parse(localStorage.getItem('filterMode') || '{"others":"include","card":"exclude","rent":"include"}')
+  );
+  
+  // filterModeが変更されたらlocalStorageに保存
+  useEffect(() => {
+    localStorage.setItem('filterMode', JSON.stringify(filterMode));
+  }, [filterMode]);
   
   // フィルタリング処理
   const filteredTransactions = useMemo(() => {
@@ -863,6 +870,15 @@ function Dashboard({
               
               <div className="space-y-6 mt-6">
                 <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-600 px-2">メイン</h4>
+                  <div className="space-y-1">
+                    {NAV.main.map(i => (
+                      <NavItem key={i.key} active={page === i.key} onClick={() => go(i.key)} icon={i.icon}>{i.label}</NavItem>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-600 px-2">データ</h4>
                   <div className="space-y-1">
                     {NAV.data.map(i => (
@@ -992,7 +1008,7 @@ function Dashboard({
                              hover:bg-gray-50 px-4 py-3 transition-all duration-200"
                 >
                   <TrendingUp className={`h-4 w-4 ${page === 'monthly' ? 'text-blue-600' : ''}`} />
-                  <span className="hidden sm:inline font-medium">月次比較</span>
+                  <span className="hidden sm:inline font-medium">比較</span>
                   <span className="sm:hidden font-medium">比較</span>
                   {page === 'monthly' && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
@@ -1006,7 +1022,7 @@ function Dashboard({
                              hover:bg-gray-50 px-4 py-3 transition-all duration-200"
                 >
                   <Search className={`h-4 w-4 ${page === 'analysis' ? 'text-blue-600' : ''}`} />
-                  <span className="hidden sm:inline font-medium">月次分析</span>
+                  <span className="hidden sm:inline font-medium">分析</span>
                   <span className="sm:hidden font-medium">分析</span>
                   {page === 'analysis' && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></span>
