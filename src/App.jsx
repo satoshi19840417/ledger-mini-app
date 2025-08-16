@@ -63,6 +63,7 @@ const DatabaseTest = lazy(() => import('./pages/DatabaseTest.jsx'));
 const ConnectionTest = lazy(() => import('./pages/ConnectionTest.jsx'));
 const Data = lazy(() => import('./pages/Data.jsx'));
 const SettingsHub = lazy(() => import('./pages/SettingsHub.jsx'));
+const DataSync = lazy(() => import('./pages/DataSync.jsx'));
 const Diagnostics = lazy(() => import('./pages/Diagnostics.jsx'));
 
 const NAV = {
@@ -88,7 +89,7 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'dbtest', 'conntest'].includes(k);
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'datasync', 'dbtest', 'conntest'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
@@ -1008,6 +1009,7 @@ function Dashboard({
           <Suspense fallback={<div>Loading...</div>}>
             {page === 'data' && <Data />}
             {page === 'settings-hub' && <SettingsHub />}
+            {page === 'datasync' && <DataSync />}
             {page === 'import' && <ImportCsv />}
             {page === 'export' && <ExportCsv />}
             {page === 'cleanup' && <DataCleanup />}

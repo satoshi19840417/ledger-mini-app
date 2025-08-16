@@ -13,6 +13,7 @@ const initialState = {
   lastSyncAt: null,
   profile: null,
   categories: DEFAULT_CATEGORIES,
+  modifiedTransactionIds: new Set(), // 変更されたトランザクションIDを追跡
 };
 
 function applyRulesToTransactions(transactions, rules) {
@@ -95,7 +96,14 @@ function reducer(state, action) {
       } else {
         localStorage.setItem('lm_categories_v1', JSON.stringify(categories));
       }
-      const newState = { ...state, transactions, rules, categories, lastImportAt };
+      const newState = { 
+        ...state, 
+        transactions, 
+        rules, 
+        categories, 
+        lastImportAt,
+        modifiedTransactionIds: new Set() // 初期化時はクリア
+      };
       if (action.type === 'loadFromBackup') {
         newState.syncStatus = 'offline';
       }
@@ -126,6 +134,11 @@ function reducer(state, action) {
           lastImportAt: state.lastImportAt,
         })
       );
+      
+      // ⚠️ loadFromDatabaseは初回読み込み時のみ使用すべき
+      // 同期後は使用しない（ローカルの変更が失われるため）
+      console.warn('⚠️ loadFromDatabase called - this will overwrite local changes!');
+      
       return {
         ...state,
         transactions: normalizedTransactions,
@@ -133,6 +146,101 @@ function reducer(state, action) {
         profile,
         syncStatus: 'synced',
         lastSyncAt: new Date().toISOString(),
+        modifiedTransactionIds: new Set() // データベースから読み込んだ後はクリア
+      };
+    }
+    
+    case 'updateTransaction': {
+      // 単一のトランザクションを更新
+      console.log('🔥 updateTransaction action called for ID:', action.payload.id);
+      const updatedTx = action.payload;
+      
+      // ハッシュ値を再生成（カテゴリ変更を検出するため）
+      const generateHash = (tx) => {
+        const dateValue = tx.date || '';
+        const amount = tx.amount || 0;
+        const categoryText = tx.category || '';
+        const descText = tx.description || '';
+        const detailText = tx.detail || '';
+        const memoText = tx.memo || '';
+        const excludeText = (tx.excludeFromTotals ?? tx.exclude_from_totals ?? false).toString();
+        // user_idはサーバー側で追加されるので、ここでは含めない
+        return `${dateValue}_${amount}_${categoryText}_${descText}_${detailText}_${memoText}_${excludeText}_${tx.id}`;
+      };
+      
+      const updatedWithHash = {
+        ...updatedTx,
+        hash: generateHash(updatedTx),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log(`📝 Updated transaction with new hash: ${updatedWithHash.hash}`);
+      
+      const transactions = state.transactions.map(tx => 
+        tx.id === updatedTx.id ? updatedWithHash : tx
+      );
+      
+      // 変更されたIDを追跡
+      const modifiedIds = new Set(state.modifiedTransactionIds);
+      modifiedIds.add(updatedTx.id);
+      console.log('📝 Modified IDs after update:', [...modifiedIds]);
+      
+      localStorage.setItem(
+        'lm_tx_v1',
+        JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
+      );
+      
+      return {
+        ...state,
+        transactions,
+        syncStatus: 'pending',
+        modifiedTransactionIds: modifiedIds
+      };
+    }
+    
+    case 'updateTransactions': {
+      // 複数のトランザクションを更新（変更されたもののみ）
+      console.log('🔥 updateTransactions action called for', action.payload.length, 'items');
+      
+      // ハッシュ値を再生成する関数
+      const generateHash = (tx) => {
+        const dateValue = tx.date || '';
+        const amount = tx.amount || 0;
+        const categoryText = tx.category || '';
+        const descText = tx.description || '';
+        const detailText = tx.detail || '';
+        const memoText = tx.memo || '';
+        const excludeText = (tx.excludeFromTotals ?? tx.exclude_from_totals ?? false).toString();
+        return `${dateValue}_${amount}_${categoryText}_${descText}_${detailText}_${memoText}_${excludeText}_${tx.id}`;
+      };
+      
+      const updatedTxMap = new Map(action.payload.map(tx => [
+        tx.id, 
+        { ...tx, hash: generateHash(tx), updated_at: new Date().toISOString() }
+      ]));
+      
+      const transactions = state.transactions.map(tx => {
+        if (updatedTxMap.has(tx.id)) {
+          return updatedTxMap.get(tx.id);
+        }
+        return tx;
+      });
+      
+      // 変更されたIDを追跡
+      const modifiedIds = new Set(state.modifiedTransactionIds);
+      action.payload.forEach(tx => modifiedIds.add(tx.id));
+      console.log('📝 Modified IDs after batch update:', [...modifiedIds]);
+      
+      localStorage.setItem(
+        'lm_tx_v1',
+        JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
+      );
+      
+      return {
+        ...state,
+        transactions,
+        syncStatus: 'pending',
+        modifiedTransactionIds: modifiedIds
       };
     }
     
@@ -178,7 +286,9 @@ function reducer(state, action) {
           totalCount: importedTransactions.length,
           duplicateCount,
           importedCount: importedTransactions.length - duplicateCount
-        }
+        },
+        // importTransactionsの場合は全データを同期対象とする（modifiedIdsをクリア）
+        modifiedTransactionIds: new Set()
       };
     }
     
@@ -290,6 +400,13 @@ function reducer(state, action) {
       };
     }
     
+    case 'clearModifiedIds': {
+      return {
+        ...state,
+        modifiedTransactionIds: new Set()
+      };
+    }
+    
     case 'setProfile': {
       return { ...state, profile: action.payload };
     }
@@ -316,19 +433,55 @@ export function StoreProvider({ children }) {
     const stored = localStorage.getItem('autoSyncEnabled');
     return stored !== null ? stored === 'true' : true;
   });
+  
+  const [hasLoadedFromDb, setHasLoadedFromDb] = useState(false);
 
   const syncWithDatabase = useCallback(
-    async (overrideTransactions) => {
+    async (overrideTransactions, onlyChanged = false) => {
       console.log('syncWithDatabase called');
       console.log('Session:', session);
       console.log('User ID:', session?.user?.id);
+      console.log('Only changed:', onlyChanged);
 
       if (!session?.user?.id) {
         console.log('No user ID, returning false');
         return false;
       }
 
-      const txToSync = overrideTransactions ?? state.transactions;
+      let txToSync = overrideTransactions ?? state.transactions;
+      
+      // onlyChangedがtrueの場合、変更されたデータのみを同期
+      if (onlyChanged && !overrideTransactions) {
+        console.log('=== 差分同期モード ===');
+        console.log('Modified IDs:', state.modifiedTransactionIds ? [...state.modifiedTransactionIds] : 'none');
+        console.log('Total transactions:', state.transactions.length);
+        
+        // modifiedTransactionIdsに含まれるトランザクションのみを同期
+        if (state.modifiedTransactionIds && state.modifiedTransactionIds.size > 0) {
+          txToSync = state.transactions.filter(tx => 
+            state.modifiedTransactionIds.has(tx.id)
+          );
+          console.log(`✅ Syncing only ${txToSync.length} modified items (IDs: ${[...state.modifiedTransactionIds].join(', ')})`);
+        } else {
+          // 変更されたIDがない場合は、updated_atで判定（フォールバック）
+          console.log('⚠️ No modified IDs tracked, falling back to updated_at check');
+          const recentThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          txToSync = state.transactions.filter(tx => {
+            return tx.updated_at && tx.updated_at > recentThreshold;
+          });
+          console.log(`Found ${txToSync.length} recently updated items`);
+        }
+        
+        // 変更がない場合は同期をスキップ
+        if (txToSync.length === 0) {
+          console.log('No changes to sync');
+          dispatch({ type: 'syncComplete' });
+          toast.success('変更はありません');
+          return true;
+        }
+        
+        console.log(`🔄 Syncing ${txToSync.length} items out of ${state.transactions.length} total`);
+      }
       console.log('Starting sync with transactions:', txToSync.length);
       dispatch({ type: 'setSyncStatus', payload: 'syncing' });
 
@@ -351,6 +504,12 @@ export function StoreProvider({ children }) {
 
         if (txResult.success && rulesResult.success) {
           dispatch({ type: 'syncComplete' });
+          
+          // 同期成功後、変更済みIDをクリア（onlyChangedの場合のみ）
+          if (onlyChanged) {
+            dispatch({ type: 'clearModifiedIds' });
+          }
+          
           return true;
         }
 
@@ -476,20 +635,25 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     // Only load from database if we have a session (not in local mode) and we are online
-    if (session?.user?.id && navigator.onLine) {
+    // AND we haven't loaded yet (to prevent reloading after sync)
+    if (session?.user?.id && navigator.onLine && !hasLoadedFromDb) {
+      console.log('📥 Initial load from database');
       loadFromDatabase();
+      setHasLoadedFromDb(true);
     }
-  }, [session, loadFromDatabase]);
+  }, [session, loadFromDatabase, hasLoadedFromDb]);
 
   useEffect(() => {
     // 自動同期が有効な場合のみ実行
     if (autoSyncEnabled && session?.user?.id && state.syncStatus === 'pending') {
       const timer = setTimeout(() => {
-        syncWithDatabase();
+        // modifiedTransactionIdsがある場合は、変更されたデータのみを同期
+        const hasModifiedIds = state.modifiedTransactionIds && state.modifiedTransactionIds.size > 0;
+        syncWithDatabase(null, hasModifiedIds); // 変更されたデータがある場合はtrue
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [autoSyncEnabled, session, state.syncStatus, syncWithDatabase]);
+  }, [autoSyncEnabled, session, state.syncStatus, state.modifiedTransactionIds, syncWithDatabase]);
   
   // 自動同期の設定を変更する関数
   const toggleAutoSync = useCallback((enabled) => {

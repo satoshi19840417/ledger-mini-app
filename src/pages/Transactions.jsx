@@ -115,11 +115,12 @@ useEffect(() => {
 }, [startDate, endDate, loadFromDatabase]);
 
 // ルール変更時に自動で再適用
-useEffect(() => {
-  if (state.rules) {
-    dispatch({ type: 'applyRules' });
-  }
-}, [state.rules, dispatch]);
+// ルールの自動適用を削除（手動適用のみに変更）
+// useEffect(() => {
+//   if (state.rules) {
+//     dispatch({ type: 'applyRules' });
+//   }
+// }, [state.rules, dispatch]);
 
   // lastApplyResultの変更を監視してメッセージを更新
   useEffect(() => {
@@ -164,7 +165,7 @@ useEffect(() => {
       pattern: tx.description || tx.detail || '',
       mode: 'contains',
       target: 'description',
-      category: tx.category || categories[0],
+      category: tx.category || categories[0] || 'その他',
       kind: tx.kind || 'both',
     });
     setShowRuleModal(true);
@@ -176,7 +177,12 @@ useEffect(() => {
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
     dispatch({ type: 'setRules', payload: updatedRules });
-    const syncPromise = syncWithDatabase();
+    
+    // ルールのみを同期（トランザクションは同期しない）
+    // 注：syncWithDatabaseはトランザクションとルールを両方同期するため、
+    // ここでは手動でルールのみを同期する必要がある
+    const syncPromise = syncWithDatabase(null, true); // 変更されたデータのみを同期
+    
     setRuleAppliedMessage('ルールを保存し、全取引に適用しています...');
     setApplyingRules(true);
     setShowRuleModal(false);
@@ -197,10 +203,15 @@ useEffect(() => {
 
   const applyRuleToTransaction = () => {
     if (!selectedTx) return;
-    const updatedTxs = state.transactions.map(tx => 
-      tx.id === selectedTx.id ? { ...tx, category: newRule.category } : tx
-    );
-    dispatch({ type: 'importTransactions', payload: updatedTxs, append: false });
+    // 単一のトランザクションのみを更新
+    const updatedTx = { ...selectedTx, category: newRule.category };
+    dispatch({ type: 'updateTransaction', payload: updatedTx });
+    
+    // 変更された1件のみを同期
+    if (syncWithDatabase) {
+      syncWithDatabase([updatedTx], false);
+    }
+    
     setShowRuleModal(false);
     setSelectedTx(null);
   };
@@ -223,21 +234,31 @@ useEffect(() => {
     const hasEdits = Object.keys(editedCategories).length > 0 || Object.keys(excludedFromTotals).length > 0;
     if (!hasEdits) return;
     
-    const updatedTxs = state.transactions.map(tx => {
-      let updated = { ...tx };
-      if (editedCategories[tx.id] !== undefined) {
-        updated.category = editedCategories[tx.id];
+    // 変更された取引のみを更新
+    const changedTransactions = [];
+    state.transactions.forEach(tx => {
+      if (editedCategories[tx.id] !== undefined || excludedFromTotals[tx.id] !== undefined) {
+        let updated = { ...tx };
+        if (editedCategories[tx.id] !== undefined) {
+          updated.category = editedCategories[tx.id];
+        }
+        if (excludedFromTotals[tx.id] !== undefined) {
+          updated.excludeFromTotals = excludedFromTotals[tx.id];
+          updated.exclude_from_totals = excludedFromTotals[tx.id]; // データベース互換性のため
+        }
+        changedTransactions.push(updated);
       }
-      if (excludedFromTotals[tx.id] !== undefined) {
-        updated.excludeFromTotals = excludedFromTotals[tx.id];
-        updated.exclude_from_totals = excludedFromTotals[tx.id]; // データベース互換性のため
-      }
-      return updated;
     });
     
-    dispatch({ type: 'importTransactions', payload: updatedTxs, append: false });
+    // 複数の取引を個別に更新
+    dispatch({ type: 'updateTransactions', payload: changedTransactions });
     setEditedCategories({});
     setExcludedFromTotals({});
+    
+    if (syncWithDatabase) {
+      // 変更されたデータのみを同期
+      syncWithDatabase(changedTransactions, false);
+    }
   };
 
   const clearFilters = () => {
@@ -604,21 +625,20 @@ useEffect(() => {
                                 <Button 
                                   type="button"
                                   onClick={() => {
-                                    const updatedTxs = state.transactions.map(t => {
-                                      if (t.id === tx.id) {
-                                        let updated = { ...t };
-                                        if (editedCategories[tx.id] !== undefined) {
-                                          updated.category = editedCategories[tx.id];
-                                        }
-                                        if (excludedFromTotals[tx.id] !== undefined) {
-                                          updated.excludeFromTotals = excludedFromTotals[tx.id];
-                                          updated.exclude_from_totals = excludedFromTotals[tx.id]; // データベース互換性のため
-                                        }
-                                        return updated;
-                                      }
-                                      return t;
-                                    });
-                                    dispatch({ type: 'importTransactions', payload: updatedTxs, append: false });
+                                    // 単一の取引のみを更新
+                                    let updated = { ...tx };
+                                    if (editedCategories[tx.id] !== undefined) {
+                                      updated.category = editedCategories[tx.id];
+                                    }
+                                    if (excludedFromTotals[tx.id] !== undefined) {
+                                      updated.excludeFromTotals = excludedFromTotals[tx.id];
+                                      updated.exclude_from_totals = excludedFromTotals[tx.id]; // データベース互換性のため
+                                    }
+                                    
+                                    // 単一トランザクションの更新アクションを使用
+                                    dispatch({ type: 'updateTransaction', payload: updated });
+                                    
+                                    // 編集状態をクリア
                                     setEditedCategories(prev => {
                                       const newState = { ...prev };
                                       delete newState[tx.id];
@@ -629,6 +649,12 @@ useEffect(() => {
                                       delete newState[tx.id];
                                       return newState;
                                     });
+                                    
+                                    // 手動で同期を実行（自動同期を待たない）
+                                    if (syncWithDatabase) {
+                                      // 変更されたトランザクションのみを同期
+                                      syncWithDatabase([updated], false); // 変更されたデータを直接渡す
+                                    }
                                   }}
                                   variant="default"
                                   size="sm"

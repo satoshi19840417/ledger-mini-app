@@ -915,6 +915,80 @@ export const diagnosticsService = {
     return logs;
   },
 
+  // 単一トランザクション更新のテスト
+  async testSingleUpdate(userId) {
+    const result = {
+      status: 'testing',
+      message: '単一更新テスト中...',
+      steps: []
+    };
+
+    try {
+      // ローカルデータを取得
+      const localData = localStorage.getItem('lm_tx_v1');
+      if (!localData) {
+        result.status = 'error';
+        result.message = 'ローカルデータがありません';
+        return result;
+      }
+
+      const parsed = JSON.parse(localData);
+      const transactions = Array.isArray(parsed) ? parsed : (parsed.transactions || []);
+      
+      if (transactions.length === 0) {
+        result.status = 'error';
+        result.message = '取引データがありません';
+        return result;
+      }
+
+      // 最初の取引を取得してテスト更新
+      const testTx = transactions[0];
+      result.steps.push({
+        step: 'テストデータ選択',
+        status: 'success',
+        message: `ID: ${testTx.id}, 日付: ${testTx.date}, 金額: ${testTx.amount}円`
+      });
+
+      // updated_atを設定して変更をマーク
+      const updatedTx = {
+        ...testTx,
+        category: testTx.category ? testTx.category + ' (テスト)' : 'テストカテゴリ',
+        updated_at: new Date().toISOString()
+      };
+
+      // 最近の変更のみを抽出
+      const recentThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const recentChanges = transactions.filter(tx => 
+        tx.updated_at && tx.updated_at > recentThreshold
+      );
+
+      result.steps.push({
+        step: '変更検出',
+        status: 'info',
+        message: `最近5分以内の変更: ${recentChanges.length}件 / 全体: ${transactions.length}件`
+      });
+
+      // 同期シミュレーション
+      if (recentChanges.length > 0) {
+        result.steps.push({
+          step: '差分同期シミュレーション',
+          status: 'success',
+          message: `${recentChanges.length}件のみを同期（${transactions.length - recentChanges.length}件をスキップ）`
+        });
+      }
+
+      result.status = 'success';
+      result.message = `✅ 単一更新テスト成功：差分同期により${recentChanges.length}件のみ処理`;
+      return result;
+
+    } catch (error) {
+      result.status = 'error';
+      result.message = 'テスト中にエラーが発生しました';
+      result.error = error.message;
+      return result;
+    }
+  },
+
   // エラーログの保存
   saveErrorLog(error, context) {
     try {

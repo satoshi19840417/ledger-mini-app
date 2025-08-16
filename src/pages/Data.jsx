@@ -15,7 +15,8 @@ import {
   BarChart3,
   RefreshCw,
   FolderOpen,
-  Cloud
+  Cloud,
+  Activity
 } from 'lucide-react';
 
 export default function Data() {
@@ -33,7 +34,7 @@ export default function Data() {
         label: '同期状態',
         value: autoSyncEnabled ? '自動同期ON' : '手動同期'
       },
-      href: '#diagnostics'
+      href: '#datasync'
     },
     {
       id: 'import',
@@ -118,6 +119,18 @@ export default function Data() {
         value: `${state.transactions.filter(tx => tx.category === 'その他').length}件`
       },
       href: '#others'
+    },
+    {
+      id: 'diagnostics',
+      title: 'システム診断',
+      description: '詳細な同期テストとエラー診断',
+      icon: Activity,
+      color: 'amber',
+      stats: {
+        label: 'ステータス',
+        value: '診断ツール'
+      },
+      href: '#diagnostics'
     }
   ];
 
@@ -130,7 +143,8 @@ export default function Data() {
       orange: 'bg-orange-50 hover:bg-orange-100 border-orange-200 hover:border-orange-300',
       pink: 'bg-pink-50 hover:bg-pink-100 border-pink-200 hover:border-pink-300',
       teal: 'bg-teal-50 hover:bg-teal-100 border-teal-200 hover:border-teal-300',
-      indigo: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 hover:border-indigo-300'
+      indigo: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 hover:border-indigo-300',
+      amber: 'bg-amber-50 hover:bg-amber-100 border-amber-200 hover:border-amber-300'
     };
     return colorMap[color] || colorMap.blue;
   };
@@ -144,7 +158,8 @@ export default function Data() {
       orange: 'text-orange-600',
       pink: 'text-pink-600',
       teal: 'text-teal-600',
-      indigo: 'text-indigo-600'
+      indigo: 'text-indigo-600',
+      amber: 'text-amber-600'
     };
     return colorMap[color] || colorMap.blue;
   };

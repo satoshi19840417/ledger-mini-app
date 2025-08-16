@@ -14,7 +14,8 @@ import {
   PlayCircle,
   GitCompare,
   AlertCircle,
-  FileWarning
+  FileWarning,
+  Zap
 } from 'lucide-react';
 
 function Diagnostics() {
@@ -29,6 +30,8 @@ function Diagnostics() {
   const [isUpdateSimulating, setIsUpdateSimulating] = useState(false);
   const [errorLogs, setErrorLogs] = useState([]);
   const [showErrorLogs, setShowErrorLogs] = useState(false);
+  const [singleUpdateResult, setSingleUpdateResult] = useState(null);
+  const [isSingleUpdateTesting, setIsSingleUpdateTesting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -84,6 +87,25 @@ function Diagnostics() {
       });
     } finally {
       setIsSimulating(false);
+    }
+  };
+
+  const runSingleUpdateTest = async () => {
+    setIsSingleUpdateTesting(true);
+    setSingleUpdateResult(null);
+    
+    try {
+      const results = await diagnosticsService.testSingleUpdate(user?.id);
+      setSingleUpdateResult(results);
+    } catch (error) {
+      console.error('単一更新テストエラー:', error);
+      setSingleUpdateResult({
+        status: 'error',
+        message: '単一更新テストの実行中にエラーが発生しました',
+        error: error.message
+      });
+    } finally {
+      setIsSingleUpdateTesting(false);
     }
   };
 
@@ -290,6 +312,24 @@ function Diagnostics() {
             )}
             
             <button
+              onClick={runSingleUpdateTest}
+              disabled={isSingleUpdateTesting}
+              className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSingleUpdateTesting ? (
+                <>
+                  <Zap className="h-5 w-5 animate-spin" />
+                  <span>テスト中...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-5 w-5" />
+                  <span>単一更新テスト</span>
+                </>
+              )}
+            </button>
+            
+            <button
               onClick={() => {
                 loadErrorLogs();
                 setShowErrorLogs(!showErrorLogs);
@@ -418,6 +458,45 @@ function Diagnostics() {
                         {step.status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
                         {step.status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
                         {step.status === 'info' && <AlertTriangle className="h-4 w-4 text-blue-500" />}
+                        <span className="font-medium">{step.step}:</span>
+                        <span className="text-gray-600">{step.message}</span>
+                        {step.error && <span className="text-red-600 text-xs">({step.error})</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 単一更新テスト結果 */}
+            {singleUpdateResult && (
+              <div className={`bg-white rounded-lg shadow-md p-6 ${
+                singleUpdateResult.status === 'success' ? 'border-green-200' :
+                singleUpdateResult.status === 'error' ? 'border-red-200' : 'border-yellow-200'
+              }`}>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  単一更新テスト結果
+                </h2>
+                
+                <div className={`mb-4 p-3 rounded ${
+                  singleUpdateResult.status === 'success' ? 'bg-green-50 text-green-700' :
+                  singleUpdateResult.status === 'error' ? 'bg-red-50 text-red-700' : 'bg-yellow-50 text-yellow-700'
+                }`}>
+                  <p className="font-medium">{singleUpdateResult.message}</p>
+                  {singleUpdateResult.error && (
+                    <p className="text-sm mt-1">エラー: {singleUpdateResult.error}</p>
+                  )}
+                </div>
+                
+                {singleUpdateResult.steps && singleUpdateResult.steps.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-600">実行ステップ:</h3>
+                    {singleUpdateResult.steps.map((step, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        {step.status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                        {step.status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
+                        {step.status === 'info' && <AlertCircle className="h-4 w-4 text-blue-500" />}
                         <span className="font-medium">{step.step}:</span>
                         <span className="text-gray-600">{step.message}</span>
                         {step.error && <span className="text-red-600 text-xs">({step.error})</span>}

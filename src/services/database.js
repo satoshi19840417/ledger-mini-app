@@ -45,6 +45,91 @@ export const dbService = {
         return { success: true, data: [] };
       }
 
+      // 大量データの警告と分割処理
+      if (transactions.length > 500) {
+        const shouldContinue = window.confirm(
+          `${transactions.length}件の大量データを同期しようとしています。\n` +
+          `ネットワークエラーが発生する可能性があります。\n\n` +
+          `推奨: データを分割して同期することをお勧めします。\n` +
+          `続行しますか？`
+        );
+        
+        if (!shouldContinue) {
+          toast('同期をキャンセルしました。データを分割して再試行してください。', { icon: '📌' });
+          return { success: false, error: 'User cancelled due to large dataset' };
+        }
+        
+        // 500件ずつに分割して処理
+        const chunks = [];
+        for (let i = 0; i < transactions.length; i += 500) {
+          chunks.push(transactions.slice(i, i + 500));
+        }
+        
+        toast(`${chunks.length}回に分けて同期を実行します...`, { icon: '📊' });
+        
+        let allResults = [];
+        for (let i = 0; i < chunks.length; i++) {
+          toast.loading(`チャンク ${i + 1}/${chunks.length} を同期中...`, { id: 'chunk-sync' });
+          
+          const result = await this.syncTransactionsChunk(userId, chunks[i]);
+          if (!result.success) {
+            toast.error(`チャンク ${i + 1} の同期に失敗しました`, { id: 'chunk-sync' });
+            return result;
+          }
+          
+          allResults = allResults.concat(result.data || []);
+          
+          // チャンク間で1秒待機
+          if (i < chunks.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+        
+        toast.success(`${transactions.length}件のデータを正常に同期しました！`, { id: 'chunk-sync' });
+        return { success: true, data: allResults };
+      }
+
+      // 500件以下の場合は通常処理
+      return await this.syncTransactionsChunk(userId, transactions);
+    } catch (error) {
+      console.error('Error in syncTransactions wrapper:', error);
+      
+      // エラーログを保存
+      try {
+        const errorLog = {
+          timestamp: new Date().toISOString(),
+          error: {
+            message: error.message || 'Unknown error',
+            stack: error.stack,
+            code: error.code,
+            name: error.name
+          },
+          context: {
+            operation: 'syncTransactions_wrapper',
+            userId,
+            transactionCount: transactions?.length || 0
+          },
+          userAgent: navigator.userAgent,
+          url: window.location.href
+        };
+        
+        const logs = JSON.parse(localStorage.getItem('errorLogs') || '[]');
+        logs.push(errorLog);
+        if (logs.length > 50) {
+          logs.splice(0, logs.length - 50);
+        }
+        localStorage.setItem('errorLogs', JSON.stringify(logs));
+        console.log('[エラーログ] syncTransactions wrapperエラーを保存しました:', errorLog);
+      } catch (logError) {
+        console.error('Failed to save error log:', logError);
+      }
+      
+      return { success: false, error };
+    }
+  },
+
+  async syncTransactionsChunk(userId, transactions) {
+    try {
       // 全てのフィールドを確実にマッピング（データベーススキーマに合わせる）
       const mappedTransactions = transactions.map(tx => {
         // 金額を数値に変換
@@ -61,11 +146,15 @@ export const dbService = {
         }
         dateValue = correctedDate;
         
-        // ハッシュ値を生成（重複チェック用）- より詳細な情報を含める
+        // ハッシュ値を生成（重複チェック用）- カテゴリを含むすべての重要な情報を含める
         const descText = tx.description || tx.説明 || '';
         const detailText = tx.detail || tx.詳細 || '';
         const memoText = tx.memo || tx.メモ || '';
-        const hashString = `${userId}_${dateValue}_${amount}_${descText}_${detailText}_${memoText}_${tx.id || Math.random()}`;
+        const categoryText = tx.category || tx.カテゴリ || '';
+        const excludeText = (tx.excludeFromTotals ?? tx.exclude_from_totals ?? false).toString();
+        
+        // カテゴリや集計除外フラグも含めてハッシュを生成
+        const hashString = `${userId}_${dateValue}_${amount}_${categoryText}_${descText}_${detailText}_${memoText}_${excludeText}_${tx.id || Math.random()}`;
         const hash = tx.hash || hashString;
         const updatedAt = tx.updated_at || tx.updatedAt || null;
         const excludeFromTotals =
@@ -91,90 +180,321 @@ export const dbService = {
         };
       });
 
-      console.log('Original transactions:', transactions);
-      console.log('Mapped transactions:', mappedTransactions);
-      console.log('Sample transaction:', mappedTransactions[0]);
+      // デバッグログ
+      console.log(`[差分同期] 処理開始: ${mappedTransactions.length}件のデータを確認`);
 
-      const ids = mappedTransactions.map(tx => tx.id);
-      const { data: existing, error: fetchError } = await supabase
-        .from('transactions')
-        .select('id, hash, updated_at')
-        .eq('user_id', userId)
-        .in('id', ids);
-
-      if (fetchError) throw fetchError;
-
-      const existingMap = new Map((existing || []).map(tx => [tx.id, tx]));
+      const ids = mappedTransactions.map(tx => tx.id).filter(id => id); // IDがあるものだけ
+      
+      // 既存データの取得（IDがある場合のみ）
+      let existingMap = new Map();
+      if (ids.length > 0) {
+        // IDを100件ずつのバッチに分割（Supabaseのin句の制限対策）
+        const idBatches = [];
+        for (let i = 0; i < ids.length; i += 100) {
+          idBatches.push(ids.slice(i, i + 100));
+        }
+        
+        for (const idBatch of idBatches) {
+          const { data: existing, error: fetchError } = await supabase
+            .from('transactions')
+            .select('id, hash, updated_at, date, amount, category, description')
+            .eq('user_id', userId)
+            .in('id', idBatch);
+          
+          if (fetchError) {
+            console.error('Error fetching existing transactions:', fetchError);
+            throw fetchError;
+          }
+          
+          (existing || []).forEach(tx => {
+            existingMap.set(tx.id, tx);
+          });
+        }
+      }
+      
       const inserts = [];
       const updates = [];
+      let skippedCount = 0;
+      let conflictCount = 0;
 
       for (const tx of mappedTransactions) {
-        const exists = existingMap.get(tx.id);
+        const exists = tx.id ? existingMap.get(tx.id) : null;
+        
         if (!exists) {
+          // 新規レコード
           inserts.push({ ...tx, updated_at: new Date().toISOString() });
           continue;
         }
 
+        // ハッシュ値による変更検出
         if (exists.hash === tx.hash) {
-          continue; // no changes
+          skippedCount++; // 変更なしのレコードをカウント
+          continue; // 変更なし → スキップ
         }
+        
+        // 変更を検出（デバッグ用）
+        console.log(`[差分同期] 変更検出 ID: ${tx.id}`);
+        console.log(`  旧hash: ${exists.hash}`);
+        console.log(`  新hash: ${tx.hash}`);
+        console.log(`  カテゴリ: ${exists.category} → ${tx.category}`);
 
+        // 競合チェック（タイムスタンプがある場合）
         if (
           tx.updated_at &&
           exists.updated_at &&
           new Date(tx.updated_at) < new Date(exists.updated_at)
         ) {
+          conflictCount++;
+          
+          // 競合の詳細を表示
+          const conflictDetails = `
+            ローカル: ${tx.date} - ${tx.description} (${tx.amount}円)
+            サーバー: ${exists.date} - ${exists.description} (${exists.amount}円)
+          `;
+          
           const overwrite = window.confirm(
-            '取引が他の端末で更新されています。上書きしますか？'
+            `競合検出 (${conflictCount}/${mappedTransactions.length}):\n` +
+            `他の端末で更新されています。\n${conflictDetails}\n\n` +
+            `ローカルの内容で上書きしますか？`
           );
-          if (!overwrite) continue;
+          
+          if (!overwrite) {
+            skippedCount++;
+            continue;
+          }
         }
 
         updates.push({ ...tx, updated_at: new Date().toISOString() });
       }
 
-      const BATCH_SIZE = 50;
+      // 統計情報を表示
+      const summary = {
+        total: mappedTransactions.length,
+        newRecords: inserts.length,
+        updates: updates.length,
+        skipped: skippedCount,
+        conflicts: conflictCount
+      };
+      
+      console.log('[差分同期] 結果:', summary);
+      
+      // 変更がない場合は早期終了
+      if (inserts.length === 0 && updates.length === 0) {
+        console.log('[差分同期] 変更なし - 同期をスキップ');
+        
+        // 少数のデータの場合はメッセージを簡潔に
+        if (mappedTransactions.length <= 10) {
+          toast.success(`✓ ${mappedTransactions.length}件のデータは最新です`);
+        } else {
+          toast.success(`✓ すべてのデータは最新です（${skippedCount}件確認済み）`);
+        }
+        return { success: true, data: [], summary };
+      }
+      
+      // 実際に変更があるデータのみを通知
+      const changeMessage = `📊 変更を検出: 新規${inserts.length}件, 更新${updates.length}件` +
+        (skippedCount > 0 ? `, 変更なし${skippedCount}件` : '');
+      console.log('[差分同期]', changeMessage);
+      toast(changeMessage, { icon: '📊' });
+
+      const BATCH_SIZE = 10; // さらに小さくして安定性を最優先
       let allData = [];
       let hasError = false;
+      let retryCount = 0;
+      const MAX_RETRIES = 3;
 
-      // 新規レコードを挿入
+      // 進捗表示
+      const totalItems = inserts.length + updates.length;
+      if (totalItems > 50) {
+        toast.loading(`データ（${totalItems}件）を同期中...`, { id: 'sync-progress' });
+      }
+
+      // 新規レコードを挿入（リトライ機能付き）
       for (let i = 0; i < inserts.length; i += BATCH_SIZE) {
         const batch = inserts.slice(i, i + BATCH_SIZE);
-        const { data, error } = await supabase
-          .from('transactions')
-          .insert(batch)
-          .select();
-        if (error) {
-          console.error(`Error inserting batch ${Math.floor(i / BATCH_SIZE) + 1}:`, error);
-          hasError = true;
-          toast.error(`取引の同期に失敗しました: ${error.message}`);
-        } else if (data) {
-          allData = allData.concat(data);
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(inserts.length / BATCH_SIZE);
+        
+        let success = false;
+        retryCount = 0;
+        
+        while (!success && retryCount < MAX_RETRIES) {
+          try {
+            // 進捗更新
+            if (totalItems > 50) {
+              const retryText = retryCount > 0 ? ` (再試行 ${retryCount}/${MAX_RETRIES})` : '';
+              toast.loading(`新規データ挿入中... (${batchNumber}/${totalBatches})${retryText}`, { id: 'sync-progress' });
+            }
+            
+            // タイムアウト設定付きのリクエスト
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
+            
+            const { data, error } = await supabase
+              .from('transactions')
+              .insert(batch)
+              .select()
+              .abortSignal(controller.signal);
+            
+            clearTimeout(timeoutId);
+            
+            if (error) {
+              throw error;
+            }
+            
+            if (data) {
+              allData = allData.concat(data);
+            }
+            
+            success = true;
+            
+            // レート制限対策: バッチ間に待機
+            if (i + BATCH_SIZE < inserts.length) {
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          } catch (err) {
+            retryCount++;
+            console.error(`Batch ${batchNumber} attempt ${retryCount} failed:`, err);
+            
+            if (retryCount >= MAX_RETRIES) {
+              hasError = true;
+              
+              // エラーログを保存
+              try {
+                const errorLog = {
+                  timestamp: new Date().toISOString(),
+                  error: {
+                    message: err.message || 'Unknown error',
+                    stack: err.stack,
+                    code: err.code,
+                    name: err.name
+                  },
+                  context: {
+                    operation: 'syncTransactions_batch',
+                    userId,
+                    batchNumber,
+                    batchSize: batch.length,
+                    retryCount
+                  },
+                  userAgent: navigator.userAgent,
+                  url: window.location.href
+                };
+                
+                const logs = JSON.parse(localStorage.getItem('errorLogs') || '[]');
+                logs.push(errorLog);
+                if (logs.length > 50) {
+                  logs.splice(0, logs.length - 50);
+                }
+                localStorage.setItem('errorLogs', JSON.stringify(logs));
+                console.log('[エラーログ] 保存しました:', errorLog);
+              } catch (logError) {
+                console.error('Failed to save error log:', logError);
+              }
+              
+              // エラーメッセージの改善
+              if (err.name === 'AbortError') {
+                toast.error(`⏱️ タイムアウト: バッチ${batchNumber}の処理が時間切れになりました。`);
+              } else if (err.message?.includes('Failed to fetch')) {
+                toast.error(`🌐 ネットワークエラー: インターネット接続を確認してください。`);
+              } else {
+                toast.error(`❌ 同期エラー (バッチ${batchNumber}): ${err.message || 'Unknown error'}`);
+              }
+              
+              break; // このバッチの処理を諦める
+            } else {
+              // リトライ前に待機
+              const waitTime = Math.min(1000 * Math.pow(2, retryCount - 1), 5000); // 指数バックオフ
+              toast(`バッチ${batchNumber}の再試行まで${waitTime/1000}秒待機...`, { icon: '⏳' });
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+          }
+        }
+        
+        if (hasError) break; // エラーが発生したら残りのバッチをスキップ
+      }
+
+      // 既存レコードを更新（バッチ処理）
+      if (!hasError && updates.length > 0) {
+        for (let i = 0; i < updates.length; i++) {
+          const tx = updates[i];
+          
+          try {
+            // 進捗更新
+            if (totalItems > 100 && i % 10 === 0) {
+              toast.loading(`データ更新中... (${i + 1}/${updates.length})`, { id: 'sync-progress' });
+            }
+            
+            const { data, error } = await supabase
+              .from('transactions')
+              .update(tx)
+              .eq('id', tx.id)
+              .eq('user_id', userId)
+              .select();
+              
+            if (error) {
+              console.error(`Error updating transaction ${tx.id}:`, error);
+              hasError = true;
+              
+              if (error.message?.includes('Failed to fetch')) {
+                toast.error(`ネットワークエラー: 更新に失敗しました。`);
+              } else {
+                toast.error(`取引の更新に失敗しました: ${error.message}`);
+              }
+              break;
+            } else if (data) {
+              allData = allData.concat(data);
+            }
+            
+            // レート制限対策
+            if (i % 10 === 0 && i < updates.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+          } catch (err) {
+            console.error(`Network error updating transaction:`, err);
+            hasError = true;
+            toast.error(`ネットワークエラー: 更新に失敗しました。`);
+            break;
+          }
         }
       }
 
-      // 既存レコードを更新
-      for (const tx of updates) {
-        const { data, error } = await supabase
-          .from('transactions')
-          .update(tx)
-          .eq('id', tx.id)
-          .eq('user_id', userId)
-          .select();
-        if (error) {
-          console.error(`Error updating transaction ${tx.id}:`, error);
-          hasError = true;
-          toast.error(`取引の同期に失敗しました: ${error.message}`);
-        } else if (data) {
-          allData = allData.concat(data);
-        }
-      }
-
+      // 完了メッセージ（実際に処理したデータのみカウント）
+      const processedCount = allData.length;
+      
       if (hasError) {
-        return { success: false, error: 'Some transactions failed to sync' };
+        toast.error(
+          `⚠️ 同期は部分的に完了しました。` +
+          `処理済み: ${processedCount}件、` +
+          `エラー: ${totalItems - processedCount}件`, 
+          { id: 'sync-progress' }
+        );
+        
+        // エラー時もsummaryに結果を含める
+        summary.processedCount = processedCount;
+        summary.errorCount = totalItems - processedCount;
+        
+        return { success: false, error: 'Some transactions failed to sync', summary };
+      } else {
+        // 成功メッセージ
+        if (processedCount > 0) {
+          toast.success(
+            `✅ 同期完了！ ` +
+            `新規: ${inserts.length}件、` +
+            `更新: ${updates.length}件` +
+            (skippedCount > 0 ? `、変更なし: ${skippedCount}件` : ''),
+            { id: 'sync-progress' }
+          );
+        }
+        
+        console.log('[差分同期] 完了:', {
+          新規: inserts.length,
+          更新: updates.length,
+          スキップ: skippedCount,
+          合計処理: processedCount
+        });
       }
 
-      return { success: true, data: allData };
+      return { success: true, data: allData, summary };
     } catch (error) {
       console.error('Error syncing transactions:', error);
       
