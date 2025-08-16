@@ -6,15 +6,13 @@ import { dbService } from '../services/database.js';
 import { useStore } from '../state/StoreContextWithDB.jsx';
 
 export default function Settings() {
-  const { state, dispatch, loadFromDatabase, syncWithDatabase, autoSyncEnabled, toggleAutoSync } = useStore();
+  const { state, dispatch } = useStore();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('account');
   const [displayName, setDisplayName] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [tempDisplayName, setTempDisplayName] = useState('');
-  const [syncing, setSyncing] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -141,16 +139,6 @@ export default function Settings() {
             }`}
           >
             アカウント連携
-          </button>
-          <button
-            onClick={() => setActiveTab('data')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'data'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            データ管理
           </button>
         </nav>
       </div>
@@ -282,154 +270,6 @@ export default function Settings() {
           <div>
             <h2 className="text-lg font-semibold mb-4">アカウント連携設定</h2>
             <AccountLink user={user} />
-          </div>
-        )}
-
-        {activeTab === 'data' && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold mb-4">データ管理</h2>
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-medium mb-2">データ同期</h3>
-                  
-                  {/* 自動同期のON/OFFトグル */}
-                  <div className="mb-4 p-3 bg-white rounded border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-sm">自動同期</h4>
-                        <p className="text-xs text-gray-600 mt-1">
-                          データ変更時に自動的にクラウドと同期します
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => toggleAutoSync(!autoSyncEnabled)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          autoSyncEnabled ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
-                      >
-                        <span className="sr-only">自動同期を切り替え</span>
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            autoSyncEnabled ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      現在: {autoSyncEnabled ? '有効 ✅' : '無効 ⏸️'}
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-3">
-                    クラウドから最新のデータを取得します。他のデバイスで追加・変更したデータを反映させる場合に使用してください。
-                  </p>
-                  <div className="flex items-center gap-3 mb-4">
-                    <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                      disabled={syncing}
-                      onClick={async () => {
-                        setSyncing(true);
-                        try {
-                          await loadFromDatabase();
-                          toast.success('データを同期しました');
-                        } catch (error) {
-                          console.error('Sync error:', error);
-                          toast.error('同期に失敗しました');
-                        } finally {
-                          setSyncing(false);
-                        }
-                      }}
-                    >
-                      {syncing ? '同期中...' : 'データを同期'}
-                    </button>
-                    {state.lastSyncAt && (
-                      <span className="text-sm text-gray-500">
-                        最終同期: {new Date(state.lastSyncAt).toLocaleString('ja-JP')}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    未同期のローカルデータをクラウドに送信します。
-                  </p>
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    disabled={uploading}
-                    onClick={async () => {
-                      console.log('未同期データ送信ボタンがクリックされました');
-                      setUploading(true);
-                      try {
-                        console.log('syncWithDatabase関数を呼び出します');
-                        const success = await syncWithDatabase();
-                        console.log('syncWithDatabase結果:', success);
-                        if (success) {
-                          toast.success('未同期データを送信しました');
-                        } else {
-                          toast.error('送信に失敗しました');
-                        }
-                      } catch (error) {
-                        console.error('Upload error:', error);
-                        toast.error('送信に失敗しました');
-                      } finally {
-                        setUploading(false);
-                      }
-                    }}
-                  >
-                    {uploading ? '送信中...' : '未同期データを送信'}
-                  </button>
-                </div>
-
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium mb-2">データエクスポート</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    すべての取引データをCSVファイルとしてダウンロードできます
-                  </p>
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    onClick={() => {
-                      // エクスポート機能は既存のページで実装済み
-                      window.location.href = '/#/yearly';
-                      toast.info('年次分析ページからCSVエクスポートが可能です');
-                    }}
-                  >
-                    エクスポートページへ
-                  </button>
-                </div>
-
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium mb-2">データインポート</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    CSVファイルから取引データを一括インポートできます
-                  </p>
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    onClick={() => {
-                      window.location.href = '/#/import-csv';
-                    }}
-                  >
-                    インポートページへ
-                  </button>
-                </div>
-
-                <div className="p-4 bg-yellow-50 rounded-lg">
-                  <h3 className="font-medium mb-2">ローカルストレージ</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    ブラウザに保存されているルール設定をクリアできます
-                  </p>
-                  <button
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-                    onClick={() => {
-                      if (confirm('ルール設定をクリアしますか？')) {
-                        localStorage.removeItem('csvImportRules');
-                        toast.success('ルール設定をクリアしました');
-                      }
-                    }}
-                  >
-                    ルール設定をクリア
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

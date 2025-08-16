@@ -63,6 +63,7 @@ const DatabaseTest = lazy(() => import('./pages/DatabaseTest.jsx'));
 const ConnectionTest = lazy(() => import('./pages/ConnectionTest.jsx'));
 const Data = lazy(() => import('./pages/Data.jsx'));
 const SettingsHub = lazy(() => import('./pages/SettingsHub.jsx'));
+const Diagnostics = lazy(() => import('./pages/Diagnostics.jsx'));
 
 const NAV = {
   main: [
@@ -81,7 +82,8 @@ const NAV = {
   ],
   settings: [
     { key: 'prefs', label: '設定', icon: SettingsIcon },
-    { key: 'settings', label: 'アカウント設定', icon: User }
+    { key: 'settings', label: 'アカウント設定', icon: User },
+    { key: 'diagnostics', label: 'システム診断', icon: AlertCircle }
   ],
 };
 
@@ -700,28 +702,38 @@ function Dashboard({
 
   return (
     <div className='app-shell' style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* ヘッダー */}
-      <header className='header'>
-        <div className='header-controls'>
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3m">最近3ヶ月</SelectItem>
-              <SelectItem value="6m">半年</SelectItem>
-              <SelectItem value="1y">1年間</SelectItem>
-              <SelectItem value="all">全期間</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className='title'>
-          <span>家計簿カテゴリ管理</span>
-        </div>
-      </header>
-
       {/* ドロワー */}
       <Sheet open={open} onOpenChange={setOpen}>
+        {/* ヘッダー */}
+        <header className='header'>
+          <div className='header-controls'>
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3m">最近3ヶ月</SelectItem>
+                <SelectItem value="6m">半年</SelectItem>
+                <SelectItem value="1y">1年間</SelectItem>
+                <SelectItem value="all">全期間</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className='title'>
+            <span>家計簿カテゴリ管理</span>
+          </div>
+          <SheetTrigger asChild>
+            <Button
+              ref={burgerRef}
+              variant="ghost"
+              size="icon"
+              className="ml-auto"
+              aria-label="メニューを開く"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+        </header>
 
         <SheetContent ref={panelRef} side="right" className="w-80 overflow-y-auto bg-white">
               <SheetHeader>
@@ -1005,6 +1017,7 @@ function Dashboard({
             {page === 'categories' && <Categories />}
             {page === 'prefs' && <Prefs />}
             {page === 'settings' && <Settings />}
+            {page === 'diagnostics' && <Diagnostics />}
             {page === 'dbtest' && <DatabaseTest />}
             {page === 'conntest' && <ConnectionTest />}
           </Suspense>
