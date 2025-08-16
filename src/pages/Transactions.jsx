@@ -178,6 +178,7 @@ useEffect(() => {
     const rules = state.rules || [];
     const updatedRules = [...rules, newRule];
     dispatch({ type: 'setRules', payload: updatedRules });
+    dispatch({ type: 'applyRules' });
     
     // ルールのみを同期（トランザクションは同期しない）
     // 注：syncWithDatabaseはトランザクションとルールを両方同期するため、
