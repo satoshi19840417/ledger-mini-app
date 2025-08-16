@@ -104,7 +104,7 @@ export default function SettingsHub() {
       description: 'カラーテーマ、ダークモード、フォント設定',
       icon: Palette,
       color: 'pink',
-      href: '#prefs',
+      href: '#/theme',
       stats: {
         label: 'テーマ',
         value: 'ライトモード'

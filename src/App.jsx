@@ -12,6 +12,7 @@ import PasswordReset from './components/PasswordReset.jsx';
 import AmountVisual from './components/ui/AmountVisual.jsx';
 import { toast } from 'react-hot-toast';
 import { supabase } from './lib/supabaseClient.js';
+import { useTheme } from './state/ThemeContext.jsx';
 
 // shadcn/ui components
 import { Button } from './components/ui/button.jsx';
@@ -65,6 +66,7 @@ const Data = lazy(() => import('./pages/Data.jsx'));
 const SettingsHub = lazy(() => import('./pages/SettingsHub.jsx'));
 const DataSync = lazy(() => import('./pages/DataSync.jsx'));
 const Diagnostics = lazy(() => import('./pages/Diagnostics.jsx'));
+const ThemeSettings = lazy(() => import('./pages/ThemeSettings.jsx'));
 
 const NAV = {
   main: [
@@ -89,13 +91,14 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'datasync', 'dbtest', 'conntest'].includes(k);
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'datasync', 'dbtest', 'conntest', 'theme'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
+  const path = raw.startsWith('/') ? raw.slice(1) : raw;
   const params = new URLSearchParams(q);
   return {
-    page: exists(raw) ? raw : undefined,
+    page: exists(path) ? path : undefined,
     period: params.get('period') || undefined,
     yenUnit: params.get('unit') || undefined,
     lockColors:
@@ -128,11 +131,21 @@ function serializeHash({
 export default function App() {
   const { state, dispatch, loadFromDatabase } = useStore();
   const { session, loading } = useSession();
+  const { theme } = useTheme();
   const isLocalMode = localStorage.getItem('localMode') === 'true';
   const [syncing, setSyncing] = useState(false);
 
   const isAuthenticated = session || isLocalMode;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
 
   // 旧形式のfilterModeからrentを除去
   useEffect(() => {
@@ -1020,6 +1033,7 @@ function Dashboard({
             {page === 'prefs' && <Prefs />}
             {page === 'settings' && <Settings />}
             {page === 'diagnostics' && <Diagnostics />}
+            {page === 'theme' && <ThemeSettings />}
             {page === 'dbtest' && <DatabaseTest />}
             {page === 'conntest' && <ConnectionTest />}
           </Suspense>
