@@ -230,9 +230,12 @@ useEffect(() => {
     }));
   };
 
-  const applyEditedCategories = () => {
+  const applyEditedCategories = async () => {
     const hasEdits = Object.keys(editedCategories).length > 0 || Object.keys(excludedFromTotals).length > 0;
     if (!hasEdits) return;
+    
+    // 保存中の表示
+    toast.loading('変更を保存中...', { id: 'batch-save' });
     
     // 変更された取引のみを更新
     const changedTransactions = [];
@@ -252,12 +255,26 @@ useEffect(() => {
     
     // 複数の取引を個別に更新
     dispatch({ type: 'updateTransactions', payload: changedTransactions });
-    setEditedCategories({});
-    setExcludedFromTotals({});
     
+    // 変更されたデータのみを同期
     if (syncWithDatabase) {
-      // 変更されたデータのみを同期
-      syncWithDatabase(changedTransactions, false);
+      try {
+        const success = await syncWithDatabase(changedTransactions, false);
+        if (success) {
+          toast.success(`✅ ${changedTransactions.length}件の変更を保存・同期しました`, { id: 'batch-save' });
+          setEditedCategories({});
+          setExcludedFromTotals({});
+        } else {
+          toast.error('同期に失敗しました', { id: 'batch-save' });
+        }
+      } catch (error) {
+        toast.error('保存中にエラーが発生しました', { id: 'batch-save' });
+      }
+    } else {
+      // ローカルのみの場合
+      toast.success(`✅ ${changedTransactions.length}件の変更を保存しました`, { id: 'batch-save' });
+      setEditedCategories({});
+      setExcludedFromTotals({});
     }
   };
 
@@ -348,9 +365,10 @@ useEffect(() => {
                     onClick={applyEditedCategories}
                     variant="default"
                     size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white animate-pulse"
                   >
                     <Save className="w-3 h-3 mr-2" />
-                    変更を保存 ({Object.keys(editedCategories).length + Object.keys(excludedFromTotals).length}件)
+                    変更を一括保存・同期 ({Object.keys(editedCategories).length + Object.keys(excludedFromTotals).length}件)
                   </Button>
                 )}
                 <Button onClick={exportCsv} variant="outline" size="sm">
@@ -575,7 +593,11 @@ useEffect(() => {
                       return (
                         <tr key={idx} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                           idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                        } ${isExcluded ? 'opacity-60' : ''}`}>
+                        } ${isExcluded ? 'opacity-60' : ''} ${
+                          (editedCategories[tx.id] !== undefined || excludedFromTotals[tx.id] !== undefined) 
+                            ? 'bg-yellow-50 !bg-opacity-100 border-l-4 border-yellow-400' 
+                            : ''
+                        }`}>
                           <td className="p-3 text-sm">{tx.date}</td>
                           <td className="p-3">
                             <Select
@@ -656,12 +678,12 @@ useEffect(() => {
                                       syncWithDatabase([updated], false); // 変更されたデータを直接渡す
                                     }
                                   }}
-                                  variant="default"
+                                  variant="outline"
                                   size="sm"
-                                  className="text-xs"
+                                  className="text-xs border-green-500 text-green-600 hover:bg-green-50"
                                 >
                                   <RefreshCw className="w-3 h-3 mr-1" />
-                                  データ反映
+                                  個別保存
                                 </Button>
                               )}
                             </div>
