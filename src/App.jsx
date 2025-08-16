@@ -471,16 +471,16 @@ const NavItem = ({ active, onClick, icon: Icon, children }) => (
   </Button>
 );
 
-function Dashboard({
-  transactions,
-  period,
-  yenUnit,
-  lockColors,
-  hideOthers,
-  kind,
-  onKindChange,
-}) {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  function Dashboard({
+    transactions,
+    period,
+    yenUnit,
+    lockColors,
+    hideOthers,
+    kind,
+    onKindChange,
+  }) {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => !tx.excludeFromTotals);
@@ -679,8 +679,8 @@ function Dashboard({
         </CardContent>
       </Card>
     </div>
-  );
-}
+    );
+  }
 
   // パスワードリセットのコールバック処理を確認
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
