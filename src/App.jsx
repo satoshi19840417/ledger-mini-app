@@ -43,7 +43,8 @@ import {
   Home,
   EyeOff,
   Database,
-  AlertCircle
+  AlertCircle,
+  Wifi
 } from 'lucide-react';
 
 const Monthly = lazy(() => import('./pages/Monthly.jsx'));
@@ -59,6 +60,7 @@ const Prefs = lazy(() => import('./pages/Prefs.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
 const Categories = lazy(() => import('./pages/Categories.jsx'));
 const DatabaseTest = lazy(() => import('./pages/DatabaseTest.jsx'));
+const ConnectionTest = lazy(() => import('./pages/ConnectionTest.jsx'));
 const Data = lazy(() => import('./pages/Data.jsx'));
 const SettingsHub = lazy(() => import('./pages/SettingsHub.jsx'));
 
@@ -84,7 +86,7 @@ const NAV = {
 };
 
 const exists = k =>
-  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'dbtest'].includes(k);
+  [...NAV.main, ...NAV.data, ...NAV.settings].some(i => i.key === k) || ['dashboard', 'monthly', 'analysis', 'yearly', 'data', 'settings-hub', 'dbtest', 'conntest'].includes(k);
 
 function parseHash(hash) {
   const [raw, q = ''] = hash.replace(/^#/, '').split('?');
@@ -462,6 +464,8 @@ function Dashboard({
   kind,
   onKindChange,
 }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => !tx.excludeFromTotals);
   }, [transactions]);
@@ -489,21 +493,31 @@ function Dashboard({
   return (
     <div className="space-y-6">
       
-      {/* データベーステストページへのリンク */}
+      {/* テストツールへのリンク */}
       <Card className="border-blue-200 bg-blue-50/30">
         <CardContent className="pt-6">
           <div className="text-center">
             <p className="text-sm text-blue-700 mb-3">
-              {!supabase ? 'ローカルモードで動作中' : 'データベース接続の状態を確認'}
+              {!supabase ? 'ローカルモードで動作中' : 'システム診断ツール'}
             </p>
-            <Button
-              variant="outline"
-              onClick={() => window.location.hash = 'dbtest'}
-              className="border-blue-300 hover:bg-blue-50"
-            >
-              <AlertCircle className="w-4 h-4 mr-2" />
-              データベース診断ツールを開く
-            </Button>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <Button
+                variant="outline"
+                onClick={() => window.location.hash = 'conntest'}
+                className="border-red-300 hover:bg-red-50"
+              >
+                <Wifi className="w-4 h-4 mr-2" />
+                接続テスト
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.hash = 'dbtest'}
+                className="border-blue-300 hover:bg-blue-50"
+              >
+                <Database className="w-4 h-4 mr-2" />
+                DB診断
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -992,6 +1006,7 @@ function Dashboard({
             {page === 'prefs' && <Prefs />}
             {page === 'settings' && <Settings />}
             {page === 'dbtest' && <DatabaseTest />}
+            {page === 'conntest' && <ConnectionTest />}
           </Suspense>
         )}
       </main>
