@@ -18,7 +18,6 @@ export default function MonthlyAnalysis({
         <BarByMonth
           transactions={transactions}
           period={period}
-          yenUnit={yenUnit}
           lockColors={lockColors}
           hideOthers={hideOthers}
           kind="expense"

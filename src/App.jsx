@@ -657,7 +657,6 @@ function Dashboard({
             <BarByMonth
               transactions={filteredTransactions}
               period={period}
-              yenUnit={yenUnit}
               lockColors={lockColors}
               hideOthers={hideOthers}
               kind={kind}
