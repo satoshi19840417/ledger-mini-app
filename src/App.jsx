@@ -18,9 +18,9 @@ import { useTheme } from './state/ThemeContext.jsx';
 import { Button } from './components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card.jsx';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet.jsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select.jsx';
 import { Badge } from './components/ui/badge.jsx';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs.jsx';
 
 // Lucide icons
 import { 
