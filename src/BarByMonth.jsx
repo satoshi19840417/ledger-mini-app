@@ -123,26 +123,33 @@ const dataWithMovingAvg = useMemo(() => {
   });
 }, [dataWithColors]);
 
-// Y軸スケール用の最大値（total / cumulative / movingAvg を安全にカバー）
-const maxTotal = useMemo(() => {
+// Y軸スケール用の最大値をバー（total / movingAvg）と累積で分割
+const maxBar = useMemo(() => {
   return Math.max(
     0,
-    ...dataWithMovingAvg.map(d =>
-      Math.max(d.total ?? 0, d.cumulative ?? 0, d.movingAvg ?? 0)
-    )
+    ...dataWithMovingAvg.map(d => Math.max(d.total ?? 0, d.movingAvg ?? 0))
   );
 }, [dataWithMovingAvg]);
+
+const maxCumulative = useMemo(() => {
+  return Math.max(0, ...dataWithMovingAvg.map(d => d.cumulative ?? 0));
+}, [dataWithMovingAvg]);
+
   const displayUnit = useMemo(
-    () => (maxTotal >= 1_000_000 ? 'man' : 'yen'),
-    [maxTotal]
+    () => (Math.max(maxBar, maxCumulative) >= 1_000_000 ? 'man' : 'yen'),
+    [maxBar, maxCumulative]
   );
 
-  const yAxisMax = useMemo(() => Math.ceil(maxTotal * 1.1), [maxTotal]);
+  const yAxisMaxBar = useMemo(() => Math.ceil(maxBar * 1.1), [maxBar]);
+  const yAxisMaxCumulative = useMemo(
+    () => Math.ceil(maxCumulative * 1.1),
+    [maxCumulative]
+  );
 
   // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
-  const ticks = useMemo(() => {
+  const ticksBar = useMemo(() => {
     const divisor = displayUnit === 'man' ? 10000 : 1;
-    const max = yAxisMax / divisor;
+    const max = yAxisMaxBar / divisor;
     if (max === 0) return [0];
 
     // 最大値を適切な間隔で分割
@@ -155,8 +162,26 @@ const maxTotal = useMemo(() => {
     for (let i = 0; i <= tickCount; i++) {
       result.push(Math.round(tickStep * i * divisor));
     }
-    return result.filter(v => v <= yAxisMax);
-  }, [yAxisMax, displayUnit]);
+    return result.filter(v => v <= yAxisMaxBar);
+  }, [yAxisMaxBar, displayUnit]);
+
+  const ticksCumulative = useMemo(() => {
+    const divisor = displayUnit === 'man' ? 10000 : 1;
+    const max = yAxisMaxCumulative / divisor;
+    if (max === 0) return [0];
+
+    // 最大値を適切な間隔で分割
+    const step = Math.pow(10, Math.floor(Math.log10(max)));
+    const normalizedMax = Math.ceil(max / step) * step;
+    const tickCount = 5;
+    const tickStep = normalizedMax / tickCount;
+
+    const result = [];
+    for (let i = 0; i <= tickCount; i++) {
+      result.push(Math.round(tickStep * i * divisor));
+    }
+    return result.filter(v => v <= yAxisMaxCumulative);
+  }, [yAxisMaxCumulative, displayUnit]);
 
   const tickFormatter = (v) => formatAmount(v, displayUnit);
   const formatValue = (v) => formatAmount(v, displayUnit);
@@ -268,8 +293,18 @@ const maxTotal = useMemo(() => {
             tickFormatter={(v) => (v.length > 8 ? `${v.slice(0, 8)}…` : v)}
           />
           <YAxis
-            domain={[0, yAxisMax]}
-            ticks={ticks}
+            yAxisId="bar"
+            domain={[0, yAxisMaxBar]}
+            ticks={ticksBar}
+            tickFormatter={tickFormatter}
+            width={isMobile ? 60 : 80}
+            tick={{ fontSize: isMobile ? 10 : 12 }}
+          />
+          <YAxis
+            yAxisId="cum"
+            orientation="right"
+            domain={[0, yAxisMaxCumulative]}
+            ticks={ticksCumulative}
             tickFormatter={tickFormatter}
             width={isMobile ? 60 : 80}
             tick={{ fontSize: isMobile ? 10 : 12 }}
@@ -282,7 +317,7 @@ const maxTotal = useMemo(() => {
             strokeDasharray="3 3"
             label={{ position: 'right', value: `平均: ${formatValue(average)}` }}
           />
-          <Bar dataKey="total" name="合計">
+          <Bar dataKey="total" name="合計" yAxisId="bar">
             {dataWithMovingAvg.map((entry, idx) => (
               <Cell key={`cell-${idx}`} fill={entry.fill} />
             ))}
@@ -297,6 +332,7 @@ const maxTotal = useMemo(() => {
     strokeWidth={2}
     dot={{ r: 3 }}
     isAnimationActive={false}
+    yAxisId="cum"
   />
 )}
 
@@ -308,7 +344,8 @@ const maxTotal = useMemo(() => {
   strokeWidth={2}
   dot={false}
   isAnimationActive={false}
-/>
+  yAxisId="bar"
+/> 
 
         </ReBarChart>
       </ResponsiveContainer>
