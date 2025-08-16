@@ -2,5 +2,9 @@ import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs) {
-  return twMerge(clsx(inputs))
+  if (!inputs.every((input) => typeof input === "string")) {
+    return ""
+  }
+
+  return twMerge(clsx(...inputs))
 }
