@@ -3,7 +3,6 @@ import { useStore } from '../state/StoreContextWithDB.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card.jsx';
 import { Button } from '../components/ui/button.jsx';
 import { Badge } from '../components/ui/badge.jsx';
-import { toast } from 'react-hot-toast';
 import { 
   Upload, 
   Download, 
@@ -16,17 +15,12 @@ import {
   BarChart3,
   RefreshCw,
   FolderOpen,
-  Cloud,
-  CloudOff,
-  HardDrive,
-  Settings2
+  Cloud
 } from 'lucide-react';
 
 export default function Data() {
-  const { state, loadFromDatabase, syncWithDatabase, autoSyncEnabled, toggleAutoSync } = useStore();
+  const { state, autoSyncEnabled } = useStore();
   const [activeSection, setActiveSection] = useState(null);
-  const [syncing, setSyncing] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   const sections = [
     {
@@ -39,7 +33,7 @@ export default function Data() {
         label: '同期状態',
         value: autoSyncEnabled ? '自動同期ON' : '手動同期'
       },
-      action: 'modal'
+      href: '#diagnostics'
     },
     {
       id: 'import',
@@ -227,20 +221,6 @@ export default function Data() {
             </Card>
           );
           
-          if (section.action === 'modal') {
-            return (
-              <div
-                key={section.id}
-                onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
-                onMouseEnter={() => setActiveSection(section.id)}
-                onMouseLeave={() => setActiveSection(null)}
-                className="cursor-pointer"
-              >
-                {content}
-              </div>
-            );
-          }
-          
           return (
             <a
               key={section.id}
@@ -254,140 +234,6 @@ export default function Data() {
           );
         })}
       </div>
-
-      {/* データ同期モーダル */}
-      {activeSection === 'sync' && (
-        <Card className="border-indigo-200 bg-indigo-50/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Cloud className="h-5 w-5 text-indigo-600" />
-              データ同期設定
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* 自動同期設定 */}
-            <div className="p-4 bg-white rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">自動同期</h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    データ変更時に自動的にクラウドと同期します
-                  </p>
-                </div>
-                <button
-                  onClick={() => toggleAutoSync(!autoSyncEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    autoSyncEnabled ? 'bg-indigo-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span className="sr-only">自動同期を切り替え</span>
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      autoSyncEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="mt-2 text-xs text-gray-500">
-                現在: {autoSyncEnabled ? '有効 ✅' : '無効 ⏸️'}
-              </div>
-            </div>
-
-            {/* 手動同期 */}
-            <div className="p-4 bg-white rounded-lg border">
-              <h4 className="font-medium mb-3">手動同期</h4>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    クラウドから最新データを取得
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      size="sm"
-                      disabled={syncing}
-                      onClick={async () => {
-                        setSyncing(true);
-                        try {
-                          await loadFromDatabase();
-                          toast.success('データを同期しました');
-                        } catch (error) {
-                          console.error('Sync error:', error);
-                          toast.error('同期に失敗しました');
-                        } finally {
-                          setSyncing(false);
-                        }
-                      }}
-                    >
-                      <CloudOff className="h-4 w-4 mr-2" />
-                      {syncing ? '同期中...' : 'データを同期'}
-                    </Button>
-                    {state.lastSyncAt && (
-                      <span className="text-xs text-gray-500">
-                        最終: {new Date(state.lastSyncAt).toLocaleString('ja-JP')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    未同期データをクラウドに送信
-                  </p>
-                  <Button
-                    size="sm"
-                    disabled={uploading}
-                    onClick={async () => {
-                      setUploading(true);
-                      try {
-                        const success = await syncWithDatabase();
-                        if (success) {
-                          toast.success('未同期データを送信しました');
-                        } else {
-                          toast.error('送信に失敗しました');
-                        }
-                      } catch (error) {
-                        console.error('Upload error:', error);
-                        toast.error('送信に失敗しました');
-                      } finally {
-                        setUploading(false);
-                      }
-                    }}
-                  >
-                    <Cloud className="h-4 w-4 mr-2" />
-                    {uploading ? '送信中...' : '未同期データを送信'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* ローカルストレージ管理 */}
-            <div className="p-4 bg-white rounded-lg border">
-              <h4 className="font-medium mb-3">
-                <HardDrive className="inline h-4 w-4 mr-2" />
-                ローカルストレージ
-              </h4>
-              <p className="text-sm text-gray-600 mb-3">
-                ブラウザに保存されているデータの管理
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    if (confirm('ルール設定をクリアしますか？')) {
-                      localStorage.removeItem('csvImportRules');
-                      toast.success('ルール設定をクリアしました');
-                    }
-                  }}
-                >
-                  <Settings2 className="h-4 w-4 mr-2" />
-                  ルール設定をクリア
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* サマリー情報 */}
       <Card>

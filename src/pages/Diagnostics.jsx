@@ -11,7 +11,10 @@ import {
   Settings,
   Clock,
   FileSearch,
-  PlayCircle
+  PlayCircle,
+  GitCompare,
+  AlertCircle,
+  FileWarning
 } from 'lucide-react';
 
 function Diagnostics() {
@@ -22,12 +25,27 @@ function Diagnostics() {
   const [expandedSections, setExpandedSections] = useState({});
   const [simulationResult, setSimulationResult] = useState(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [updateSimResult, setUpdateSimResult] = useState(null);
+  const [isUpdateSimulating, setIsUpdateSimulating] = useState(false);
+  const [errorLogs, setErrorLogs] = useState([]);
+  const [showErrorLogs, setShowErrorLogs] = useState(false);
 
   useEffect(() => {
     if (user) {
       runDiagnostics();
     }
+    // エラーログを取得
+    loadErrorLogs();
   }, [user]);
+
+  const loadErrorLogs = () => {
+    try {
+      const logs = diagnosticsService.collectErrorLogs();
+      setErrorLogs(logs);
+    } catch (error) {
+      console.error('Failed to load error logs:', error);
+    }
+  };
 
   const runDiagnostics = async () => {
     setIsRunning(true);
@@ -66,6 +84,25 @@ function Diagnostics() {
       });
     } finally {
       setIsSimulating(false);
+    }
+  };
+
+  const runUpdateSimulation = async () => {
+    setIsUpdateSimulating(true);
+    setUpdateSimResult(null);
+    
+    try {
+      const results = await diagnosticsService.simulateDataUpdate(user?.id);
+      setUpdateSimResult(results);
+    } catch (error) {
+      console.error('更新シミュレーションエラー:', error);
+      setUpdateSimResult({
+        status: 'error',
+        message: '更新シミュレーションの実行中にエラーが発生しました',
+        error: error.message
+      });
+    } finally {
+      setIsUpdateSimulating(false);
     }
   };
 
@@ -231,6 +268,42 @@ function Diagnostics() {
                 )}
               </button>
             )}
+            
+            {user && (
+              <button
+                onClick={runUpdateSimulation}
+                disabled={isUpdateSimulating}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {isUpdateSimulating ? (
+                  <>
+                    <GitCompare className="h-5 w-5 animate-spin" />
+                    <span>更新チェック中...</span>
+                  </>
+                ) : (
+                  <>
+                    <GitCompare className="h-5 w-5" />
+                    <span>更新チェック</span>
+                  </>
+                )}
+              </button>
+            )}
+            
+            <button
+              onClick={() => {
+                loadErrorLogs();
+                setShowErrorLogs(!showErrorLogs);
+              }}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <FileWarning className="h-5 w-5" />
+              <span>エラーログ</span>
+              {errorLogs.length > 0 && (
+                <span className="bg-white text-red-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                  {errorLogs.length}
+                </span>
+              )}
+            </button>
           </div>
           
           {diagnostics?.timestamp && (
@@ -348,6 +421,162 @@ function Diagnostics() {
                         <span className="font-medium">{step.step}:</span>
                         <span className="text-gray-600">{step.message}</span>
                         {step.error && <span className="text-red-600 text-xs">({step.error})</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 更新シミュレーション結果 */}
+            {updateSimResult && (
+              <div className={`bg-white rounded-lg shadow-md p-6 ${
+                updateSimResult.status === 'success' ? 'border-green-200' :
+                updateSimResult.status === 'warning' ? 'border-yellow-200' :
+                updateSimResult.status === 'info' ? 'border-blue-200' : 'border-red-200'
+              }`}>
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <GitCompare className="h-5 w-5" />
+                  データ更新チェック結果
+                </h2>
+                
+                <div className={`mb-4 p-3 rounded ${
+                  updateSimResult.status === 'success' ? 'bg-green-50 text-green-700' :
+                  updateSimResult.status === 'warning' ? 'bg-yellow-50 text-yellow-700' :
+                  updateSimResult.status === 'info' ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'
+                }`}>
+                  <p className="font-medium">{updateSimResult.message}</p>
+                  {updateSimResult.error && (
+                    <p className="text-sm mt-1">エラー: {updateSimResult.error}</p>
+                  )}
+                </div>
+                
+                {/* 新規レコード */}
+                {updateSimResult.newRecords && updateSimResult.newRecords.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-gray-600 mb-2">
+                      新規追加予定 ({updateSimResult.newRecords.length}件)
+                    </h3>
+                    <div className="space-y-1 max-h-32 overflow-y-auto bg-green-50 p-2 rounded">
+                      {updateSimResult.newRecords.slice(0, 5).map((record, idx) => (
+                        <div key={idx} className="text-xs text-green-700">
+                          {record.date} - {record.description} (¥{record.amount})
+                        </div>
+                      ))}
+                      {updateSimResult.newRecords.length > 5 && (
+                        <div className="text-xs text-green-600">
+                          他 {updateSimResult.newRecords.length - 5} 件
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* 更新予定 */}
+                {updateSimResult.updates && updateSimResult.updates.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-gray-600 mb-2">
+                      更新予定 ({updateSimResult.updates.length}件)
+                    </h3>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {updateSimResult.updates.slice(0, 5).map((update, idx) => (
+                        <div key={idx} className="bg-blue-50 p-2 rounded text-xs">
+                          <div className="font-medium text-blue-700">
+                            {update.date} - {update.description}
+                          </div>
+                          <div className="text-blue-600 mt-1">
+                            {update.changes.map((change, i) => (
+                              <span key={i} className="inline-block mr-2">• {change}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {updateSimResult.updates.length > 5 && (
+                        <div className="text-xs text-blue-600 text-center">
+                          他 {updateSimResult.updates.length - 5} 件の更新
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* 競合 */}
+                {updateSimResult.conflicts && updateSimResult.conflicts.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-red-600 mb-2">
+                      ⚠️ 競合検出 ({updateSimResult.conflicts.length}件)
+                    </h3>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {updateSimResult.conflicts.map((conflict, idx) => (
+                        <div key={idx} className="bg-red-50 p-2 rounded text-xs border-l-4 border-red-400">
+                          <div className="font-medium text-red-700">
+                            {conflict.date} - {conflict.description}
+                          </div>
+                          <div className="text-red-600 mt-1">
+                            {conflict.message}
+                          </div>
+                          <div className="text-red-500 text-xs mt-1">
+                            サーバー更新: {new Date(conflict.serverUpdatedAt).toLocaleString('ja-JP')}
+                            <br />
+                            ローカル更新: {new Date(conflict.localUpdatedAt).toLocaleString('ja-JP')}
+                          </div>
+                          <div className="text-red-600 mt-1">
+                            変更内容:
+                            {conflict.changes.map((change, i) => (
+                              <span key={i} className="block ml-2">• {change}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* エラーログ表示 */}
+            {showErrorLogs && (
+              <div className="bg-white rounded-lg shadow-md p-6 border-red-200">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <FileWarning className="h-5 w-5 text-red-500" />
+                  エラーログ履歴
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('errorLogs');
+                      setErrorLogs([]);
+                    }}
+                    className="ml-auto text-sm text-red-600 hover:text-red-700"
+                  >
+                    クリア
+                  </button>
+                </h2>
+                
+                {errorLogs.length === 0 ? (
+                  <p className="text-gray-500">エラーログはありません</p>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {errorLogs.slice(-10).reverse().map((log, idx) => (
+                      <div key={idx} className="border-l-4 border-red-400 pl-3 py-2 bg-red-50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="text-xs text-gray-500">
+                              {new Date(log.timestamp).toLocaleString('ja-JP')}
+                            </div>
+                            <div className="text-sm text-red-700 font-mono mt-1">
+                              {log.message || log.error?.message}
+                            </div>
+                            {log.context && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                Context: {JSON.stringify(log.context)}
+                              </div>
+                            )}
+                            {log.url && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                URL: {log.url}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

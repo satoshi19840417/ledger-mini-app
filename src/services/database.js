@@ -177,7 +177,50 @@ export const dbService = {
       return { success: true, data: allData };
     } catch (error) {
       console.error('Error syncing transactions:', error);
-      toast.error('取引の同期に失敗しました');
+      
+      // エラー情報を保存（診断は別途実行）
+      try {
+        const errorLog = {
+          timestamp: new Date().toISOString(),
+          error: {
+            message: error.message,
+            stack: error.stack,
+            code: error.code
+          },
+          context: {
+            operation: 'syncTransactions',
+            userId,
+            transactionCount: transactions.length
+          },
+          userAgent: navigator.userAgent,
+          url: window.location.href
+        };
+        
+        const logs = JSON.parse(localStorage.getItem('errorLogs') || '[]');
+        logs.push(errorLog);
+        if (logs.length > 50) {
+          logs.splice(0, logs.length - 50);
+        }
+        localStorage.setItem('errorLogs', JSON.stringify(logs));
+      } catch (e) {
+        console.error('Failed to save error log:', e);
+      }
+      
+      // エラーメッセージの改善
+      let errorMessage = '取引の同期に失敗しました';
+      const errorStr = error.message?.toLowerCase() || '';
+      
+      if (errorStr.includes('auth') || error.code === '401') {
+        errorMessage = '認証エラー: 再度ログインしてください';
+      } else if (errorStr.includes('network')) {
+        errorMessage = 'ネットワークエラー: 接続を確認してください';
+      } else if (errorStr.includes('duplicate')) {
+        errorMessage = '重複エラー: 同じデータが既に存在します';
+      } else if (errorStr.includes('validation')) {
+        errorMessage = 'データ形式エラー: 入力内容を確認してください';
+      }
+      
+      toast.error(errorMessage);
       return { success: false, error };
     }
   },
