@@ -1030,7 +1030,10 @@ function Dashboard({
         <Card className="fixed bottom-4 right-4 z-50 max-w-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <p className="text-sm">新しいバージョンがあります。</p>
+              <p className="text-sm flex items-center">
+                <AlertCircle className="w-4 h-4 text-primary mr-2" />
+                新しいバージョンがあります。
+              </p>
               <Button size="sm" onClick={() => updateServiceWorker(true)}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 更新
