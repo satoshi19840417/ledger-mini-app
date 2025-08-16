@@ -18,6 +18,16 @@ npm run dev
   - `VITE_SUPABASE_URL`: Supabase プロジェクトの URL
   - `VITE_SUPABASE_ANON_KEY`: Supabase の anon key
 
+#### 環境変数の設定例
+
+```
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+これらの環境変数が未設定の場合、`src/lib/supabaseClient.js` は警告を出して `null` を返し、
+Supabase を利用する機能は無効になります。
+
 ## 開発用コマンド
 
 | コマンド | 説明 |
