@@ -66,7 +66,6 @@ function ScrollableLegend({ payload }) {
 export default function BarByMonth({
   transactions,
   period,
-  yenUnit,
   lockColors,
   hideOthers,
   kind = 'expense',
@@ -133,29 +132,34 @@ const maxTotal = useMemo(() => {
     )
   );
 }, [dataWithMovingAvg]);
-
+  const displayUnit = useMemo(
+    () => (maxTotal >= 1_000_000 ? 'man' : 'yen'),
+    [maxTotal]
+  );
 
   const yAxisMax = useMemo(() => Math.ceil(maxTotal * 1.1), [maxTotal]);
 
   // Y軸のticksを自動計算（きりの良い数値で5つ程度に分割）
   const ticks = useMemo(() => {
-    if (yAxisMax === 0) return [0];
+    const divisor = displayUnit === 'man' ? 10000 : 1;
+    const max = yAxisMax / divisor;
+    if (max === 0) return [0];
 
     // 最大値を適切な間隔で分割
-    const step = Math.pow(10, Math.floor(Math.log10(yAxisMax)));
-    const normalizedMax = Math.ceil(yAxisMax / step) * step;
+    const step = Math.pow(10, Math.floor(Math.log10(max)));
+    const normalizedMax = Math.ceil(max / step) * step;
     const tickCount = 5;
     const tickStep = normalizedMax / tickCount;
 
     const result = [];
     for (let i = 0; i <= tickCount; i++) {
-      result.push(Math.round(tickStep * i));
+      result.push(Math.round(tickStep * i * divisor));
     }
     return result.filter(v => v <= yAxisMax);
-  }, [yAxisMax]);
+  }, [yAxisMax, displayUnit]);
 
-  const tickFormatter = (v) => formatAmount(v, yenUnit);
-  const formatValue = (v) => formatAmount(v, yenUnit);
+  const tickFormatter = (v) => formatAmount(v, displayUnit);
+  const formatValue = (v) => formatAmount(v, displayUnit);
   const legendPayload = dataWithColors.map((d) => ({
     id: d.month,
     value: d.month,

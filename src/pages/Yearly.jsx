@@ -134,7 +134,6 @@ export default function Yearly({
                   <BarByMonth
                     transactions={transactions}
                     period={period}
-                    yenUnit={yenUnit}
                     lockColors={lockColors}
                     hideOthers={hideOthers}
                     kind={kind}
