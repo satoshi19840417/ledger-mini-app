@@ -1,4 +1,5 @@
 import { useRef, useMemo } from 'react';
+import { UNCATEGORIZED_LABEL } from './defaultCategories.js';
 import { formatAmount } from './utils/currency.js';
 import {
   ResponsiveContainer,
@@ -78,7 +79,7 @@ export default function CategoryComparison({
   const filtered = useMemo(() => {
     return transactions.filter((tx) => {
       if (tx.kind !== kind) return false;
-      const cat = tx.category || 'その他';
+      const cat = tx.category || UNCATEGORIZED_LABEL;
       if (hideOthers && cat === 'その他') return false;
       return true;
     });
@@ -87,7 +88,7 @@ export default function CategoryComparison({
   const monthMap = {};
   filtered.forEach((tx) => {
     const month = tx.date.slice(0, 7);
-    const cat = tx.category || 'その他';
+    const cat = tx.category || UNCATEGORIZED_LABEL;
     monthMap[month] = monthMap[month] || {};
     monthMap[month][cat] = (monthMap[month][cat] || 0) + Math.abs(tx.amount);
   });
@@ -103,7 +104,7 @@ export default function CategoryComparison({
     }
     const totals = {};
     filtered.forEach((tx) => {
-      const cat = tx.category || 'その他';
+      const cat = tx.category || UNCATEGORIZED_LABEL;
       totals[cat] = (totals[cat] || 0) + Math.abs(tx.amount);
     });
     return Object.entries(totals)

@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { DEFAULT_CATEGORIES } from '../defaultCategories';
+import { DEFAULT_CATEGORIES, UNCATEGORIZED_LABEL } from '../defaultCategories';
 /** @typedef {import('../types').Transaction} Transaction */
 /** @typedef {import('../types').Rule} Rule */
 /** @typedef {import('../types').StoreState} StoreState */
@@ -42,7 +42,8 @@ function applyRulesToTransactions(transactions, rules) {
         return false;
       }
     });
-    return matched ? { ...tx, category: matched.category } : tx;
+    const category = matched ? matched.category : tx.category;
+    return { ...tx, category: category || UNCATEGORIZED_LABEL };
   });
 }
 
@@ -72,6 +73,7 @@ function reducer(state, action) {
             kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
             isCardPayment:
               tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
+            category: tx.category || UNCATEGORIZED_LABEL,
           }));
         } catch {
           // ignore
@@ -170,7 +172,7 @@ function reducer(state, action) {
       const category = action.payload;
       const categories = state.categories.filter(c => c !== category);
       const transactions = state.transactions.map(tx =>
-        tx.category === category ? { ...tx, category: '' } : tx
+        tx.category === category ? { ...tx, category: UNCATEGORIZED_LABEL } : tx
       );
       const rules = state.rules.filter(rule => rule.category !== category);
       localStorage.setItem('lm_categories_v1', JSON.stringify(categories));

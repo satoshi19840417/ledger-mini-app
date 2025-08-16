@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import PieByCategory from '../PieByCategory.jsx';
 import CategoryComparison from '../CategoryComparison.jsx';
+import { UNCATEGORIZED_LABEL } from '../defaultCategories.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -48,7 +49,7 @@ export default function Monthly({
   const topCategories = useMemo(() => {
     const totals = {};
     monthTxs.forEach((tx) => {
-      const cat = tx.category || 'その他';
+      const cat = tx.category || UNCATEGORIZED_LABEL;
       if (hideOthers && cat === 'その他') return;
       totals[cat] = (totals[cat] || 0) + Math.abs(tx.amount);
     });
@@ -101,7 +102,7 @@ export default function Monthly({
   const categoryDetails = useMemo(() => {
     const categoryMap = {};
     monthTxs.forEach((tx) => {
-      const cat = tx.category || 'その他';
+      const cat = tx.category || UNCATEGORIZED_LABEL;
       if (!categoryMap[cat]) {
         categoryMap[cat] = { amount: 0, count: 0, transactions: [] };
       }
@@ -361,7 +362,7 @@ export default function Monthly({
                           <td className="p-2 text-sm">{tx.date}</td>
                           <td className="p-2 text-sm">
                             <Badge variant="outline" className="text-xs">
-                              {tx.category || 'その他'}
+                              {tx.category || UNCATEGORIZED_LABEL}
                             </Badge>
                           </td>
                           <td className="p-2 text-sm text-muted-foreground">

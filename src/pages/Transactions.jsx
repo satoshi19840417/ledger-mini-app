@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../state/StoreContextWithDB';
+import { UNCATEGORIZED_LABEL } from '../defaultCategories.js';
 import { toast } from 'react-hot-toast';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -24,7 +25,7 @@ export default function Transactions() {
   /** @type {Transaction[]} */
   const txs = state.transactions;
   const categories = state.categories;
-  const unclassifiedCount = txs.filter(tx => !tx.category).length;
+  const unclassifiedCount = txs.filter(tx => tx.category === UNCATEGORIZED_LABEL).length;
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -55,7 +56,7 @@ export default function Transactions() {
 const filtered = useMemo(() => {
   return txs.filter((tx) => {
     // 既存フィルタ
-    if (showUnclassifiedOnly && tx.category) return false;
+    if (showUnclassifiedOnly && tx.category !== UNCATEGORIZED_LABEL) return false;
     if (excludeCardPayments && tx.isCardPayment) return false;
 
     if (startDate && tx.date < startDate) return false;
@@ -65,7 +66,7 @@ const filtered = useMemo(() => {
     if (selectedCategory && selectedCategory !== '' && tx.category !== selectedCategory) return false;
 
     if (categoryQuery && categoryQuery.trim() !== '') {
-      const c = (tx.category || '').toLowerCase();
+      const c = (tx.category || UNCATEGORIZED_LABEL).toLowerCase();
       if (!c.includes(categoryQuery.toLowerCase().trim())) return false;
     }
 
@@ -165,7 +166,7 @@ useEffect(() => {
       pattern: tx.description || tx.detail || '',
       mode: 'contains',
       target: 'description',
-      category: tx.category || categories[0] || 'その他',
+      category: tx.category || categories[0] || UNCATEGORIZED_LABEL,
       kind: tx.kind || 'both',
     });
     setShowRuleModal(true);
@@ -601,7 +602,7 @@ useEffect(() => {
                           <td className="p-3 text-sm">{tx.date}</td>
                           <td className="p-3">
                             <Select
-                              value={editedCategories[tx.id] || tx.category || ''}
+                              value={editedCategories[tx.id] || tx.category || UNCATEGORIZED_LABEL}
                               onValueChange={(value) => handleCategoryChange(tx.id, value)}
                             >
                               <SelectTrigger className={`w-full h-8 text-xs ${
@@ -777,7 +778,7 @@ useEffect(() => {
                       <div>金額: {selectedTx.amount.toLocaleString()}円</div>
                       <div>現在のカテゴリ: 
                         <Badge variant="outline" className="ml-1">
-                          {selectedTx.category || '未分類'}
+                          {selectedTx.category || UNCATEGORIZED_LABEL}
                         </Badge>
                       </div>
                     </div>
