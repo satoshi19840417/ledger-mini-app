@@ -10,7 +10,7 @@ import {
   Legend,
   Cell,
 } from 'recharts';
-import { DEFAULT_CATEGORIES as CATEGORIES } from './defaultCategories.js';
+import { DEFAULT_CATEGORIES as CATEGORIES, UNCATEGORIZED_LABEL } from './defaultCategories.js';
 
 const DEFAULT_BAR_COLOR = '#3b82f6';
 
@@ -83,7 +83,7 @@ export default function BarByCategory({
 
   const totals = {};
   filteredTx.forEach((tx) => {
-    const cat = tx.category || 'その他';
+    const cat = tx.category || UNCATEGORIZED_LABEL;
     if (hideOthers && cat === 'その他') return;
     totals[cat] = (totals[cat] || 0) + Math.abs(tx.amount);
   });

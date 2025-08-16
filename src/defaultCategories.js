@@ -1,3 +1,5 @@
+export const UNCATEGORIZED_LABEL = '未分類';
+
 export const DEFAULT_CATEGORIES = [
   '食費',
   '外食費',

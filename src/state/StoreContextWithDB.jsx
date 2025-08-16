@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 import { dbService } from '../services/database';
 import { useSession } from '../useSession';
-import { DEFAULT_CATEGORIES } from '../defaultCategories';
+import { DEFAULT_CATEGORIES, UNCATEGORIZED_LABEL } from '../defaultCategories';
 import { saveBackup, loadBackup } from '../services/localBackup';
 import { toast } from 'react-hot-toast';
 
@@ -41,7 +41,8 @@ function applyRulesToTransactions(transactions, rules) {
         return false;
       }
     });
-    return matched ? { ...tx, category: matched.category } : tx;
+    const category = matched ? matched.category : tx.category;
+    return { ...tx, category: category || UNCATEGORIZED_LABEL };
   });
 }
 
@@ -68,6 +69,7 @@ function reducer(state, action) {
             kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
             isCardPayment:
               tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
+            category: tx.category || UNCATEGORIZED_LABEL,
           }));
         } catch {
           // ignore
@@ -113,7 +115,11 @@ function reducer(state, action) {
     
     case 'loadBackup': {
       const { transactions = [], rules = [], categories = DEFAULT_CATEGORIES } = action.payload || {};
-      return { ...state, transactions, rules, categories };
+      const normalizedTransactions = transactions.map(tx => ({
+        ...tx,
+        category: tx.category || UNCATEGORIZED_LABEL,
+      }));
+      return { ...state, transactions: normalizedTransactions, rules, categories };
     }
 
     case 'loadFromDatabase': {
@@ -124,6 +130,7 @@ function reducer(state, action) {
         kind: tx.kind || (tx.amount < 0 ? 'expense' : 'income'),
         isCardPayment:
           tx.isCardPayment || tx.is_card_payment || tx.category === 'カード支払い',
+        category: tx.category || UNCATEGORIZED_LABEL,
       }));
       if (rules !== undefined) {
         localStorage.setItem('lm_rules_v1', JSON.stringify(rules));
@@ -154,13 +161,13 @@ function reducer(state, action) {
     case 'updateTransaction': {
       // 単一のトランザクションを更新
       console.log('🔥 updateTransaction action called for ID:', action.payload.id);
-      const updatedTx = action.payload;
+      const updatedTx = { ...action.payload, category: action.payload.category || UNCATEGORIZED_LABEL };
       
       // ハッシュ値を再生成（カテゴリ変更を検出するため）
       const generateHash = (tx) => {
         const dateValue = tx.date || '';
         const amount = tx.amount || 0;
-        const categoryText = tx.category || '';
+        const categoryText = tx.category || UNCATEGORIZED_LABEL;
         const descText = tx.description || '';
         const detailText = tx.detail || '';
         const memoText = tx.memo || '';
@@ -213,18 +220,21 @@ function reducer(state, action) {
       const generateHash = (tx) => {
         const dateValue = tx.date || '';
         const amount = tx.amount || 0;
-        const categoryText = tx.category || '';
+        const categoryText = tx.category || UNCATEGORIZED_LABEL;
         const descText = tx.description || '';
         const detailText = tx.detail || '';
         const memoText = tx.memo || '';
         const excludeText = (tx.excludeFromTotals ?? tx.exclude_from_totals ?? false).toString();
         return `${dateValue}_${amount}_${categoryText}_${descText}_${detailText}_${memoText}_${excludeText}_${tx.id}`;
       };
-      
-      const updatedTxMap = new Map(action.payload.map(tx => [
-        tx.id, 
-        { ...tx, hash: generateHash(tx), updated_at: new Date().toISOString() }
-      ]));
+
+      const updatedTxMap = new Map(action.payload.map(tx => {
+        const normalizedTx = { ...tx, category: tx.category || UNCATEGORIZED_LABEL };
+        return [
+          tx.id,
+          { ...normalizedTx, hash: generateHash(normalizedTx), updated_at: new Date().toISOString() }
+        ];
+      }));
       
       const transactions = state.transactions.map(tx => {
         if (updatedTxMap.has(tx.id)) {
@@ -355,9 +365,9 @@ function reducer(state, action) {
     case 'deleteCategory': {
       const category = action.payload;
       const categories = state.categories.filter(c => c !== category);
-      // 削除されたカテゴリを使用している取引は「その他」に変更
+      // 削除されたカテゴリを使用している取引は「未分類」に変更
       const transactions = state.transactions.map(tx =>
-        tx.category === category ? { ...tx, category: 'その他' } : tx
+        tx.category === category ? { ...tx, category: UNCATEGORIZED_LABEL } : tx
       );
       const rules = state.rules.filter(rule => rule.category !== category);
       localStorage.setItem('lm_categories_v1', JSON.stringify(categories));

@@ -1,5 +1,6 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { formatAmount } from './utils/currency.js';
+import { UNCATEGORIZED_LABEL } from './defaultCategories.js';
 import {
   ResponsiveContainer,
   PieChart as RePieChart,
@@ -105,7 +106,7 @@ export default function PieByCategory({
 
   const totals = {};
   filteredTx.forEach((tx) => {
-    const cat = tx.category || 'その他';
+    const cat = tx.category || UNCATEGORIZED_LABEL;
     totals[cat] = (totals[cat] || 0) + Math.abs(tx.amount);
   });
   const totalSum = Object.values(totals).reduce((s, v) => s + v, 0);
@@ -113,7 +114,7 @@ export default function PieByCategory({
   let othersValue = 0;
   Object.entries(totals).forEach(([name, value]) => {
     const ratio = totalSum ? value / totalSum : 0;
-    if (name === 'その他' || ratio < 0.03) {
+    if (name === 'その他' || (name !== UNCATEGORIZED_LABEL && ratio < 0.03)) {
       othersValue += value;
     } else {
       items.push({ name, value });
