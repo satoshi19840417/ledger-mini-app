@@ -274,12 +274,37 @@ export default function DataSync() {
               <div className="text-xs text-muted-foreground">総取引数</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {state.transactions.filter(tx => tx.updated_at).length}
+              <div className="text-2xl font-bold text-orange-600">
+                {state.pendingUpdates?.size || 0}
               </div>
-              <div className="text-xs text-muted-foreground">同期済み</div>
+              <div className="text-xs text-muted-foreground">未同期変更</div>
             </div>
           </div>
+          
+          {/* 未同期データの詳細 */}
+          {state.pendingUpdates && state.pendingUpdates.size > 0 && (
+            <div className="mt-4 p-3 bg-orange-50 rounded-lg">
+              <h4 className="text-sm font-medium text-orange-700 mb-2">
+                未同期の変更 ({state.pendingUpdates.size}件)
+              </h4>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {Array.from(state.pendingUpdates.values()).slice(0, 5).map((tx, idx) => (
+                  <div key={idx} className="text-xs text-orange-600">
+                    {tx.date} - {tx.description || tx.category} 
+                    {tx.amount && ` (¥${Math.abs(tx.amount).toLocaleString()})`}
+                  </div>
+                ))}
+                {state.pendingUpdates.size > 5 && (
+                  <div className="text-xs text-orange-500 font-medium">
+                    他 {state.pendingUpdates.size - 5} 件の変更
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-orange-600 mt-2">
+                💡 自動同期がOFFの場合は「未同期データを送信」ボタンで同期してください
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

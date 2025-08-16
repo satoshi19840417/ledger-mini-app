@@ -14,6 +14,7 @@ const initialState = {
   profile: null,
   categories: DEFAULT_CATEGORIES,
   modifiedTransactionIds: new Set(), // 変更されたトランザクションIDを追跡
+  pendingUpdates: new Map(), // 未同期の更新データを保持 (ID -> transaction)
 };
 
 function applyRulesToTransactions(transactions, rules) {
@@ -185,6 +186,11 @@ function reducer(state, action) {
       modifiedIds.add(updatedTx.id);
       console.log('📝 Modified IDs after update:', [...modifiedIds]);
       
+      // pendingUpdatesマップに追加
+      const pendingUpdates = new Map(state.pendingUpdates);
+      pendingUpdates.set(updatedTx.id, updatedWithHash);
+      console.log('📝 Pending updates count:', pendingUpdates.size);
+      
       localStorage.setItem(
         'lm_tx_v1',
         JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
@@ -194,7 +200,8 @@ function reducer(state, action) {
         ...state,
         transactions,
         syncStatus: 'pending',
-        modifiedTransactionIds: modifiedIds
+        modifiedTransactionIds: modifiedIds,
+        pendingUpdates
       };
     }
     
@@ -231,6 +238,13 @@ function reducer(state, action) {
       action.payload.forEach(tx => modifiedIds.add(tx.id));
       console.log('📝 Modified IDs after batch update:', [...modifiedIds]);
       
+      // pendingUpdatesマップに追加
+      const pendingUpdates = new Map(state.pendingUpdates);
+      updatedTxMap.forEach((tx, id) => {
+        pendingUpdates.set(id, tx);
+      });
+      console.log('📝 Pending updates count:', pendingUpdates.size);
+      
       localStorage.setItem(
         'lm_tx_v1',
         JSON.stringify({ transactions, lastImportAt: state.lastImportAt })
@@ -240,7 +254,8 @@ function reducer(state, action) {
         ...state,
         transactions,
         syncStatus: 'pending',
-        modifiedTransactionIds: modifiedIds
+        modifiedTransactionIds: modifiedIds,
+        pendingUpdates
       };
     }
     
@@ -397,13 +412,15 @@ function reducer(state, action) {
         ...state,
         syncStatus: 'synced',
         lastSyncAt: new Date().toISOString(),
+        pendingUpdates: new Map(), // 同期完了時にクリア
       };
     }
     
     case 'clearModifiedIds': {
       return {
         ...state,
-        modifiedTransactionIds: new Set()
+        modifiedTransactionIds: new Set(),
+        pendingUpdates: new Map() // 変更IDクリア時に同時にクリア
       };
     }
     
@@ -453,18 +470,26 @@ export function StoreProvider({ children }) {
       // onlyChangedがtrueの場合、変更されたデータのみを同期
       if (onlyChanged && !overrideTransactions) {
         console.log('=== 差分同期モード ===');
+        console.log('Pending updates:', state.pendingUpdates ? state.pendingUpdates.size : 0);
         console.log('Modified IDs:', state.modifiedTransactionIds ? [...state.modifiedTransactionIds] : 'none');
         console.log('Total transactions:', state.transactions.length);
         
-        // modifiedTransactionIdsに含まれるトランザクションのみを同期
-        if (state.modifiedTransactionIds && state.modifiedTransactionIds.size > 0) {
+        // pendingUpdatesマップから変更データを取得（優先）
+        if (state.pendingUpdates && state.pendingUpdates.size > 0) {
+          txToSync = Array.from(state.pendingUpdates.values());
+          console.log(`✅ Using pending updates: ${txToSync.length} items`);
+          console.log('Pending update IDs:', Array.from(state.pendingUpdates.keys()).join(', '));
+        } 
+        // フォールバック: modifiedTransactionIdsを使用
+        else if (state.modifiedTransactionIds && state.modifiedTransactionIds.size > 0) {
           txToSync = state.transactions.filter(tx => 
             state.modifiedTransactionIds.has(tx.id)
           );
-          console.log(`✅ Syncing only ${txToSync.length} modified items (IDs: ${[...state.modifiedTransactionIds].join(', ')})`);
-        } else {
-          // 変更されたIDがない場合は、updated_atで判定（フォールバック）
-          console.log('⚠️ No modified IDs tracked, falling back to updated_at check');
+          console.log(`✅ Using modified IDs: ${txToSync.length} items`);
+        } 
+        // 最終フォールバック: updated_atで判定
+        else {
+          console.log('⚠️ No pending updates or modified IDs, falling back to updated_at check');
           const recentThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString();
           txToSync = state.transactions.filter(tx => {
             return tx.updated_at && tx.updated_at > recentThreshold;
