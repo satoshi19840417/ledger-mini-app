@@ -704,15 +704,6 @@ function Dashboard({
         <div className='title'>
           <span>家計簿カテゴリ管理</span>
         </div>
-        <Button
-          ref={burgerRef}
-          className='burger'
-          variant="ghost"
-          size="icon"
-          onClick={() => setOpen(true)}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
       </header>
 
       {/* ドロワー */}
