@@ -459,17 +459,17 @@ export default function App() {
     return () => panel.removeEventListener('keydown', onKey);
   }, [open]);
 
-const NavItem = ({ active, onClick, icon: Icon, children }) => (
-  <Button
-    variant={active ? "secondary" : "ghost"}
-    className="w-full justify-start gap-2 h-auto py-3 px-4 text-gray-700 hover:text-gray-900"
-    style={{ color: active ? '#1f2937' : '#4b5563' }}
-    onClick={onClick}
-  >
-    <Icon className="h-4 w-4" />
-    {children}
-  </Button>
-);
+  const NavItem = ({ active, onClick, icon: Icon, children }) => (
+    <Button
+      variant={active ? "secondary" : "ghost"}
+      className="w-full justify-start gap-2 h-auto py-3 px-4 text-gray-700 hover:text-gray-900"
+      style={{ color: active ? '#1f2937' : '#4b5563' }}
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4" />
+      {children}
+    </Button>
+  );
 
   function Dashboard({
     transactions,
